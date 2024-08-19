@@ -49,6 +49,7 @@ public class User {
 //    @ManyToOne
 //    @JoinColumn(name = "warehouse_id")
 //    private Warehouse warehouse;
+    //@
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
