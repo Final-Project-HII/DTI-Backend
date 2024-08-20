@@ -57,7 +57,7 @@ public class AddressServiceImpl implements AddressService {
         dto.setId(address.getId());
         dto.setUserId(address.getUser().getId());
         dto.setAddressLine(address.getAddressLine());
-//        dto.setCityId(address.getCity().getId());
+        dto.setCityId(address.getCity().getId());
         dto.setPostalCode(address.getPostalCode());
         dto.setLat(address.getLat());
         dto.setLon(address.getLon());
@@ -69,9 +69,6 @@ public class AddressServiceImpl implements AddressService {
 
     private Address convertToEntity(AddressDTO dto) {
         Address address = new Address();
-        // Assume User and City entities are already fetched or passed as DTOs
-        // address.setUser(...);
-        // address.setCity(...);
         address.setAddressLine(dto.getAddressLine());
         address.setPostalCode(dto.getPostalCode());
         address.setLat(dto.getLat());

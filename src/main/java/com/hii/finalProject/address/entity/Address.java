@@ -1,5 +1,6 @@
 package com.hii.finalProject.address.entity;
 
+import com.hii.finalProject.city.entity.City;
 import com.hii.finalProject.users.entity.User;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -21,9 +22,9 @@ public class Address {
     @Column(name = "address_line", length = 255)
     private String addressLine;
 
-//    @ManyToOne
-//    @JoinColumn(name = "city_id", nullable = false)
-//    private City city;
+    @ManyToOne
+    @JoinColumn(name = "city_id", nullable = false)
+    private City city;
 
     @Column(name = "postal_code", length = 10)
     private String postalCode;
