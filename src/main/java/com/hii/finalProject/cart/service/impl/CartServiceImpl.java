@@ -24,25 +24,30 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @Cacheable(value = "carts", key = "#userId")
+
     public CartDTO getCartDTO(Long userId) {
         Cart cart = getCart(userId);
         return convertToDTO(cart);
     }
 
     @Override
-    @Cacheable(value = "carts", key = "#userId")
+    @Transactional
+
     public Cart getCart(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
         return cartRepository.findByUserId(userId)
                 .orElseGet(() -> createCart(userId));
     }
 
+
     @Override
     @Transactional
-    @Cacheable(value = "carts", key = "#userId")
+
     public Cart createCart(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found" + userId));
         Cart newCart = new Cart();
         newCart.setUser(user);
         return cartRepository.save(newCart);

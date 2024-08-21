@@ -11,11 +11,11 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "cart_items")
+@Table(name = "cart_items", schema = "developmentfp")
 public class CartItem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "cart_item_id_gen")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @SequenceGenerator(name = "cart_item_id_gen", sequenceName = "cart_item_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;

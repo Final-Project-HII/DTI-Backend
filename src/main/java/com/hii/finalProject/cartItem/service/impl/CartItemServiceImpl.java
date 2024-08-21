@@ -31,7 +31,6 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "carts", key = "#userId")
     public CartItemDTO addToCart(Long userId, Long productId, Integer quantity) {
         Cart cart = cartService.getCart(userId);
         Product product = productRepository.findById(productId)
@@ -58,7 +57,6 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "carts", key = "#userId")
     public void removeFromCart(Long userId, Long productId) {
         Cart cart = cartService.getCart(userId);
 
@@ -69,7 +67,6 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "carts", key = "#userId")
     public void updateCartItemQuantity(Long userId, Long productId, Integer quantity) {
         Cart cart = cartService.getCart(userId);
 
@@ -82,7 +79,6 @@ public class CartItemServiceImpl implements CartItemService {
                 });
     }
 
-    @Cacheable(value = "cartItems", key = "#cartItemId")
     public CartItemDTO getCartItemById(Long cartItemId) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new RuntimeException("CartItem not found"));

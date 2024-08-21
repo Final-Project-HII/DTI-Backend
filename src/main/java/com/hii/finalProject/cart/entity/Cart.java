@@ -3,6 +3,7 @@ package com.hii.finalProject.cart.entity;
 import com.hii.finalProject.cartItem.entity.CartItem;
 import com.hii.finalProject.users.entity.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -14,18 +15,22 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "cart")
+@Table(name = "cart", schema = "developmentfp")
 public class Cart implements Serializable {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "cart_id_gen")
-    @SequenceGenerator(name = "cart_id_gen", sequenceName = "cart_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
+//    @OneToOne(fetch = FetchType.LAZY, optional = false)
+//    @JoinColumn(name = "user_id",referencedColumnName = "id", nullable = false)
+//    @ToString.Exclude
+//    @EqualsAndHashCode.Exclude
+
+
+    @NotNull(message = "User id is required")
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
