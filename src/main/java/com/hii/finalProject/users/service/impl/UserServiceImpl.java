@@ -1,22 +1,48 @@
 package com.hii.finalProject.users.service.impl;
 
 
+import com.hii.finalProject.auth.repository.AuthRedisRepository;
+import com.hii.finalProject.email.service.EmailService;
+import com.hii.finalProject.exceptions.DataNotFoundException;
+import com.hii.finalProject.users.dto.CheckVerificationLinkDTO;
+import com.hii.finalProject.users.dto.ManagePasswordDTO;
 import com.hii.finalProject.users.dto.UserDTO;
+import com.hii.finalProject.users.dto.UserRegisterRequestDTO;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
 import com.hii.finalProject.users.service.UserService;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.transaction.Transactional;
+import lombok.extern.java.Log;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.BeanUtils;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.nio.charset.StandardCharsets;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Log
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    private final EmailService emailService;
+
+    private final AuthRedisRepository authRedisRepository;
+
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailService emailService, AuthRedisRepository authRedisRepository) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
+        this.authRedisRepository = authRedisRepository;
     }
 
     @Override
@@ -57,6 +83,143 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
+    }
+
+
+    @Transactional
+    @Override
+    public User register(UserRegisterRequestDTO user) {
+        boolean exists = userRepository.findAll()
+                .stream()
+                .anyMatch(data -> data.getEmail().equals(user.getEmail()));
+
+        if(exists){
+            throw new DataNotFoundException("Email has already been registered");
+        }
+
+        User newUser = user.toEntity();
+        userRepository.save(newUser);
+        String tokenValue = UUID.randomUUID().toString();
+        authRedisRepository.saveVerificationLink(user.getEmail(),tokenValue);
+        String htmlBody = "<html>" +
+                "<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;'>" +
+                "<div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px;'>" +
+
+                "<div style='text-align: center; background-color: #FABC3F; padding: 20px;'>" +
+                "<img src='https://res.cloudinary.com/dv9bbdl6i/image/upload/v1724211850/HiiMart/hiimartV1_rgwy5e.png' alt='Your Site' style='width: 50px;'>" +
+                "</div>" +
+
+                "<div style='text-align: center; padding: 40px 20px;'>" +
+                "<h1 style='color: #E85C0D;'>Thanks for Signing Up!</h1>" +
+                "<h2 style='color: #E85C0D;'>Verify Your E-mail Address</h2>" +
+                "<p style='color: #333;'>Hi,<br>You're almost ready to get started. Please click on the button below to verify your email address</p>" +
+                "<a href='http://localhost:3000/manage-password?token=" + tokenValue +"&email=" + user.getEmail() + "' style='text-decoration: none;'>" +
+                "<button style='background-color: #C7253E; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;'>VERIFY YOUR EMAIL</button>" +
+                "</a>" +
+                "</div>" +
+
+                "<div style='background-color: #e0e0e0; padding: 20px; text-align: center;'>" +
+                "<p style='color: #333;'>Get in touch:<br>+62 815 8608 1551<br>HiiMart@gmail.com</p>" +
+                "<p style='color: #999;'>Copyrights © Company All Rights Reserved</p>" +
+                "</div>" +
+                "</div>" +
+                "</body>" +
+                "</html>";
+        emailService.sendEmail(user.getEmail(), "Complete Registration for Hii Mart!", htmlBody);
+        return newUser;
+    }
+
+    @Override
+    public User confirmVerification(ManagePasswordDTO data) {
+        User user = userRepository.findByEmail(data.getEmail()).orElseThrow(() -> new DataNotFoundException("Email not found"));
+        if(!data.getConfirmPassword().equals(data.getPassword())){
+            throw new InputMismatchException("Password doesn't match");
+        }
+        if(!authRedisRepository.isVerificationLinkValid(data.getEmail())){
+           throw new DataNotFoundException("Verification link has expired");
+        }
+        user.setIsVerified(true);
+        user.setPassword(passwordEncoder.encode(data.getPassword()));
+        userRepository.save(user);
+        return user;
+    }
+
+    @Override
+    public String checkVerificationLink(CheckVerificationLinkDTO data) {
+        Optional<User> user = userRepository.findByEmail(data.getEmail());
+        var existingToken = authRedisRepository.getVerificationLink(data.getEmail());
+        if(user.get().getIsVerified()){
+            return "Verified";
+        }
+        if(!user.get().getIsVerified() && authRedisRepository.isVerificationLinkValid(data.getEmail()) && existingToken.equals(data.getToken())){
+            return "Not Verified";
+        }
+        return "Expired";
+    }
+
+    @Override
+    public boolean newVerificationLink(String email) {
+        if(authRedisRepository.isVerificationLinkValid(email)){
+            authRedisRepository.deleteVerificationLink(email);
+        }
+        String tokenValue = UUID.randomUUID().toString();
+        authRedisRepository.saveVerificationLink(email,tokenValue);
+        String htmlBody = "<html>" +
+                "<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;'>" +
+                "<div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px;'>" +
+
+                "<div style='text-align: center; background-color: #FABC3F; padding: 20px;'>" +
+                "<img src='https://res.cloudinary.com/dv9bbdl6i/image/upload/v1724211850/HiiMart/hiimartV1_rgwy5e.png' alt='Your Site' style='width: 50px;'>" +
+                "</div>" +
+
+                "<div style='text-align: center; padding: 40px 20px;'>" +
+                "<h1 style='color: #E85C0D;'>Thanks for Signing Up!</h1>" +
+                "<h2 style='color: #E85C0D;'>Verify Your E-mail Address</h2>" +
+                "<p style='color: #333;'>Hi,<br>You're almost ready to get started. Please click on the button below to verify your email address</p>" +
+                "<a href='http://localhost:3000/manage-password?token=" + tokenValue +"&email=" + email + "' style='text-decoration: none;'>" +
+                "<button style='background-color: #C7253E; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;'>VERIFY YOUR EMAIL</button>" +
+                "</a>" +
+                "</div>" +
+
+                "<div style='background-color: #e0e0e0; padding: 20px; text-align: center;'>" +
+                "<p style='color: #333;'>Get in touch:<br>+62 815 8608 1551<br>HiiMart@gmail.com</p>" +
+                "<p style='color: #999;'>Copyrights © Company All Rights Reserved</p>" +
+                "</div>" +
+                "</div>" +
+                "</body>" +
+                "</html>";
+        emailService.sendEmail(email, "Complete Registration for Hii Mart!", htmlBody);
+        return true;
+    }
+
+    @Override
+    public void sendResetPasswordLink(String email) {
+        String tokenValue = UUID.randomUUID().toString();
+        authRedisRepository.saveResetPasswordLink(email,tokenValue);
+        String htmlBody = "<html>" +
+                "<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;'>" +
+                "<div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px;'>" +
+
+                "<div style='text-align: center; background-color: #FABC3F; padding: 20px;'>" +
+                "<img src='https://res.cloudinary.com/dv9bbdl6i/image/upload/v1724211850/HiiMart/hiimartV1_rgwy5e.png' alt='Your Site' style='width: 50px;'>" +
+                "</div>" +
+
+                "<div style='text-align: center; padding: 40px 20px;'>" +
+                "<h1 style='color: #E85C0D;'>Reset Password!</h1>" +
+                "<p style='color: #333;'>Hi,<br>We received a request to reset your password. Click the button below to reset it:</p>" +
+                "<a href='http://localhost:3000/manage-password?token=" + tokenValue +"&email=" + email + "' style='text-decoration: none;'>" +
+                "<button style='background-color: #C7253E; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;'>RESET PASSWORD</button>" +
+                "</a>" +
+                "</div>" +
+
+                "<div style='background-color: #e0e0e0; padding: 20px; text-align: center;'>" +
+                "<p style='color: #333;'>Get in touch:<br>+62 815 8608 1551<br>HiiMart@gmail.com</p>" +
+                "<p style='color: #999;'>Copyrights © Company All Rights Reserved</p>" +
+                "</div>" +
+                "</div>" +
+                "</body>" +
+                "</html>";
+        emailService.sendEmail(email, "Complete Registration for Hii Mart!", htmlBody);
     }
 
     private UserDTO convertToDTO(User user) {
