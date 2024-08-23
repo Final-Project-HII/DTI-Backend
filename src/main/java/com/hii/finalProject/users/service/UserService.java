@@ -1,10 +1,7 @@
 package com.hii.finalProject.users.service;
 
 
-import com.hii.finalProject.users.dto.CheckVerificationLinkDTO;
-import com.hii.finalProject.users.dto.ManagePasswordDTO;
-import com.hii.finalProject.users.dto.UserDTO;
-import com.hii.finalProject.users.dto.UserRegisterRequestDTO;
+import com.hii.finalProject.users.dto.*;
 import com.hii.finalProject.users.entity.User;
 
 import java.util.List;
@@ -20,12 +17,15 @@ public interface UserService {
 
     User register(UserRegisterRequestDTO user);
 
-    User confirmVerification(ManagePasswordDTO data);
+    User setPassword(ManagePasswordDTO data);
 
     String checkVerificationLink(CheckVerificationLinkDTO data);
 
 
-    boolean newVerificationLink(String email);
+    Boolean newVerificationLink(String email);
 
-    void sendResetPasswordLink(String email);
+    void newResetPasswordLink(String email);
+
+    String sendResetPasswordLink(String email);
+    Boolean checkResetPasswordLinkIsValid(CheckResetPasswordLinkDTO data);
 }

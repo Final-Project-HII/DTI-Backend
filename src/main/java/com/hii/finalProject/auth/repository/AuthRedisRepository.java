@@ -29,14 +29,28 @@ public class AuthRedisRepository {
         valueOps.set(STRING_LINK_VERIFICATION_KEY_PREFIX+email,token,1,TimeUnit.HOURS);
     }
 
+    public Boolean isResetPasswordLinkValid(String email){
+        return valueOps.get(STRING_LINK_RESET_PASSWORD_KEY_PREFIX+email) != null;
+    }
+
     public void saveResetPasswordLink(String email, String token){
         valueOps.set(STRING_LINK_RESET_PASSWORD_KEY_PREFIX+email,token,1,TimeUnit.HOURS);
     }
+
+    public void deleteResetPasswordLink(String email){
+        valueOps.getOperations().delete(STRING_LINK_RESET_PASSWORD_KEY_PREFIX+email);
+    }
+
+
     public Boolean isVerificationLinkValid(String email) {
         return valueOps.get(STRING_LINK_VERIFICATION_KEY_PREFIX+email) != null;
     }
     public String getVerificationLink(String email) {
         return valueOps.get(STRING_LINK_VERIFICATION_KEY_PREFIX+email);
+    }
+
+    public String getResetPasswordLink(String email) {
+        return valueOps.get(STRING_LINK_RESET_PASSWORD_KEY_PREFIX+email);
     }
     public String getJwtKey(String email) {
         return valueOps.get(STRING_KEY_PREFIX+email);

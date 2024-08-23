@@ -1,11 +1,8 @@
 package com.hii.finalProject.users.controller;
 
 import com.hii.finalProject.response.Response;
-import com.hii.finalProject.users.dto.CheckVerificationLinkDTO;
-import com.hii.finalProject.users.dto.ManagePasswordDTO;
-import com.hii.finalProject.users.dto.UserDTO;
+import com.hii.finalProject.users.dto.*;
 
-import com.hii.finalProject.users.dto.UserRegisterRequestDTO;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.service.UserService;
 import jakarta.validation.Valid;
@@ -32,14 +29,13 @@ public class UserController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<Response<Object>> resetPassword(@RequestParam String email){
-
-        return Response.successfulResponse("Reset password link has been sent succesfully");
+    public ResponseEntity<Response<String>> resetPassword(@RequestParam String email){
+        return Response.successfulResponse("Reset password link status has been fetched successfully",userService.sendResetPasswordLink(email));
     }
 
     @PostMapping("/set-password")
     public ResponseEntity<Response<User>> managePassword(@RequestBody ManagePasswordDTO data){
-        return Response.successfulResponse("User has been verified", userService.confirmVerification(data));
+        return Response.successfulResponse("User has been verified", userService.setPassword(data));
     }
 
     @PostMapping("/new-verification-link")
@@ -47,9 +43,20 @@ public class UserController {
         return Response.successfulResponse("Verification link has been sent", userService.newVerificationLink(email));
     }
 
+    @PostMapping("/new-reset-password-link")
+    public ResponseEntity<Response<Object>> sendNewResetPasswordLink(@RequestParam String email){
+        userService.newResetPasswordLink(email);
+        return Response.successfulResponse("Reset password link has been sent");
+    }
+
     @PostMapping("/check-verification")
     public ResponseEntity<Response<String>> isVerifiedLinkValid(@RequestBody CheckVerificationLinkDTO data){
         return Response.successfulResponse("Verification link status has been fetched", userService.checkVerificationLink(data));
+    }
+
+    @PostMapping("/check-reset-password")
+    public ResponseEntity<Response<Boolean>> isResetPasswordLinkValid(@RequestBody CheckResetPasswordLinkDTO data){
+        return Response.successfulResponse("Verification link status has been fetched", userService.checkResetPasswordLinkIsValid(data));
     }
     @GetMapping("/")
     public Map<String, Object> user(@AuthenticationPrincipal OAuth2User principal) {

@@ -5,7 +5,8 @@ import lombok.Data;
 @Data
 public class LoginResponseDTO {
     private String accessToken;
-    private String userId;
     private String email;
     private String role;
+    private Boolean isVerified;
+    private Boolean isRegistered;
 }
