@@ -48,16 +48,8 @@ public class AuthServiceImpl implements AuthService {
 
         var existingKey = authRedisRepository.getJwtKey(authentication.getName());
         LoginResponseDTO response = new LoginResponseDTO();
-        Optional<User> user = userRepository.findByEmail(authentication.getName());
         response.setEmail(authentication.getName());
         response.setRole(scope);
-        if(user.isPresent()){
-            response.setIsVerified(user.get().getIsVerified());
-            response.setIsRegistered(true);
-        }else{
-            response.setIsVerified(false);
-            response.setIsRegistered(false);
-        }
         if(existingKey != null){
             log.info("Token already exists for user: " + authentication.getName());
             response.setAccessToken(existingKey);

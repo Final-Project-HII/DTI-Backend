@@ -46,13 +46,14 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginRequestDTO userLogin) {
         log.info("User login request received for user: " + userLogin.getEmail());
         try {
-            // Check if the user exists
-            Optional<User> user = userRepository.findByEmail(userLogin.getEmail());
-            if (user.isEmpty()) {
-                Map<String, String> errorResponse = new HashMap<>();
-                errorResponse.put("error", "Email Not Found");
-                errorResponse.put("message", "No account found with this email address");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            Optional<User> userOptional = userRepository.findByEmail(userLogin.getEmail());
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Email Not Found", "message", "No account found with this email address"));
+            }
+
+            User user = userOptional.get();
+            if (!user.getIsVerified()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Email Not Verified", "message", "Your email address has not been verified"));
             }
 
             Authentication authentication = authenticationManager
@@ -71,17 +72,9 @@ public class AuthController {
             headers.add("Set-Cookie", cookie.getName() + "=" + cookie.getValue() + "; Path=/; HttpOnly");
             return ResponseEntity.status(HttpStatus.OK).headers(headers).body(resp);
         } catch (BadCredentialsException e) {
-            // Custom response for bad credentials
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Invalid Credentials");
-            errorResponse.put("message", "The provided email or password is incorrect");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid Credentials", "message", "The provided password is incorrect"));
         } catch (Exception e) {
-            // Handle other exceptions
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Authentication Failed");
-            errorResponse.put("message", "An error occurred during authentication");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Authentication Failed", "message", "An error occurred during authentication"));
         }
     }
 }
