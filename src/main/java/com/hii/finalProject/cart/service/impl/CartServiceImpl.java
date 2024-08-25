@@ -8,10 +8,13 @@ import com.hii.finalProject.cartItem.dto.CartItemDTO;
 import com.hii.finalProject.cartItem.entity.CartItem;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class CartServiceImpl implements CartService {
@@ -27,33 +30,58 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @Cacheable (value = "carts", key = "#userId")
+    @Cacheable(value = "cartDTOs", key = "#userId")
     public CartDTO getCartDTO(Long userId) {
-        Cart cart = getCart(userId);
-        return convertToDTO(cart);
+        Cart cart = getCartEntity(userId);
+        CartDTO cartDTO = convertToDTO(cart);
+        redisTemplate.opsForValue().set("cartDTO:" + userId, cartDTO, 1, TimeUnit.HOURS);
+        return cartDTO;
     }
 
     @Override
     @Transactional
-    @Cacheable (value = "carts", key = "#userId")
-    public Cart getCart(Long userId) {
+    public Cart getCartEntity(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
         return cartRepository.findByUserId(userId)
-                .orElseGet(() -> createCart(userId));
+                .orElseGet(() -> createCartEntity(userId));
     }
-
 
     @Override
     @Transactional
-    @Cacheable (value = "carts", key = "#userId")
-    public Cart createCart(Long userId) {
+    @CachePut(value = "cartDTOs", key = "#userId")
+    public CartDTO createCartDTO(Long userId) {
+        Cart cart = createCartEntity(userId);
+        CartDTO cartDTO = convertToDTO(cart);
+        redisTemplate.opsForValue().set("cartDTO:" + userId, cartDTO, 1, TimeUnit.HOURS);
+        return cartDTO;
+    }
+
+    @Override
+    @Transactional
+    public Cart createCartEntity(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found" + userId));
         Cart newCart = new Cart();
         newCart.setUser(user);
-        return cartRepository.save(newCart);
+        Cart savedCart = cartRepository.save(newCart);
+        redisTemplate.opsForValue().set("cartEntity:" + userId, savedCart, 1, TimeUnit.HOURS);
+        return savedCart;
+    }
+
+//    public void clearCart(Long userId) {
+//        cartRepository.deleteByUserId(userId);
+//        redisTemplate.delete("cartDTO:" + userId);
+//        redisTemplate.delete("cartEntity:" + userId);
+//    }
+
+    public CartDTO updateCart(Long userId, Cart updatedCart) {
+        Cart savedCart = cartRepository.save(updatedCart);
+        CartDTO cartDTO = convertToDTO(savedCart);
+        redisTemplate.opsForValue().set("cartEntity:" + userId, savedCart, 1, TimeUnit.HOURS);
+        redisTemplate.opsForValue().set("cartDTO:" + userId, cartDTO, 1, TimeUnit.HOURS);
+        return cartDTO;
     }
 
     private CartDTO convertToDTO(Cart cart) {

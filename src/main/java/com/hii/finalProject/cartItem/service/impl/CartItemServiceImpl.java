@@ -10,9 +10,13 @@ import com.hii.finalProject.product.entity.Product;
 import com.hii.finalProject.product.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class CartItemServiceImpl implements CartItemService {
@@ -20,19 +24,22 @@ public class CartItemServiceImpl implements CartItemService {
     private final CartItemRepository cartItemRepository;
     private final CartService cartService;
     private final ProductRepository productRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     public CartItemServiceImpl(CartItemRepository cartItemRepository, CartService cartService,
-                               ProductRepository productRepository) {
+                               ProductRepository productRepository, RedisTemplate<String, Object> redisTemplate) {
         this.cartItemRepository = cartItemRepository;
         this.cartService = cartService;
         this.productRepository = productRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
     @Transactional
+    @CachePut(value = "cartItems", key = "#userId + ':' + #productId")
     public CartItemDTO addToCart(Long userId, Long productId, Integer quantity) {
-        Cart cart = cartService.getCart(userId);
+        Cart cart = cartService.getCartEntity(userId);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
@@ -50,15 +57,15 @@ public class CartItemServiceImpl implements CartItemService {
 
         cartItem.setQuantity(cartItem.getQuantity() + quantity);
 
-        cartItemRepository.save(cartItem);
-
-        return convertToDTO(cartItem);
+        CartItem savedItem = cartItemRepository.save(cartItem);
+        return convertToDTO(savedItem);
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = "cartItems", key = "#userId + ':' + #productId")
     public void removeFromCart(Long userId, Long productId) {
-        Cart cart = cartService.getCart(userId);
+        Cart cart = cartService.getCartEntity(userId);
 
         cart.getItems().removeIf(item -> item.getProduct().getId().equals(productId));
 
@@ -67,18 +74,24 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
-    public void updateCartItemQuantity(Long userId, Long productId, Integer quantity) {
-        Cart cart = cartService.getCart(userId);
+    @CachePut(value = "cartItems", key = "#userId + ':' + #productId")
+    public CartItemDTO updateCartItemQuantity(Long userId, Long productId, Integer quantity) {
+        Cart cart = cartService.getCartEntity(userId);
 
-        cart.getItems().stream()
+        CartItem updatedItem = cart.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(productId))
                 .findFirst()
-                .ifPresent(item -> {
+                .map(item -> {
                     item.setQuantity(quantity);
-                    cartItemRepository.save(item);
-                });
+                    return cartItemRepository.save(item);
+                })
+                .orElseThrow(() -> new RuntimeException("CartItem not found"));
+
+        return convertToDTO(updatedItem);
     }
 
+    @Override
+    @Cacheable(value = "cartItems", key = "#cartItemId", unless = "#result == null")
     public CartItemDTO getCartItemById(Long cartItemId) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new RuntimeException("CartItem not found"));
