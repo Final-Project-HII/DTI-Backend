@@ -30,12 +30,12 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @Cacheable(value = "cartDTOs", key = "#userId")
+//    @Cacheable(value = "cartDTOs", key = "#userId")
     public CartDTO getCartDTO(Long userId) {
         Cart cart = getCartEntity(userId);
-        CartDTO cartDTO = convertToDTO(cart);
-        redisTemplate.opsForValue().set("cartDTO:" + userId, cartDTO, 1, TimeUnit.HOURS);
-        return cartDTO;
+//        CartDTO cartDTO = convertToDTO(cart);
+//        redisTemplate.opsForValue().set("cartDTO:" + userId, cartDTO, 1, TimeUnit.HOURS);
+        return convertToDTO(cart);
     }
 
     @Override
@@ -50,7 +50,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    @CachePut(value = "cartDTOs", key = "#userId")
+//    @CachePut(value = "cartDTOs", key = "#userId")
     public CartDTO createCartDTO(Long userId) {
         Cart cart = createCartEntity(userId);
         CartDTO cartDTO = convertToDTO(cart);
