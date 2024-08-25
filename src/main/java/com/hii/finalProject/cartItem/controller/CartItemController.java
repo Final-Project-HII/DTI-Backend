@@ -26,7 +26,6 @@ public class CartItemController {
 
     @PostMapping("/add")
     public ResponseEntity<CartItemDTO> addToCart(@RequestBody AddToCartRequest request) {
-        // Log the userId for debugging
         log.info("Received user_id: {}", request.getId());
 
         CartItemDTO addedItem = cartItemService.addToCart(request.getId(), request.getProductId(), request.getQuantity());

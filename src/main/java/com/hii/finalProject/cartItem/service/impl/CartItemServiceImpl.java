@@ -37,7 +37,6 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
-    @CachePut(value = "cartItems", key = "#userId + ':' + #productId")
     public CartItemDTO addToCart(Long userId, Long productId, Integer quantity) {
         Cart cart = cartService.getCartEntity(userId);
         Product product = productRepository.findById(productId)
@@ -57,8 +56,9 @@ public class CartItemServiceImpl implements CartItemService {
 
         cartItem.setQuantity(cartItem.getQuantity() + quantity);
 
-        CartItem savedItem = cartItemRepository.save(cartItem);
-        return convertToDTO(savedItem);
+        cartItemRepository.save(cartItem);
+
+        return convertToDTO(cartItem);
     }
 
     @Override
@@ -66,10 +66,13 @@ public class CartItemServiceImpl implements CartItemService {
     @CacheEvict(value = "cartItems", key = "#userId + ':' + #productId")
     public void removeFromCart(Long userId, Long productId) {
         Cart cart = cartService.getCartEntity(userId);
+        boolean itemRemoved = cart.getItems().removeIf(item -> item.getProduct().getId().equals(productId));
 
-        cart.getItems().removeIf(item -> item.getProduct().getId().equals(productId));
-
-        cartItemRepository.deleteByCartIdAndProductId(cart.getId(), productId);
+        if (itemRemoved) {
+            cartItemRepository.deleteByCartIdAndProductId(cart.getId(), productId);
+        } else {
+            throw new RuntimeException("CartItem not found for removal");
+        }
     }
 
     @Override
