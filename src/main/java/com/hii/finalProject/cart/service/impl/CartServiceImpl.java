@@ -9,6 +9,7 @@ import com.hii.finalProject.cartItem.entity.CartItem;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,14 +18,16 @@ public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    public CartServiceImpl(CartRepository cartRepository, UserRepository userRepository) {
+    public CartServiceImpl(CartRepository cartRepository, UserRepository userRepository, RedisTemplate<String, Object> redisTemplate) {
         this.cartRepository = cartRepository;
         this.userRepository = userRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
-
+    @Cacheable (value = "carts", key = "#userId")
     public CartDTO getCartDTO(Long userId) {
         Cart cart = getCart(userId);
         return convertToDTO(cart);
@@ -32,7 +35,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-
+    @Cacheable (value = "carts", key = "#userId")
     public Cart getCart(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
@@ -44,7 +47,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-
+    @Cacheable (value = "carts", key = "#userId")
     public Cart createCart(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found" + userId));
