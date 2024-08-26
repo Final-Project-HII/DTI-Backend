@@ -16,7 +16,7 @@ public interface CartService {
 
     Cart createCartEntity(Long userId);
 
-//    void clearCart(Long userId);
-
     CartDTO updateCart(Long userId, Cart updatedCart);
+
+    void clearCartCache(Long userId);
 }

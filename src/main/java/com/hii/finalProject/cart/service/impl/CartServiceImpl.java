@@ -30,11 +30,9 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-//    @Cacheable(value = "cartDTOs", key = "#userId")
+    @Cacheable(value = "cartDTOs", key = "#userId")
     public CartDTO getCartDTO(Long userId) {
         Cart cart = getCartEntity(userId);
-//        CartDTO cartDTO = convertToDTO(cart);
-//        redisTemplate.opsForValue().set("cartDTO:" + userId, cartDTO, 1, TimeUnit.HOURS);
         return convertToDTO(cart);
     }
 
@@ -50,12 +48,10 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-//    @CachePut(value = "cartDTOs", key = "#userId")
+    @CachePut(value = "cartDTOs", key = "#userId")
     public CartDTO createCartDTO(Long userId) {
         Cart cart = createCartEntity(userId);
-        CartDTO cartDTO = convertToDTO(cart);
-        redisTemplate.opsForValue().set("cartDTO:" + userId, cartDTO, 1, TimeUnit.HOURS);
-        return cartDTO;
+        return convertToDTO(cart);
     }
 
     @Override
@@ -65,23 +61,20 @@ public class CartServiceImpl implements CartService {
                 .orElseThrow(() -> new RuntimeException("User not found" + userId));
         Cart newCart = new Cart();
         newCart.setUser(user);
-        Cart savedCart = cartRepository.save(newCart);
-        redisTemplate.opsForValue().set("cartEntity:" + userId, savedCart, 1, TimeUnit.HOURS);
-        return savedCart;
+        return cartRepository.save(newCart);
     }
 
-//    public void clearCart(Long userId) {
-//        cartRepository.deleteByUserId(userId);
-//        redisTemplate.delete("cartDTO:" + userId);
-//        redisTemplate.delete("cartEntity:" + userId);
-//    }
-
+    @Override
     public CartDTO updateCart(Long userId, Cart updatedCart) {
         Cart savedCart = cartRepository.save(updatedCart);
         CartDTO cartDTO = convertToDTO(savedCart);
-        redisTemplate.opsForValue().set("cartEntity:" + userId, savedCart, 1, TimeUnit.HOURS);
-        redisTemplate.opsForValue().set("cartDTO:" + userId, cartDTO, 1, TimeUnit.HOURS);
+        redisTemplate.opsForValue().set("cartDTOs::" + userId, cartDTO, 1, TimeUnit.HOURS);
         return cartDTO;
+    }
+
+    @Override
+    public void clearCartCache(Long userId) {
+        redisTemplate.delete("cartDTOs::" + userId);
     }
 
     private CartDTO convertToDTO(Cart cart) {

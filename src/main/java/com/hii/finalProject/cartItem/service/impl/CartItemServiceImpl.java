@@ -9,8 +9,6 @@ import com.hii.finalProject.cartItem.service.CartItemService;
 import com.hii.finalProject.product.entity.Product;
 import com.hii.finalProject.product.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -56,20 +54,34 @@ public class CartItemServiceImpl implements CartItemService {
 
         cartItem.setQuantity(cartItem.getQuantity() + quantity);
 
-        cartItemRepository.save(cartItem);
+        CartItem savedItem = cartItemRepository.save(cartItem);
+        CartItemDTO dto = convertToDTO(savedItem);
 
-        return convertToDTO(cartItem);
+        // Update cart item cache
+        String cartItemKey = "cartItems::" + userId + ":" + productId;
+        redisTemplate.opsForValue().set(cartItemKey, dto, 1, TimeUnit.HOURS);
+
+        // Clear cart DTO cache to force a refresh
+        cartService.clearCartCache(userId);
+
+        return dto;
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = "cartItems", key = "#userId + ':' + #productId")
     public void removeFromCart(Long userId, Long productId) {
         Cart cart = cartService.getCartEntity(userId);
         boolean itemRemoved = cart.getItems().removeIf(item -> item.getProduct().getId().equals(productId));
 
         if (itemRemoved) {
             cartItemRepository.deleteByCartIdAndProductId(cart.getId(), productId);
+
+            // Remove cart item from cache
+            String cartItemKey = "cartItems::" + userId + ":" + productId;
+            redisTemplate.delete(cartItemKey);
+
+            // Clear cart DTO cache to force a refresh
+            cartService.clearCartCache(userId);
         } else {
             throw new RuntimeException("CartItem not found for removal");
         }
@@ -77,7 +89,6 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
-    @CachePut(value = "cartItems", key = "#userId + ':' + #productId")
     public CartItemDTO updateCartItemQuantity(Long userId, Long productId, Integer quantity) {
         Cart cart = cartService.getCartEntity(userId);
 
@@ -90,7 +101,16 @@ public class CartItemServiceImpl implements CartItemService {
                 })
                 .orElseThrow(() -> new RuntimeException("CartItem not found"));
 
-        return convertToDTO(updatedItem);
+        CartItemDTO dto = convertToDTO(updatedItem);
+
+        // Update cart item cache
+        String cartItemKey = "cartItems::" + userId + ":" + productId;
+        redisTemplate.opsForValue().set(cartItemKey, dto, 1, TimeUnit.HOURS);
+
+        // Clear cart DTO cache to force a refresh
+        cartService.clearCartCache(userId);
+
+        return dto;
     }
 
     @Override
