@@ -80,6 +80,7 @@ public class SecurityConfig {
                     auth.requestMatchers("/error/**").permitAll();
                     auth.requestMatchers("/api/auth/**").permitAll();
                     auth.requestMatchers("/api/users/register").permitAll();
+                    auth.requestMatchers("/api/users/register-google").permitAll();
                     auth.requestMatchers("/api/users/set-password").permitAll();
                     auth.requestMatchers("/api/users/check-verification").permitAll();
                     auth.requestMatchers("/api/users/new-verification-link").permitAll();

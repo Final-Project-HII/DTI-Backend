@@ -2,6 +2,8 @@ package com.hii.finalProject.auth.service.impl;
 
 
 import com.hii.finalProject.auth.dto.LoginResponseDTO;
+import com.hii.finalProject.auth.dto.LoginSocialRequestDTO;
+import com.hii.finalProject.auth.dto.LoginSocialResponseDTO;
 import com.hii.finalProject.auth.repository.AuthRedisRepository;
 import com.hii.finalProject.auth.service.AuthService;
 import com.hii.finalProject.exceptions.DataNotFoundException;
@@ -70,6 +72,38 @@ public class AuthServiceImpl implements AuthService {
             throw new DataNotFoundException("JWT Token has already been blacklisted");
         }
         authRedisRepository.saveJwtKey(authentication.getName(),jwt);
+        response.setAccessToken(jwt);
+        return response;
+    }
+
+    @Override
+    public LoginSocialResponseDTO generateSocialToken(LoginSocialRequestDTO data) {
+        Instant now = Instant.now();
+        Optional<User> user = userRepository.findByEmail(data.getEmail());
+        var existingKey = authRedisRepository.getJwtKey(data.getEmail());
+        LoginSocialResponseDTO response = new LoginSocialResponseDTO();
+        response.setEmail(data.getEmail());
+        response.setRole(user.get().getRole().name());
+        if(existingKey != null){
+            log.info("Token already exists for user: " + data.getEmail());
+            response.setAccessToken(existingKey);
+            return response;
+        }
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer("self")
+                .issuedAt(now)
+                .expiresAt(now.plus(10, ChronoUnit.HOURS))
+                .subject(data.getEmail())
+                .claim("scope", user.get().getRole().name())
+                .build();
+
+        var jwt = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+
+        if(authRedisRepository.isKeyBlacklisted(jwt)){
+            throw new DataNotFoundException("JWT Token has already been blacklisted");
+        }
+        authRedisRepository.saveJwtKey(data.getEmail(), jwt);
         response.setAccessToken(jwt);
         return response;
     }

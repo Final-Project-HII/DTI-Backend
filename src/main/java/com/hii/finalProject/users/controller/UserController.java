@@ -28,6 +28,11 @@ public class UserController {
         return Response.successfulResponse("User registered successfully", userService.register(userRegisterRequestDto));
     }
 
+    @PostMapping("/register-google")
+    public ResponseEntity<Response<User>> registerSocial(@RequestBody UserRegisterSocialRequestDTO userRegisterSocialRequestDto) {
+        return Response.successfulResponse("User registered successfully", userService.registerSocial(userRegisterSocialRequestDto));
+    }
+
     @PostMapping("/reset-password")
     public ResponseEntity<Response<String>> resetPassword(@RequestParam String email){
         return Response.successfulResponse("Reset password link status has been fetched successfully",userService.sendResetPasswordLink(email));
@@ -39,8 +44,9 @@ public class UserController {
     }
 
     @PostMapping("/new-verification-link")
-    public ResponseEntity<Response<Boolean>> sendNewVerificationLink(@RequestParam String email){
-        return Response.successfulResponse("Verification link has been sent", userService.newVerificationLink(email));
+    public ResponseEntity<Response<Object>> sendNewVerificationLink(@RequestParam String email){
+        userService.newVerificationLink(email);
+        return Response.successfulResponse("Verification link has been sent");
     }
 
     @PostMapping("/new-reset-password-link")

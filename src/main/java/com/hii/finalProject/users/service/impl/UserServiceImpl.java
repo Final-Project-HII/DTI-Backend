@@ -125,6 +125,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User registerSocial(UserRegisterSocialRequestDTO user) {
+        Optional<User> userData = userRepository.findByEmail(user.getEmail());
+        if(userData.isPresent()){
+            throw new DataNotFoundException("Email has already been registered");
+        }
+
+        User newUser = user.toEntity();
+        newUser.setIsVerified(true);
+        userRepository.save(newUser);
+        return newUser;
+    }
+
+    @Override
     public User setPassword(ManagePasswordDTO data) {
         User user = userRepository.findByEmail(data.getEmail()).orElseThrow(() -> new DataNotFoundException("Email not found"));
         if(!data.getConfirmPassword().equals(data.getPassword())){
@@ -153,7 +166,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Boolean newVerificationLink(String email) {
+    public void newVerificationLink(String email) {
         if(authRedisRepository.isVerificationLinkValid(email)){
             authRedisRepository.deleteVerificationLink(email);
         }
@@ -184,7 +197,6 @@ public class UserServiceImpl implements UserService {
                 "</body>" +
                 "</html>";
         emailService.sendEmail(email, "Complete Registration for Hii Mart!", htmlBody);
-        return true;
     }
 
     @Override
@@ -223,11 +235,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public String sendResetPasswordLink(String email) {
         Optional<User> userData = userRepository.findByEmail(email);
-        if(userData.isEmpty()){
-            return "Not Registered";
-        }
         if(!userData.get().getIsVerified()){
             return "Not Verified";
+        }
+        if(userData.isEmpty() || userData.get().getPassword() == null){
+            return "Not Registered";
         }
         if (authRedisRepository.isResetPasswordLinkValid(email)) {
             authRedisRepository.deleteResetPasswordLink(email);

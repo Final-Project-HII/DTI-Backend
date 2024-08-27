@@ -3,6 +3,8 @@ package com.hii.finalProject.auth.controller;
 
 import com.hii.finalProject.auth.dto.LoginRequestDTO;
 import com.hii.finalProject.auth.dto.LoginResponseDTO;
+import com.hii.finalProject.auth.dto.LoginSocialRequestDTO;
+import com.hii.finalProject.auth.dto.LoginSocialResponseDTO;
 import com.hii.finalProject.auth.entity.UserAuth;
 import com.hii.finalProject.auth.service.AuthService;
 import com.hii.finalProject.users.entity.User;
@@ -73,6 +75,33 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.OK).headers(headers).body(resp);
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid Credentials", "message", "The provided password is incorrect"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Authentication Failed", "message", "An error occurred during authentication"));
+        }
+    }
+
+
+    @PostMapping("/login-social")
+    public ResponseEntity<?> loginSocial(@RequestBody LoginSocialRequestDTO userLogin) {
+        log.info("User login request received for user: " + userLogin.getEmail());
+        try {
+            Optional<User> userOptional = userRepository.findByEmail(userLogin.getEmail());
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Email Not Found", "message", "No account found with this email address"));
+            }
+
+            User user = userOptional.get();
+            if (!user.getIsVerified()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Email Not Verified", "message", "Your email address has not been verified"));
+            }
+            log.info("Token requested for user :" + userOptional.get().getName() + " with roles: " + userOptional.get().getRole());
+            LoginSocialResponseDTO resp = authService.generateSocialToken(userLogin);
+            Cookie cookie = new Cookie("Sid", resp.getAccessToken());
+            cookie.setMaxAge(3600);
+            cookie.setPath("/");
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Set-Cookie", cookie.getName() + "=" + cookie.getValue() + "; Path=/; HttpOnly");
+            return ResponseEntity.status(HttpStatus.OK).headers(headers).body(resp);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Authentication Failed", "message", "An error occurred during authentication"));
         }

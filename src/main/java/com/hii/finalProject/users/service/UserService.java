@@ -16,13 +16,14 @@ public interface UserService {
     void deleteUser(Long id);
 
     User register(UserRegisterRequestDTO user);
+    User registerSocial(UserRegisterSocialRequestDTO user);
 
     User setPassword(ManagePasswordDTO data);
 
     String checkVerificationLink(CheckVerificationLinkDTO data);
 
 
-    Boolean newVerificationLink(String email);
+    void newVerificationLink(String email);
 
     void newResetPasswordLink(String email);
 
