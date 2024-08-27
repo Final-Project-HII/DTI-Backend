@@ -127,10 +127,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public User registerSocial(UserRegisterSocialRequestDTO user) {
         Optional<User> userData = userRepository.findByEmail(user.getEmail());
-        if(userData.isPresent()){
-            throw new DataNotFoundException("Email has already been registered");
+        if (userData.isPresent()) {
+            User existingUser = userData.get();
+            if (existingUser.getPassword() != null && existingUser.getIsVerified()) {
+                throw new DataNotFoundException("Email has already been registered");
+            }
+            if(existingUser.getPassword() == null && !existingUser.getIsVerified())
+            {
+                throw new DataNotFoundException("Email has already been registered");
+            }else{
+                return existingUser;
+            }
         }
-
         User newUser = user.toEntity();
         newUser.setIsVerified(true);
         userRepository.save(newUser);
