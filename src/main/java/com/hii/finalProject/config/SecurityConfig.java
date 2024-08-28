@@ -77,34 +77,32 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/error/**").permitAll();
-                    auth.requestMatchers("/api/auth/**").permitAll();
-                    auth.requestMatchers("/api/users/register").permitAll();
-                    auth.requestMatchers("/api/users/register-google").permitAll();
-                    auth.requestMatchers("/api/users/set-password").permitAll();
-                    auth.requestMatchers("/api/users/check-verification").permitAll();
-                    auth.requestMatchers("/api/users/new-verification-link").permitAll();
-                    auth.requestMatchers("/api/users/reset-password").permitAll();
-                    auth.requestMatchers("/api/users/check-reset-password").permitAll();
-                    auth.requestMatchers("/api/users/new-reset-password-link").permitAll();
-                    auth.anyRequest().authenticated();
+//                    auth.requestMatchers("/error/**").permitAll();
+//                    auth.requestMatchers("/api/auth/**").permitAll();
+//                    auth.requestMatchers("/api/users/register").permitAll();
+//                    auth.requestMatchers("/api/users/register-google").permitAll();
+//                    auth.requestMatchers("/api/users/set-password").permitAll();
+//                    auth.requestMatchers("/api/users/check-verification").permitAll();
+//                    auth.requestMatchers("/api/users/new-verification-link").permitAll();
+//                    auth.requestMatchers("/api/users/reset-password").permitAll();
+//                    auth.requestMatchers("/api/users/check-reset-password").permitAll();
+//                    auth.requestMatchers("/api/users/new-reset-password-link").permitAll();
+                    auth.anyRequest().permitAll();
                 })
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer((oauth2) -> {
                     oauth2.jwt((jwt) -> jwt.decoder(jwtDecoder()));
                     oauth2.bearerTokenResolver((request) -> {
-                        String authHeader = request.getHeader("Authorization");
-                        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                            return authHeader.substring(7);
-                        }
-
                         Cookie[] cookies = request.getCookies();
-                        if (cookies != null){
-                            for (Cookie cookie : cookies){
-                                if ("sid".equals(cookie.getName())){
+                        var authHeader = request.getHeader("Authorization");
+                        if (cookies != null) {
+                            for (Cookie cookie : cookies) {
+                                if ("Sid".equals(cookie.getName())) {
                                     return cookie.getValue();
                                 }
                             }
+                        } else if (authHeader!= null && !authHeader.isEmpty()) {
+                            return authHeader.replace("Bearer ", "");
                         }
                         return null;
                     });
