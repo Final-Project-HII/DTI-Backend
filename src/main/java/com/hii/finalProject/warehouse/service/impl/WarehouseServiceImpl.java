@@ -1,5 +1,8 @@
 package com.hii.finalProject.warehouse.service.impl;
 
+import com.hii.finalProject.city.entity.City;
+import com.hii.finalProject.exceptions.DataNotFoundException;
+import com.hii.finalProject.warehouse.dto.WarehouseDTO;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.warehouse.repository.WarehouseRepository;
 import com.hii.finalProject.warehouse.service.WarehouseService;
@@ -26,26 +29,31 @@ public class WarehouseServiceImpl implements WarehouseService {
     }
 
     @Override
-    public Warehouse createWarehouse(Warehouse warehouse) {
-        return warehouseRepository.save(warehouse);
+    public Warehouse createWarehouse(WarehouseDTO data) {
+        Warehouse newWarehouse = data.toEntity();
+        return warehouseRepository.save(newWarehouse);
     }
 
     @Override
-    public Optional<Warehouse> updateWarehouse(Long id, Warehouse warehouseDetails) {
-        return warehouseRepository.findById(id)
-                .map(existingWarehouse -> {
-                    existingWarehouse.setName(warehouseDetails.getName());
-                    existingWarehouse.setAddressLine(warehouseDetails.getAddressLine());
-                    existingWarehouse.setCityId(warehouseDetails.getCityId());
-                    existingWarehouse.setPostalCode(warehouseDetails.getPostalCode());
-                    existingWarehouse.setLat(warehouseDetails.getLat());
-                    existingWarehouse.setLon(warehouseDetails.getLon());
-                    return warehouseRepository.save(existingWarehouse);
-                });
+    public Warehouse updateWarehouse(Long id, WarehouseDTO data) {
+        Warehouse existingWarehouse = warehouseRepository.findById(id).orElseThrow(() -> new DataNotFoundException("Warehouse with ID " + id + " is not found"));
+        existingWarehouse.setName(data.getName());
+        existingWarehouse.setAddressLine(data.getAddressLine());
+        City city = new City();
+        city.setId(data.getCityId());
+        existingWarehouse.setCityId(city);
+        existingWarehouse.setPostalCode(data.getPostalCode());
+        existingWarehouse.setLat(data.getLat());
+        existingWarehouse.setLon(data.getLon());
+        return warehouseRepository.save(existingWarehouse);
     }
+
+
+
 
     @Override
     public void deleteWarehouse(Long id) {
+        warehouseRepository.findById(id).orElseThrow(() -> new DataNotFoundException("Warehouse with ID " + id + " is not found"));
         warehouseRepository.deleteById(id);
     }
 }

@@ -3,10 +3,13 @@ package com.hii.finalProject.users.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.ColumnDefault;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users", schema = "developmentfp")
+@Table(name = "users",schema = "developmentfp")
 @Data
 public class User {
     @Id
@@ -36,9 +39,18 @@ public class User {
     @Column(name = "warehouse_id")
     private Integer warehouseId;
 
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
+
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
+
+    @PrePersist
+    protected void onCreate(){
+        createdAt = Instant.now();
+        updatedAt = Instant.now();
+    }
 }

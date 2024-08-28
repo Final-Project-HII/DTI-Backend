@@ -1,25 +1,30 @@
 package com.hii.finalProject.warehouse.entity;
 
+import com.hii.finalProject.city.entity.City;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.ColumnDefault;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "warehouse")
+@Table(name = "warehouse",schema = "developmentfp")
 @Data
 public class Warehouse {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name="name",nullable = false)
     private String name;
 
     @Column(name = "address_line", nullable = false)
     private String addressLine;
 
-    @Column(name = "city_id")
-    private Integer cityId;
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "city_id", nullable = false)
+    private City cityId;
 
     @Column(name = "postal_code", nullable = false)
     private String postalCode;
@@ -30,9 +35,18 @@ public class Warehouse {
     @Column(nullable = false)
     private Float lon;
 
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
+
+
+    @PrePersist
+    protected void onCreate(){
+        createdAt = Instant.now();
+        updatedAt = Instant.now();
+    }
 }
