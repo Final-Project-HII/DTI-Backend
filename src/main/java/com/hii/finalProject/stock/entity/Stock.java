@@ -1,6 +1,7 @@
 package com.hii.finalProject.stock.entity;
 
-import com.hii.finalProject.product.entity.Product;
+
+import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import jakarta.persistence.*;
 import lombok.Data;

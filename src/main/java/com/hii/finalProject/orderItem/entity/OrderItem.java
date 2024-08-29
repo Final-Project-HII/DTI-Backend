@@ -1,7 +1,7 @@
 package com.hii.finalProject.orderItem.entity;
 
 import com.hii.finalProject.order.entity.Order;
-import com.hii.finalProject.product.entity.Product;
+import com.hii.finalProject.products.entity.Product;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;

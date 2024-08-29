@@ -4,6 +4,7 @@ import com.hii.finalProject.city.entity.City;
 import com.hii.finalProject.users.entity.User;
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -44,3 +45,4 @@ public class Address {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 }
+

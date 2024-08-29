@@ -30,3 +30,4 @@ public interface UserService {
     String sendResetPasswordLink(String email);
     Boolean checkResetPasswordLinkIsValid(CheckResetPasswordLinkDTO data);
 }
+

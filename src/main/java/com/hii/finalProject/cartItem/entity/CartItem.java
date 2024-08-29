@@ -1,7 +1,7 @@
 package com.hii.finalProject.cartItem.entity;
 
 import com.hii.finalProject.cart.entity.Cart;
-import com.hii.finalProject.product.entity.Product;
+import com.hii.finalProject.products.entity.Product;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
