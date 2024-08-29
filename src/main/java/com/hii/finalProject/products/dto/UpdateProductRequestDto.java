@@ -1,18 +1,17 @@
 package com.hii.finalProject.products.dto;
 
-import com.hii.finalProject.image.dto.ProductImageRequestDto;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
 
-@Getter
 @Setter
-public class NewProductRequestDto {
+@Getter
+public class UpdateProductRequestDto {
     private String name;
     private String description;
     private String price;
     private Integer weight;
     private Long categoryId;
-//    private List<ProductImageRequestDto> productImages;
+    private List<Long> deleteImages;
 }

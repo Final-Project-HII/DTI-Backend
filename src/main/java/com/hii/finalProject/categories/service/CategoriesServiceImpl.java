@@ -7,6 +7,7 @@ import com.hii.finalProject.categories.repository.CategoriesRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,12 +37,22 @@ public class CategoriesServiceImpl implements CategoriesService {
 
     @Override
     public CategoriesResponseDto updateCategory(Long id, CategoriesRequestDto categoryRequestDTO) {
-        return null;
+        Optional<Categories> existingCategory = categoriesRepository.findById(id);
+        if (existingCategory.isPresent()) {
+            Categories categories = existingCategory.get();
+            categories.setName(categoryRequestDTO.getName());
+            Categories updatedCategories = categoriesRepository.save(categories);
+            return mapToResponseDto(updatedCategories);
+        } else {
+            throw new IllegalArgumentException("Category not found with id: " + id);
+        }
     }
-
-    @Override
     public void deleteCategory(Long id) {
-
+        if (categoriesRepository.existsById(id)) {
+            categoriesRepository.deleteById(id);
+        } else {
+            throw new IllegalArgumentException("Category not found with id: " + id);
+        }
     }
 
     private CategoriesResponseDto mapToResponseDto(Categories categories){

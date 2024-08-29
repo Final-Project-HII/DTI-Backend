@@ -26,4 +26,25 @@ public class CategoriesController {
     public ResponseEntity<List<CategoriesResponseDto>> getAllCategories(){
         return ResponseEntity.ok(categoriesService.getAllCategories());
     }
+    @PutMapping("/update/{id}")
+    public ResponseEntity<CategoriesResponseDto> updateCategory(
+            @PathVariable Long id,
+            @RequestBody CategoriesRequestDto categoriesRequestDto) {
+        try {
+            CategoriesResponseDto updatedCategory = categoriesService.updateCategory(id, categoriesRequestDto);
+            return ResponseEntity.ok(updatedCategory);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+        try {
+            categoriesService.deleteCategory(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
 }
