@@ -6,8 +6,9 @@ import com.hii.finalProject.cartItem.dto.CartItemDTO;
 import com.hii.finalProject.cartItem.entity.CartItem;
 import com.hii.finalProject.cartItem.repository.CartItemRepository;
 import com.hii.finalProject.cartItem.service.CartItemService;
-import com.hii.finalProject.product.entity.Product;
-import com.hii.finalProject.product.repository.ProductRepository;
+
+import com.hii.finalProject.products.entity.Product;
+import com.hii.finalProject.products.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -126,7 +127,7 @@ public class CartItemServiceImpl implements CartItemService {
         dto.setProductId(cartItem.getProduct().getId());
         dto.setProductName(cartItem.getProduct().getName());
         dto.setQuantity(cartItem.getQuantity());
-        dto.setPrice(cartItem.getProduct().getPrice());
+//        dto.setPrice(cartItem.getProduct().getPrice());
         return dto;
     }
 }

@@ -1,6 +1,5 @@
 package com.hii.finalProject.users.controller;
 
-import com.hii.finalProject.auth.service.impl.AuthServiceImpl;
 import com.hii.finalProject.response.Response;
 import com.hii.finalProject.users.dto.*;
 
@@ -8,9 +7,7 @@ import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,11 +19,9 @@ import java.util.Map;
 @RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
-    private final AuthServiceImpl authServiceImpl;
 
-    public UserController(UserService userService, AuthServiceImpl authServiceImpl) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.authServiceImpl = authServiceImpl;
     }
     @PostMapping("/register")
     public ResponseEntity<Response<User>> register(@Valid @RequestBody UserRegisterRequestDTO userRegisterRequestDto) {
@@ -73,10 +68,4 @@ public class UserController {
     public Map<String, Object> user(@AuthenticationPrincipal OAuth2User principal) {
     return Collections.singletonMap("name", principal.getAttribute("name"));
     }
-
-//    @PostMapping("/logout")
-//    public ResponseEntity<Response<String>> logout(@RequestBody LogoutRequestDTO logoutRequest) {
-//        userService.logout(logoutRequest);
-//        return Response.successfulResponse("User logged out successfully");
-//    }
 }

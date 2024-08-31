@@ -29,19 +29,17 @@ public class CartItemController {
     }
 
     @PostMapping("/add")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CartItemDTO> addToCart(@RequestBody AddToCartRequest request) {
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
-        Long userId = userService.getUserIdByEmail(userEmail);
+        Long userId = userService.getUserByEmail(userEmail);
         CartItemDTO addedItem = cartItemService.addToCart(userId, request.getProductId(), request.getQuantity());
         return ResponseEntity.ok(addedItem);
     }
 
     @DeleteMapping("/item/{productId}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> removeFromCart(@PathVariable Long productId) {
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
-        Long userId = userService.getUserIdByEmail(userEmail);
+        Long userId = userService.getUserByEmail(userEmail);
         cartItemService.removeFromCart(userId, productId);
         return ResponseEntity.ok().build();
     }
@@ -52,7 +50,7 @@ public class CartItemController {
             @PathVariable Long productId,
             @RequestBody UpdateQuantityRequest request) {
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
-        Long userId = userService.getUserIdByEmail(userEmail);
+        Long userId = userService.getUserByEmail(userEmail);
         cartItemService.updateCartItemQuantity(userId, productId, request.getQuantity());
         return ResponseEntity.ok().build();
     }

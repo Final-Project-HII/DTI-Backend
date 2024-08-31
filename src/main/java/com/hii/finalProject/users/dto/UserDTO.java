@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Data
 public class UserDTO {
     private Long id;
-    private String email;
+    private Long email;
     private String name;
     private String phoneNumber;
     private String profilePicture;
@@ -17,3 +17,4 @@ public class UserDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
+

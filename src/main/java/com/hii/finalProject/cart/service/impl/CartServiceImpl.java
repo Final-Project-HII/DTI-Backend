@@ -87,11 +87,11 @@ public class CartServiceImpl implements CartService {
 
     private CartItemDTO convertToCartItemDTO(CartItem cartItem) {
         CartItemDTO dto = new CartItemDTO();
-//        dto.setId(cartItem.getId());
+        dto.setId(cartItem.getId());
         dto.setProductId(cartItem.getProduct().getId());
         dto.setProductName(cartItem.getProduct().getName());
         dto.setQuantity(cartItem.getQuantity());
-        dto.setPrice(cartItem.getProduct().getPrice());
+        dto.setPrice(Double.valueOf(cartItem.getProduct().getPrice()));
         return dto;
     }
 }
