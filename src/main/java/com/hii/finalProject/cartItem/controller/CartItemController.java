@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RestController
-@RequestMapping("/api/v1/cart-items")
+@RequestMapping("/api/cart-items")
 public class CartItemController {
 
     private static final Logger log = LoggerFactory.getLogger(CartItemController.class);
