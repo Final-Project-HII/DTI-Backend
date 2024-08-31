@@ -114,7 +114,7 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
-    @Cacheable(value = "cartItems", key = "#cartItemId", unless = "#result == null")
+//    @Cacheable(value = "cartItems", key = "#cartItemId", unless = "#result == null")
     public CartItemDTO getCartItemById(Long cartItemId) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new RuntimeException("CartItem not found"));
@@ -123,7 +123,6 @@ public class CartItemServiceImpl implements CartItemService {
 
     private CartItemDTO convertToDTO(CartItem cartItem) {
         CartItemDTO dto = new CartItemDTO();
-        dto.setId(cartItem.getId());
         dto.setProductId(cartItem.getProduct().getId());
         dto.setProductName(cartItem.getProduct().getName());
         dto.setQuantity(cartItem.getQuantity());

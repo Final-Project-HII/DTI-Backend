@@ -12,6 +12,6 @@ public interface CartItemService {
 
     CartItemDTO updateCartItemQuantity(Long userId, Long productId, Integer quantity);
 
-    @Cacheable(value = "cartItems", key = "#cartItemId", unless = "#result == null")
+//    @Cacheable(value = "cartItems", key = "#cartItemId", unless = "#result == null")
     CartItemDTO getCartItemById(Long cartItemId);
 }

@@ -77,17 +77,19 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> {
-//                    auth.requestMatchers("/error/**").permitAll();
-//                    auth.requestMatchers("/api/auth/**").permitAll();
-//                    auth.requestMatchers("/api/users/register").permitAll();
-//                    auth.requestMatchers("/api/users/register-google").permitAll();
-//                    auth.requestMatchers("/api/users/set-password").permitAll();
-//                    auth.requestMatchers("/api/users/check-verification").permitAll();
-//                    auth.requestMatchers("/api/users/new-verification-link").permitAll();
-//                    auth.requestMatchers("/api/users/reset-password").permitAll();
-//                    auth.requestMatchers("/api/users/check-reset-password").permitAll();
-//                    auth.requestMatchers("/api/users/new-reset-password-link").permitAll();
-                    auth.anyRequest().permitAll();
+                    auth.requestMatchers("/api/auth/**").permitAll();
+                    auth.requestMatchers("/api/users/register").permitAll();
+                    auth.requestMatchers("/api/users/register-google").permitAll();
+                    auth.requestMatchers("/api/users/set-password").permitAll();
+                    auth.requestMatchers("/api/users/check-verification").permitAll();
+                    auth.requestMatchers("/api/users/new-verification-link").permitAll();
+                    auth.requestMatchers("/api/users/reset-password").permitAll();
+                    auth.requestMatchers("/api/users/check-reset-password").permitAll();
+                    auth.requestMatchers("/api/users/new-reset-password-link").permitAll();
+                    auth.requestMatchers("/api/v1/products").permitAll();
+                    auth.requestMatchers("/api/v1/carts/**").authenticated();
+                    auth.requestMatchers("/api/v1/cart-items/**").authenticated();
+                    auth.anyRequest().authenticated();
                 })
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer((oauth2) -> {

@@ -30,7 +30,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @Cacheable(value = "cartDTOs", key = "#userId")
+//    @Cacheable(value = "cartDTOs", key = "#userId")
     public CartDTO getCartDTO(Long userId) {
         Cart cart = getCartEntity(userId);
         return convertToDTO(cart);
@@ -48,7 +48,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    @CachePut(value = "cartDTOs", key = "#userId")
+//    @CachePut(value = "cartDTOs", key = "#userId")
     public CartDTO createCartDTO(Long userId) {
         Cart cart = createCartEntity(userId);
         return convertToDTO(cart);
@@ -87,7 +87,7 @@ public class CartServiceImpl implements CartService {
 
     private CartItemDTO convertToCartItemDTO(CartItem cartItem) {
         CartItemDTO dto = new CartItemDTO();
-        dto.setId(cartItem.getId());
+//        dto.setId(cartItem.getId());
         dto.setProductId(cartItem.getProduct().getId());
         dto.setProductName(cartItem.getProduct().getName());
         dto.setQuantity(cartItem.getQuantity());
