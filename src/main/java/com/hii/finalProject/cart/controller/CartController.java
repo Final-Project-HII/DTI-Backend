@@ -23,7 +23,7 @@ public class CartController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+//    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CartDTO> getCart() {
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
         Long userId = userService.getUserIdByEmail(userEmail);
