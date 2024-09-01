@@ -68,9 +68,9 @@ public class OrderServiceImpl implements OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        // Clear the cart after creating the order
-        cart.getItems().clear();
-        cartService.updateCart(userId, cart);
+//        // Clear the cart after creating the order
+//        cart.getItems().clear();
+//        cartService.updateCart(userId, cart);
 
         return convertToDTO(savedOrder);
     }
