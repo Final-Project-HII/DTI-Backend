@@ -32,10 +32,10 @@ public class PaymentServiceImpl implements PaymentService {
     private final CartService cartService;
 
 //    @Value("${midtrans.server.key}")
-    private String serverKey = "SB-Mid-server-1YIRKrKNSAv83Cq4AdIKPKlB";
+//    private String serverKey = "SB-Mid-server-1YIRKrKNSAv83Cq4AdIKPKlB";
 
 //    @Value("${midtrans.api.url}")
-    private String apiUrl = "https://api.sandbox.midtrans.com/v2/charge";
+//    private String apiUrl = "https://api.sandbox.midtrans.com/v2/charge";
 
     public PaymentServiceImpl(OrderService orderService, UserService userService, CartService cartService) {
         this.orderService = orderService;
