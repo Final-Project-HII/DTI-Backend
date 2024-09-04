@@ -37,7 +37,7 @@ public class ProductServiceImpl implements ProductService{
     private final ProductImageService productImageService;
     private final ProductImageRepository productImageRepository;
     private final EntityManager entityManager;
-//    private final ModelMapper modelMapper;
+
     public ProductServiceImpl(ProductRepository productRepository, EntityManager entityManager,  ProductImageRepository productImageRepository, CategoriesRepository categoriesRepository, CloudinaryService cloudinaryService, ProductImageService productImageService){
         this.productRepository = productRepository;
         this.categoriesRepository = categoriesRepository;
@@ -101,7 +101,6 @@ public class ProductServiceImpl implements ProductService{
                         cloudinaryService.deleteImage(image.getImageUrl());
                         imagesToRemove.add(image);
                     } catch (IOException e) {
-                        // Log the error but continue with deletion
                         e.printStackTrace();
                     }
                 }
@@ -130,13 +129,6 @@ public class ProductServiceImpl implements ProductService{
         return getPublicProductList(updatedProduct);
     }
 
-
-//    @Override
-//    @Transactional
-//    public void deleteProduct(Long id) {
-//        productRepository.deleteByIdAndFlush(id);
-//        System.out.println("Product deleted and flushed with id: " + id);
-//    }
     @Override
     @Transactional
     public void deleteProduct(Long id) {
@@ -186,13 +178,6 @@ public class ProductServiceImpl implements ProductService{
 
         Product savedProduct = productRepository.save(product);
 
-        // Handle product images
-//        if (productRequestDTO.getProductImages() != null && !productRequestDTO.getProductImages().isEmpty()) {
-//            for (ProductImageRequestDto imageDto : productRequestDTO.getProductImages()) {
-//                imageDto.setProductId(savedProduct.getId());
-//                productImageService.createProductImage(null, imageDto);
-//            }
-//        }
         List<ProductImageResponseDto> savedImages = new ArrayList<>();
         for (MultipartFile image : productImages) {
             String imageUrl = cloudinaryService.uploadFile(image, "product_images");

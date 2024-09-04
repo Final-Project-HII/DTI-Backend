@@ -13,13 +13,9 @@ import java.util.List;
 public interface ProductService {
 
     ProductListDtoResponse createProduct(NewProductRequestDto productRequestDTO, List<MultipartFile> productImages);
-//    ProductDetailResponseDTO getProductById(Long id);
     Page<ProductListDtoResponse> getAllProducts(String search, String categoryName, String sortBy, String sortDirection, Pageable pageable);
     ProductListDtoResponse getProductById(Long id);
     ProductListDtoResponse updateProduct(Long id, UpdateProductRequestDto updateProductRequestDto, List<MultipartFile> newImages);
     void deleteProduct(Long id);
-//    ProductDetailResponseDTO updateProduct(Long id, UpdateProductRequestDTO productRequestDTO);
-//    String deleteProduct(Long id);
-//    ProductListDtoResponse updateProduct(Long id, UpdateProductRequestDto updateRequestDto, List<MultipartFile> newImages);
-//    List<ProductResponseDTO> searchProducts(String keyword);
+
 }

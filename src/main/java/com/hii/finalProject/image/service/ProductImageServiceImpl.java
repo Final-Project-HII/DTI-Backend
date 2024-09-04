@@ -54,7 +54,6 @@ public class ProductImageServiceImpl implements ProductImageService {
         try {
             cloudinaryService.deleteImage(productImage.getImageUrl());
         } catch (IOException e) {
-            // Log the error but continue with deletion from database
             e.printStackTrace();
         }
 
