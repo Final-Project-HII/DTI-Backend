@@ -13,6 +13,10 @@ import com.hii.finalProject.products.dto.ProductListDtoResponse;
 import com.hii.finalProject.products.dto.UpdateProductRequestDto;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
+import com.hii.finalProject.stock.dto.StockDtoProductResponse;
+import com.hii.finalProject.stock.dto.StockDtoResponse;
+import com.hii.finalProject.stock.entity.Stock;
+import com.hii.finalProject.stock.repository.StockRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
@@ -25,6 +29,8 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,14 +43,16 @@ public class ProductServiceImpl implements ProductService{
     private final ProductImageService productImageService;
     private final ProductImageRepository productImageRepository;
     private final EntityManager entityManager;
-//    private final ModelMapper modelMapper;
-    public ProductServiceImpl(ProductRepository productRepository, EntityManager entityManager,  ProductImageRepository productImageRepository, CategoriesRepository categoriesRepository, CloudinaryService cloudinaryService, ProductImageService productImageService){
+    private final StockRepository stockRepository;
+
+    public ProductServiceImpl(StockRepository stockRepository, ProductRepository productRepository, EntityManager entityManager,  ProductImageRepository productImageRepository, CategoriesRepository categoriesRepository, CloudinaryService cloudinaryService, ProductImageService productImageService){
         this.productRepository = productRepository;
         this.categoriesRepository = categoriesRepository;
         this.cloudinaryService = cloudinaryService;
         this.productImageService = productImageService;
         this.productImageRepository = productImageRepository;
         this.entityManager = entityManager;
+        this.stockRepository = stockRepository;
     }
 
     @Override
@@ -55,8 +63,8 @@ public class ProductServiceImpl implements ProductService{
             if (search != null && !search.isEmpty()) {
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("name")), "%" + search.toLowerCase() + "%"),
-                        cb.like(cb.lower(root.get("description")), "%" + search.toLowerCase() + "%")
-//                        cb.like(cb.lower(root.get("categoryName")), "%" + search.toLowerCase() + "%")
+                        cb.like(cb.lower(root.get("description")), "%" + search.toLowerCase() + "%"),
+                        cb.like(cb.lower(root.get("categories").get("name")), search.toLowerCase()+"%")
                 ));
             }
             if (categoryName != null && !categoryName.isEmpty()) {
@@ -101,7 +109,6 @@ public class ProductServiceImpl implements ProductService{
                         cloudinaryService.deleteImage(image.getImageUrl());
                         imagesToRemove.add(image);
                     } catch (IOException e) {
-                        // Log the error but continue with deletion
                         e.printStackTrace();
                     }
                 }
@@ -130,13 +137,6 @@ public class ProductServiceImpl implements ProductService{
         return getPublicProductList(updatedProduct);
     }
 
-
-//    @Override
-//    @Transactional
-//    public void deleteProduct(Long id) {
-//        productRepository.deleteByIdAndFlush(id);
-//        System.out.println("Product deleted and flushed with id: " + id);
-//    }
     @Override
     @Transactional
     public void deleteProduct(Long id) {
@@ -186,14 +186,8 @@ public class ProductServiceImpl implements ProductService{
 
         Product savedProduct = productRepository.save(product);
 
-        // Handle product images
-//        if (productRequestDTO.getProductImages() != null && !productRequestDTO.getProductImages().isEmpty()) {
-//            for (ProductImageRequestDto imageDto : productRequestDTO.getProductImages()) {
-//                imageDto.setProductId(savedProduct.getId());
-//                productImageService.createProductImage(null, imageDto);
-//            }
-//        }
         List<ProductImageResponseDto> savedImages = new ArrayList<>();
+
         for (MultipartFile image : productImages) {
             String imageUrl = cloudinaryService.uploadFile(image, "product_images");
             ProductImageRequestDto imageDto = new ProductImageRequestDto();
@@ -209,15 +203,18 @@ public class ProductServiceImpl implements ProductService{
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
         List<ProductImageResponseDto> images = productImageService.getProductImage(id);
-        return getPublicProductList(product, images);
+        List<Stock> stocks = stockRepository.findByProduct(product);
+        return getPublicProductList(product, images, stocks);
     }
 
 
     private ProductListDtoResponse getPublicProductList(Product product) {
-        return getPublicProductList(product, productImageService.getProductImage(product.getId()));
+        List<ProductImageResponseDto> images = productImageService.getProductImage(product.getId());
+        List<Stock> stocks = stockRepository.findByProduct(product);
+        return getPublicProductList(product, images, stocks);
     }
 
-    private ProductListDtoResponse getPublicProductList(Product product, List<ProductImageResponseDto> images) {
+    private ProductListDtoResponse getPublicProductList(Product product, List<ProductImageResponseDto> images, List<Stock> stocks) {
         ProductListDtoResponse responseDto = new ProductListDtoResponse();
         responseDto.setId(product.getId());
         responseDto.setName(product.getName());
@@ -225,6 +222,19 @@ public class ProductServiceImpl implements ProductService{
         responseDto.setPrice(product.getPrice());
         responseDto.setWeight(product.getWeight());
         responseDto.setProductImages(images);
+        // Convert Stock to StockDto
+        List<StockDtoProductResponse> stockDtos = stocks.stream()
+                .map(StockDtoProductResponse::convertFromStock)
+                .collect(Collectors.toList());
+        // Calculate total stock
+        Integer totalStock = stockDtos.stream()
+                .map(StockDtoProductResponse::getQuantity)
+                .filter(Objects::nonNull)
+                .reduce(0, Integer::sum);
+
+        responseDto.setTotalStock(totalStock > 0 ? totalStock : 0);
+
+        responseDto.setStocks(stockDtos);
         if (product.getCategories() != null) {
             responseDto.setCategoryId(product.getCategories().getId());
             responseDto.setCategoryName(product.getCategories().getName());

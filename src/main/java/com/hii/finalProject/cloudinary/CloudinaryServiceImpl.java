@@ -20,7 +20,7 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             HashMap<Object, Object> options = new HashMap<>();
             options.put("folder", folderName);
             Map uploadedFile = cloudinary.uploader().upload(bytes, options);
-            String publicId = (String) uploadedFile.get("public_id");
+            String publicId = (String) uploadedFile.get("secure_url");
             return publicId;
         }catch (IOException e){
             throw new RuntimeException("Error uploading file to Cloudinary", e);
