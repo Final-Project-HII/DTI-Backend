@@ -46,6 +46,7 @@ public class ProductServiceImpl implements ProductService{
     private final StockRepository stockRepository;
 
     public ProductServiceImpl(StockRepository stockRepository, ProductRepository productRepository, EntityManager entityManager,  ProductImageRepository productImageRepository, CategoriesRepository categoriesRepository, CloudinaryService cloudinaryService, ProductImageService productImageService){
+
         this.productRepository = productRepository;
         this.categoriesRepository = categoriesRepository;
         this.cloudinaryService = cloudinaryService;
