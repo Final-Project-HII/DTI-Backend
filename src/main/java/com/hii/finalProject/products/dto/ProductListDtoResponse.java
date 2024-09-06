@@ -27,4 +27,5 @@ public class ProductListDtoResponse {
     private List<StockDtoProductResponse> stocks;
     private Instant createdAt;
     private Instant updatedAt;
+    //stock
 }
