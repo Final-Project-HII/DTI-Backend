@@ -2,6 +2,7 @@ package com.hii.finalProject.products.entity;
 
 import com.hii.finalProject.categories.entity.Categories;
 import com.hii.finalProject.image.entity.ProductImage;
+import com.hii.finalProject.stock.entity.Stock;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -33,6 +34,9 @@ public class Product implements Serializable {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> productImages = new ArrayList<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Stock> stocks = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Instant createdAt = Instant.now();
