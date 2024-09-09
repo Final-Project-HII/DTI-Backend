@@ -1,12 +1,15 @@
 package com.hii.finalProject.warehouse.entity;
 
 import com.hii.finalProject.city.entity.City;
+import com.hii.finalProject.stock.entity.Stock;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "warehouse",schema = "developmentfp")
@@ -34,6 +37,9 @@ public class Warehouse {
 
     @Column(nullable = false)
     private Float lon;
+
+    @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<Stock> stocks = new ArrayList<>();
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")

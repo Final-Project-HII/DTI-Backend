@@ -5,13 +5,12 @@ import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "stock", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"product_id", "warehouse_id"})
-})
+@Table(name = "stock",schema = "developmentfp")
 public class Stock {
 
     @Id
