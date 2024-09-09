@@ -24,8 +24,9 @@ public class WarehouseServiceImpl implements WarehouseService {
     }
 
     @Override
-    public Optional<Warehouse> getWarehouseById(Long id) {
-        return warehouseRepository.findById(id);
+    public Warehouse getWarehouseById(Long id) {
+        Warehouse data = warehouseRepository.findById(id).orElseThrow(() -> new DataNotFoundException("Warehouse with id " + id + " is not found"));
+        return data;
     }
 
     @Override
@@ -36,12 +37,13 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     @Override
     public Warehouse updateWarehouse(Long id, WarehouseDTO data) {
+        System.out.println(data);
         Warehouse existingWarehouse = warehouseRepository.findById(id).orElseThrow(() -> new DataNotFoundException("Warehouse with ID " + id + " is not found"));
         existingWarehouse.setName(data.getName());
         existingWarehouse.setAddressLine(data.getAddressLine());
         City city = new City();
         city.setId(data.getCityId());
-        existingWarehouse.setCityId(city);
+        existingWarehouse.setCity(city);
         existingWarehouse.setPostalCode(data.getPostalCode());
         existingWarehouse.setLat(data.getLat());
         existingWarehouse.setLon(data.getLon());

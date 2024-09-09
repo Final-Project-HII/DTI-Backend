@@ -24,7 +24,7 @@ public class Warehouse {
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "city_id", nullable = false)
-    private City cityId;
+    private City city;
 
     @Column(name = "postal_code", nullable = false)
     private String postalCode;

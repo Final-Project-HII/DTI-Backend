@@ -27,6 +27,11 @@ public class WarehouseController {
         return Response.successfulResponse("Warehouse list is successfully fetched", warehouseService.getAllWarehouses());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Response<Warehouse>> getWarehouseById(@PathVariable("id") Long id){
+        return Response.successfulResponse("Warehouse with id " + id +" is successfully fetched", warehouseService.getWarehouseById(id));
+    }
+
     @PostMapping("")
     public ResponseEntity<Response<Warehouse>> addNewWarehouse(@RequestBody WarehouseDTO data){
         return Response.successfulResponse(HttpStatus.CREATED.value(),"Warehouse has been successfully created",warehouseService.createWarehouse(data));
@@ -34,6 +39,7 @@ public class WarehouseController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Response<Warehouse>> updateWarehouse(@PathVariable("id") Long id, @RequestBody WarehouseDTO data){
+        System.out.println(data);
         return Response.successfulResponse("Warehouse has been successfully updated",warehouseService.updateWarehouse(id,data));
     }
     @DeleteMapping("/{id}")
@@ -41,33 +47,4 @@ public class WarehouseController {
         warehouseService.deleteWarehouse(id);
         return Response.successfulResponse("Warehouse has been successfully deleted");
     }
-//    @GetMapping
-//    public ResponseEntity<List<Warehouse>> getAllWarehouses() {
-//        return ResponseEntity.ok(warehouseService.getAllWarehouses());
-//    }
-//
-//    @GetMapping("/{id}")
-//    public ResponseEntity<Warehouse> getWarehouseById(@PathVariable Long id) {
-//        return warehouseService.getWarehouseById(id)
-//                .map(ResponseEntity::ok)
-//                .orElse(ResponseEntity.notFound().build());
-//    }
-//
-//    @PostMapping
-//    public ResponseEntity<Warehouse> createWarehouse(@RequestBody Warehouse warehouse) {
-//        return ResponseEntity.ok(warehouseService.createWarehouse(warehouse));
-//    }
-//
-//    @PutMapping("/{id}")
-//    public ResponseEntity<Warehouse> updateWarehouse(@PathVariable Long id, @RequestBody Warehouse warehouse) {
-//        return warehouseService.updateWarehouse(id, warehouse)
-//                .map(ResponseEntity::ok)
-//                .orElse(ResponseEntity.notFound().build());
-//    }
-//
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> deleteWarehouse(@PathVariable Long id) {
-//        warehouseService.deleteWarehouse(id);
-//        return ResponseEntity.noContent().build();
-//    }
 }

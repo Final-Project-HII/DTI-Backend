@@ -2,7 +2,9 @@ package com.hii.finalProject.city.controller;
 
 import com.hii.finalProject.city.dto.CityDTO;
 import com.hii.finalProject.city.service.CityService;
+import com.hii.finalProject.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/cities")
+@RequestMapping("/api/cities")
 public class CityController {
 
     @Autowired
@@ -29,9 +31,8 @@ public class CityController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CityDTO>> getAllCities() {
-        List<CityDTO> cities = cityService.getAllCities();
-        return ResponseEntity.ok(cities);
+    public ResponseEntity<Response<List<CityDTO>>> getAllCities() {
+        return Response.successfulResponse("All city has been fetched",cityService.getAllCities());
     }
 
     @DeleteMapping("/{id}")

@@ -43,7 +43,7 @@ public class CityServiceImpl implements CityService {
 
     private CityDTO convertToDTO(City city) {
         CityDTO dto = new CityDTO();
-        dto.setId(Math.toIntExact(city.getId()));
+        dto.setId(city.getId());
         dto.setName(city.getName());
         return dto;
     }

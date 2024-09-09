@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface WarehouseService {
     List<Warehouse> getAllWarehouses();
-    Optional<Warehouse> getWarehouseById(Long id);
+    Warehouse getWarehouseById(Long id);
     Warehouse createWarehouse(WarehouseDTO data);
     Warehouse updateWarehouse(Long id, WarehouseDTO data);
     void deleteWarehouse(Long id);
