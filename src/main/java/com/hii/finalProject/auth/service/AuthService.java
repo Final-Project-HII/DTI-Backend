@@ -9,4 +9,5 @@ public interface AuthService {
     LoginResponseDTO generateToken(Authentication authentication);
 
     LoginSocialResponseDTO generateSocialToken(LoginSocialRequestDTO data);
+    void logout(String token);
 }
