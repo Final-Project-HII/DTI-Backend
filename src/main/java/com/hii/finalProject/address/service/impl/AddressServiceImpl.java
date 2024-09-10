@@ -5,6 +5,9 @@ import com.hii.finalProject.address.dto.AddressDTO;
 import com.hii.finalProject.address.entity.Address;
 import com.hii.finalProject.address.repository.AddressRepository;
 import com.hii.finalProject.address.service.AddressService;
+import com.hii.finalProject.users.entity.User;
+import com.hii.finalProject.users.service.UserService;
+import com.hii.finalProject.users.service.impl.UserServiceImpl;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,9 +17,11 @@ import java.util.stream.Collectors;
 public class AddressServiceImpl implements AddressService {
 
     private final AddressRepository addressRepository;
+    private final UserService userService;
 
-    public AddressServiceImpl(AddressRepository addressRepository) {
+    public AddressServiceImpl(AddressRepository addressRepository, UserService userService) {
         this.addressRepository = addressRepository;
+        this.userService = userService;
     }
 
     @Override
@@ -40,10 +45,9 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public AddressDTO getAddressById(Long id) {
-        return addressRepository.findById(id)
-                .map(this::convertToDTO)
-                .orElseThrow(() -> new RuntimeException("Address not found"));
+    public List<Address> getAddressByUserId(String email) {
+        User userData = userService.getUserByEmail(email);
+        return addressRepository.findByUserId(userData.getId());
     }
 
     @Override

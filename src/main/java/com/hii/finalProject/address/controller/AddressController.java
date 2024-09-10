@@ -1,7 +1,11 @@
 package com.hii.finalProject.address.controller;
 
 import com.hii.finalProject.address.dto.AddressDTO;
+import com.hii.finalProject.address.entity.Address;
 import com.hii.finalProject.address.service.AddressService;
+import com.hii.finalProject.auth.helpers.Claims;
+import com.hii.finalProject.response.Response;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,8 +36,10 @@ public class AddressController {
     }
 
     @GetMapping("/{id}")
-    public AddressDTO getAddressById(@PathVariable Long id) {
-        return addressService.getAddressById(id);
+    public ResponseEntity<Response<List<Address>>> getAddressByUserId() {
+        var claims = Claims.getClaimsFromJwt();
+        var email = (String) claims.get("sub");
+        return Response.successfulResponse("All address has been successfully fetched", addressService.getAddressByUserId(email));
     }
 
     @GetMapping

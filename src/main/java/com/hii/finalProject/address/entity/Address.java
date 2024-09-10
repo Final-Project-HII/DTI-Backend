@@ -20,6 +20,13 @@ public class Address {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+
+    @Column(name = "name", length = 255)
+    private String name;
+
+    @Column(name = "phone_number", length = 15)
+    private String phoneNumber;
+
     @Column(name = "address_line", length = 255)
     private String addressLine;
 
