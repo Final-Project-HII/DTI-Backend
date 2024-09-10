@@ -5,9 +5,15 @@ import com.hii.finalProject.order.dto.OrderDTO;
 import com.hii.finalProject.order.service.OrderService;
 import com.hii.finalProject.users.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -38,10 +44,39 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<List<OrderDTO>> getUserOrders() {
+    public ResponseEntity<Page<OrderDTO>> getUserOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "orderDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection) {
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
         Long userId = userService.getUserByEmail(userEmail);
-        List<OrderDTO> orders = orderService.getOrdersByUserId(userId);
+
+        Sort.Direction direction = Sort.Direction.fromString(sortDirection);
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        Page<OrderDTO> orders = orderService.getOrdersByUserId(userId, pageRequest);
+        return ResponseEntity.ok(orders);
+    }
+
+
+    @GetMapping("/filtered")
+    public ResponseEntity<Page<OrderDTO>> getFilteredOrders(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "orderDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection) {
+
+        String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
+        Long userId = userService.getUserByEmail(userEmail);
+
+        Sort.Direction direction = Sort.Direction.fromString(sortDirection);
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        Page<OrderDTO> orders = orderService.getFilteredOrders(userId, status, startDate, endDate, pageRequest);
         return ResponseEntity.ok(orders);
     }
 

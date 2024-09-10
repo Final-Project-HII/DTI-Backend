@@ -11,6 +11,8 @@ import com.hii.finalProject.orderItem.entity.OrderItem;
 import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,9 +85,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderDTO> getOrdersByUserId(Long userId) {
-        List<Order> orders = orderRepository.findByUserId(userId);
-        return orders.stream().map(this::convertToDTO).collect(Collectors.toList());
+    public Page<OrderDTO> getOrdersByUserId(Long userId, Pageable pageable) {
+        Page<Order> orders = orderRepository.findByUserId(userId, pageable);
+        return orders.map(this::convertToDTO);
     }
 
     @Override
@@ -96,6 +98,21 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(status);
         Order updatedOrder = orderRepository.save(order);
         return convertToDTO(updatedOrder);
+    }
+
+    @Override
+    public Page<OrderDTO> getFilteredOrders(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        Page<Order> orders;
+
+        if (status != null && !status.isEmpty()) {
+            orders = orderRepository.findByUserIdAndStatus(userId, status, pageable);
+        } else if (startDate != null && endDate != null) {
+            orders = orderRepository.findByUserIdAndOrderDateBetween(userId, startDate, endDate, pageable);
+        } else {
+            orders = orderRepository.findByUserId(userId, pageable);
+        }
+
+        return orders.map(this::convertToDTO);
     }
 
     private OrderDTO convertToDTO(Order order) {
