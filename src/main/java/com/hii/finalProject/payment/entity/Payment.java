@@ -1,6 +1,5 @@
 package com.hii.finalProject.payment.entity;
 
-import com.hii.finalProject.order.entity.Order;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
@@ -17,9 +16,8 @@ public class Payment {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    @Column(name = "order_id", nullable = false)
+    private Long orderId;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -36,5 +34,8 @@ public class Payment {
     private PaymentStatus status;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
+
+    @Column(name = "proof_image_url")
+    private String proofImageUrl;
 }
