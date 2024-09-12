@@ -4,6 +4,7 @@ import com.hii.finalProject.response.Response;
 import com.hii.finalProject.warehouse.dto.WarehouseDTO;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.warehouse.service.WarehouseService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,8 +24,8 @@ public class WarehouseController {
 
 
     @GetMapping("")
-    public ResponseEntity<Response<List<Warehouse>>> getWarehouseList(){
-        return Response.successfulResponse("Warehouse list is successfully fetched", warehouseService.getAllWarehouses());
+    public ResponseEntity<Response<Page<Warehouse>>> getWarehouseList(@RequestParam(value = "name",required = false) String name, @RequestParam(value = "cityName",required = false) String cityName, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size){
+        return Response.successfulResponse("Warehouse list is successfully fetched", warehouseService.getAllWarehouses(name,cityName, page,size));
     }
 
     @GetMapping("/{id}")

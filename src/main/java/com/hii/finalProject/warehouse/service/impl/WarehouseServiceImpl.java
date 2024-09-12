@@ -1,11 +1,18 @@
 package com.hii.finalProject.warehouse.service.impl;
 
+import com.hii.finalProject.address.entity.Address;
+import com.hii.finalProject.address.specification.AddressListSpecification;
 import com.hii.finalProject.city.entity.City;
 import com.hii.finalProject.exceptions.DataNotFoundException;
 import com.hii.finalProject.warehouse.dto.WarehouseDTO;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.warehouse.repository.WarehouseRepository;
 import com.hii.finalProject.warehouse.service.WarehouseService;
+import com.hii.finalProject.warehouse.specification.WarehouseListSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -19,8 +26,10 @@ public class WarehouseServiceImpl implements WarehouseService {
     }
 
     @Override
-    public List<Warehouse> getAllWarehouses() {
-        return warehouseRepository.findAll();
+    public Page<Warehouse> getAllWarehouses(String name, String cityName, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Specification<Warehouse> specification = Specification.where(WarehouseListSpecification.byWarehouseName(name).and(WarehouseListSpecification.byCity(cityName)));
+        return warehouseRepository.findAll(specification,pageable);
     }
 
     @Override
