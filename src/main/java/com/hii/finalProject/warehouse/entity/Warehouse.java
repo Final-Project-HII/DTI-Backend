@@ -9,7 +9,9 @@ import org.hibernate.annotations.ColumnDefault;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "warehouse",schema = "developmentfp")
@@ -27,7 +29,7 @@ public class Warehouse {
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "city_id", nullable = false)
-    private City cityId;
+    private City city;
 
     @Column(name = "postal_code", nullable = false)
     private String postalCode;
@@ -38,8 +40,8 @@ public class Warehouse {
     @Column(nullable = false)
     private Float lon;
 
-    @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    private List<Stock> stocks = new ArrayList<>();
+    @OneToMany(mappedBy = "warehouse",cascade = CascadeType.ALL)
+    private Set<Stock> stocks = new LinkedHashSet<>();
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
