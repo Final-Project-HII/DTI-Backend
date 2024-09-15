@@ -88,6 +88,7 @@ public class SecurityConfig {
                     auth.requestMatchers("/api/users/new-reset-password-link").permitAll();
                     auth.requestMatchers("/api/product/**").permitAll();
                     auth.requestMatchers("/api/orders/**").permitAll();
+                    auth.requestMatchers("/api/category/**").permitAll();
 //                    auth.requestMatchers("/api/carts/**").authenticated();
 //                    auth.requestMatchers("/api/cart-items/**").authenticated();
                     auth.anyRequest().authenticated();

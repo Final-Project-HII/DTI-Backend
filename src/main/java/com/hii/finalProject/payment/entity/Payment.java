@@ -1,5 +1,6 @@
 package com.hii.finalProject.payment.entity;
 
+import com.hii.finalProject.paymentProof.entity.PaymentProof;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
@@ -11,8 +12,7 @@ import java.time.LocalDateTime;
 public class Payment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "payment_id_gen")
-    @SequenceGenerator(name = "payment_id_gen", sequenceName = "payment_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 
@@ -36,6 +36,6 @@ public class Payment {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "proof_image_url")
-    private String proofImageUrl;
+    @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private PaymentProof paymentProof;
 }

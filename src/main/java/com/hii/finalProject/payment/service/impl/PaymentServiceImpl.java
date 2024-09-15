@@ -9,8 +9,11 @@ import com.hii.finalProject.order.entity.Order;
 import com.hii.finalProject.order.service.OrderService;
 import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import com.hii.finalProject.payment.entity.*;
+
 import com.hii.finalProject.payment.repository.PaymentRepository;
 import com.hii.finalProject.payment.service.PaymentService;
+import com.hii.finalProject.paymentProof.Repository.PaymentProofRepository;
+import com.hii.finalProject.paymentProof.entity.PaymentProof;
 import com.hii.finalProject.users.dto.UserDTO;
 import com.hii.finalProject.users.service.UserService;
 import jakarta.transaction.Transactional;
@@ -41,19 +44,21 @@ public class PaymentServiceImpl implements PaymentService {
     private final CartService cartService;
     private final RestTemplate restTemplate;
     private final PaymentRepository paymentRepository;
+    private final PaymentProofRepository paymentProofRepository;
 
-//    @Value("${midtrans.server.key}")
+    //    @Value("${midtrans.server.key}")
     private String serverKey = "SB-Mid-server-1YIRKrKNSAv83Cq4AdIKPKlB";
 
 //    @Value("${midtrans.api.url}")
     private String apiUrl  = "https://api.sandbox.midtrans.com/v2/charge";
 
-    public PaymentServiceImpl(OrderService orderService, UserService userService, CartService cartService, RestTemplateBuilder restTemplateBuilder, PaymentRepository paymentRepository) {
+    public PaymentServiceImpl(OrderService orderService, UserService userService, CartService cartService, RestTemplateBuilder restTemplateBuilder, PaymentRepository paymentRepository, PaymentProofRepository paymentProofRepository) {
         this.orderService = orderService;
         this.userService = userService;
         this.cartService = cartService;
         this.restTemplate = restTemplateBuilder.build();
         this.paymentRepository = paymentRepository;
+        this.paymentProofRepository = paymentProofRepository;
     }
 
     @Override
@@ -158,12 +163,29 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setStatus(PaymentStatus.PENDING);
         payment.setName("Manual Payment for Order " + orderId);
         payment.setCreatedAt(LocalDateTime.now());
-        payment.setProofImageUrl(proofImageUrl);
 
-        paymentRepository.save(payment);
+        Payment savedPayment = paymentRepository.save(payment);
+
+        PaymentProof paymentProof = new PaymentProof();
+        paymentProof.setPayment(savedPayment);
+        paymentProof.setPaymentProofUrl(proofImageUrl);
+        paymentProof.setCreatedAt(LocalDateTime.now());
+        paymentProof.setUpdatedAt(LocalDateTime.now());
+
+        paymentProofRepository.save(paymentProof);
 
         // Update order status
         orderService.updateOrderStatus(orderId, "PAYMENT_PENDING");
+
+        Optional<UserDTO> user = userService.getUserById(orderDTO.getUserId());
+        if (user.isEmpty()) {
+            throw new RuntimeException("User not found for order: " + orderId);
+        }
+        Cart cart = cartService.getCartEntity(orderDTO.getUserId());
+        cart.getItems().clear(); // Clear all items from the cart
+        cartService.updateCart(orderDTO.getUserId(), cart);
+
+
 
         return "Manual payment proof received and being processed for order: " + orderId;
     }
