@@ -1,6 +1,8 @@
 package com.hii.finalProject.warehouse.service.impl;
 
 import com.hii.finalProject.address.entity.Address;
+import com.hii.finalProject.address.service.AddressService;
+import com.hii.finalProject.address.service.impl.AddressServiceImpl;
 import com.hii.finalProject.address.specification.AddressListSpecification;
 import com.hii.finalProject.city.entity.City;
 import com.hii.finalProject.exceptions.DataNotFoundException;
@@ -12,23 +14,28 @@ import com.hii.finalProject.warehouse.specification.WarehouseListSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.geo.Point;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class WarehouseServiceImpl implements WarehouseService {
     private final WarehouseRepository warehouseRepository;
+    private final AddressService addressService;
 
-    public WarehouseServiceImpl(WarehouseRepository warehouseRepository) {
+    public WarehouseServiceImpl(WarehouseRepository warehouseRepository, AddressService addressService) {
         this.warehouseRepository = warehouseRepository;
+        this.addressService = addressService;
     }
 
     @Override
     public Page<Warehouse> getAllWarehouses(String name, String cityName, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Specification<Warehouse> specification = Specification.where(WarehouseListSpecification.byWarehouseName(name).and(WarehouseListSpecification.byCity(cityName)));
+        Specification<Warehouse> specification = Specification.where(WarehouseListSpecification.byWarehouseName(name).and(WarehouseListSpecification.byCity(cityName)).and(WarehouseListSpecification.notDeleted()));
         return warehouseRepository.findAll(specification,pageable);
     }
 
@@ -36,6 +43,14 @@ public class WarehouseServiceImpl implements WarehouseService {
     public Warehouse getWarehouseById(Long id) {
         Warehouse data = warehouseRepository.findById(id).orElseThrow(() -> new DataNotFoundException("Warehouse with id " + id + " is not found"));
         return data;
+    }
+
+
+
+    @Override
+    public Warehouse findNearestWarehouse(Long addressId) {
+        Address address = addressService.getAddressById(addressId);
+        return warehouseRepository.findNearestWarehouse(address.getLat(), address.getLon());
     }
 
     @Override
@@ -64,7 +79,8 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     @Override
     public void deleteWarehouse(Long id) {
-        warehouseRepository.findById(id).orElseThrow(() -> new DataNotFoundException("Warehouse with ID " + id + " is not found"));
-        warehouseRepository.deleteById(id);
+        Warehouse warehouse = warehouseRepository.findById(id).orElseThrow(() -> new DataNotFoundException("Warehouse with ID " + id + " is not found"));
+        warehouse.setDeletedAt(Instant.now());
+        warehouseRepository.save(warehouse);
     }
 }

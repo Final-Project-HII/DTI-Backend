@@ -42,6 +42,13 @@ public class AddressController {
         return Response.successfulResponse("Address has been successfully deleted");
     }
 
+    @GetMapping("/active-address")
+    public ResponseEntity<Response<Address>> getUserActiveAddress() {
+        var claims = Claims.getClaimsFromJwt();
+        var email = (String) claims.get("sub");
+        return Response.successfulResponse("Active user address has been fetched", addressService.getActiveUserAddress(email));
+    }
+
     @GetMapping("")
     public ResponseEntity<Response<Page<Address>>> getAddressByUserId(@RequestParam(value = "addressLine",required = false) String addressLine, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         var claims = Claims.getClaimsFromJwt();
@@ -57,7 +64,7 @@ public class AddressController {
     }
 
 
-    @PutMapping("branch/{id}")
+    @PutMapping("/change-primary-address/{id}")
     public ResponseEntity<Response<Address>> tooglePrimaryAddress(@PathVariable Long id) {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");

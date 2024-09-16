@@ -79,6 +79,11 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    public Address getAddressById(Long id){
+        return addressRepository.findById(id).orElseThrow(() -> new DataNotFoundException("Address with ID " + id + " is not found" ));
+    }
+
+    @Override
     public Page<Address> getAddressByUserId(String email, String addressLine, int page, int size) {
         Long userId = userService.getUserByEmail(email);
         Pageable pageable = PageRequest.of(page, size);
@@ -89,6 +94,13 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public List<AddressDTO> getAllAddresses() {
         return null;
+    }
+
+    @Override
+    public Address getActiveUserAddress(String email) {
+        Long userId = userService.getUserByEmail(email);
+        Address existingAddress = addressRepository.findByUserIdAndIsActiveTrueAndDeletedAtIsNull(userId).orElseThrow(() -> new DataNotFoundException("Active user address not found"));
+        return existingAddress;
     }
 
     @Override

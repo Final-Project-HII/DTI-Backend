@@ -48,4 +48,9 @@ public class WarehouseController {
         warehouseService.deleteWarehouse(id);
         return Response.successfulResponse("Warehouse has been successfully deleted");
     }
+
+    @GetMapping("/nearest-warehouse/{id}")
+    public ResponseEntity<Response<Warehouse>> getNearestWarehouse(@PathVariable("id") Long addressId){
+        return Response.successfulResponse("Nearest warehouse is successfully fetched", warehouseService.findNearestWarehouse(addressId));
+    }
 }
