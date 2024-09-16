@@ -1,6 +1,7 @@
 package com.hii.finalProject.users.entity;
 
 
+import com.hii.finalProject.warehouse.entity.Warehouse;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.ColumnDefault;
@@ -36,8 +37,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @Column(name = "warehouse_id")
-    private Integer warehouseId;
+    @ManyToOne
+    @JoinColumn(name = "warehouse_id",nullable = true)
+    private Warehouse warehouse;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")

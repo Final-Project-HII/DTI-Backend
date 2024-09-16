@@ -2,6 +2,7 @@ package com.hii.finalProject.users.service.impl;
 
 
 import com.hii.finalProject.auth.repository.AuthRedisRepository;
+import com.hii.finalProject.cloudinary.CloudinaryService;
 import com.hii.finalProject.email.service.EmailService;
 import com.hii.finalProject.exceptions.DataNotFoundException;
 import com.hii.finalProject.users.dto.*;
@@ -13,11 +14,14 @@ import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.InputMismatchException;
@@ -36,11 +40,14 @@ public class UserServiceImpl implements UserService {
 
     private final AuthRedisRepository authRedisRepository;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailService emailService, AuthRedisRepository authRedisRepository) {
+    private final CloudinaryService cloudinaryService;
+
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailService emailService, AuthRedisRepository authRedisRepository, CloudinaryService cloudinaryService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.authRedisRepository = authRedisRepository;
+        this.cloudinaryService = cloudinaryService;
     }
 
     @Override
@@ -288,6 +295,42 @@ public class UserServiceImpl implements UserService {
         Optional<User> user = userRepository.findByEmail(data.getEmail());
         var existingToken = authRedisRepository.getResetPasswordLink(data.getEmail());
         return user.get().getIsVerified() && authRedisRepository.isResetPasswordLinkValid(data.getEmail()) && existingToken.equals(data.getToken());
+    }
+
+
+
+
+
+    @Override
+    @CachePut(value = "getProfileData",key = "#email")
+    public ProfileResponseDTO updateProfile(String email, ProfileRequestDTO profileRequestDTO) {
+        User userData = userRepository.findByEmail(email).orElseThrow(() -> new DataNotFoundException("User not found"));
+        userData.setProfilePicture(cloudinaryService.uploadFile(profileRequestDTO.getAvatar(),"folder_luxtix"));
+        userData.setName(profileRequestDTO.getDisplayName());
+        userData.setPhoneNumber(profileRequestDTO.getPhoneNumber());
+        userRepository.save(userData);
+        ProfileResponseDTO data = new ProfileResponseDTO();
+        data.setEmail(userData.getEmail());
+        data.setDisplayName(userData.getName());
+        data.setAvatar(cloudinaryService.generateUrl(userData.getProfilePicture()));
+        data.setPhoneNumber(userData.getPhoneNumber());
+        data.setDisplayName(userData.getName());
+        return data;
+    }
+
+
+    @Override
+    @Cacheable(value = "getProfileData",key = "#email")
+    public ProfileResponseDTO getProfileData(String email) {
+        User userData = userRepository.findByEmail(email).orElseThrow(() -> new DataNotFoundException("User not found"));
+        ProfileResponseDTO data = new ProfileResponseDTO();
+        data.setEmail(userData.getEmail());
+        data.setDisplayName(userData.getName());
+        data.setWarehouseId(userData.getWarehouse() != null ? userData.getWarehouse().getId() : null);
+        data.setAvatar(cloudinaryService.generateUrl(userData.getProfilePicture()));
+        data.setPhoneNumber(userData.getPhoneNumber());
+        data.setDisplayName(userData.getName());
+        return data;
     }
 
     private UserDTO convertToDTO(User user) {

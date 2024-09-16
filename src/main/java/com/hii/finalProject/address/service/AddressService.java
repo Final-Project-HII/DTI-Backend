@@ -13,6 +13,11 @@ public interface AddressService {
     Page<Address> getAddressByUserId(String email, String addressLine, int page, int size);
     List<AddressDTO> getAllAddresses();
 
+    Address getAddressById(Long id);
+
+
+    Address getActiveUserAddress(String email);
+
     Boolean checkUserAddress(String email);
 
 

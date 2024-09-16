@@ -26,4 +26,9 @@ public interface WarehouseListSpecification {
             return cb.equal(cb.lower(cityJoin.get("name")), city.toLowerCase());
         });
     }
+
+    public static Specification<Warehouse> notDeleted() {
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.isNull(root.get("deletedAt"));
+    }
 }

@@ -51,10 +51,16 @@ public class Warehouse {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
 
     @PrePersist
     protected void onCreate(){
         createdAt = Instant.now();
+        updatedAt = Instant.now();
+    }
+    @PreUpdate
+    protected void onUpdate() {
         updatedAt = Instant.now();
     }
 }
