@@ -95,7 +95,7 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public User register(UserRegisterRequestDTO user) {
+    public UserRegisterResponseDTO register(UserRegisterRequestDTO user) {
         Optional<User> userData = userRepository.findByEmail(user.getEmail());
         if(userData.isPresent()){
             throw new DataNotFoundException("Email has already been registered");
@@ -103,6 +103,12 @@ public class UserServiceImpl implements UserService {
 
         User newUser = user.toEntity();
         userRepository.save(newUser);
+        UserRegisterResponseDTO userRegisterResponseDTO = new UserRegisterResponseDTO();
+        userRegisterResponseDTO.setName(newUser.getName());
+        userRegisterResponseDTO.setImageUrl(newUser.getProfilePicture());
+        userRegisterResponseDTO.setIsVerified(newUser.getIsVerified());
+        userRegisterResponseDTO.setEmail(newUser.getEmail());
+        userRegisterResponseDTO.setRole(newUser.getRole());
         String tokenValue = UUID.randomUUID().toString();
         authRedisRepository.saveVerificationLink(user.getEmail(),tokenValue);
         String htmlBody = "<html>" +
@@ -130,7 +136,51 @@ public class UserServiceImpl implements UserService {
                 "</body>" +
                 "</html>";
         emailService.sendEmail(user.getEmail(), "Complete Registration for Hii Mart!", htmlBody);
-        return newUser;
+        return userRegisterResponseDTO;
+    }
+
+    @Override
+    public UserRegisterResponseDTO registerAdmin(AdminRegisterRequestDTO user) {
+        Optional<User> userData = userRepository.findByEmail(user.getEmail());
+        if(userData.isPresent()){
+            throw new DataNotFoundException("Email has already been registered");
+        }
+        User newUser = user.toEntity();
+        userRepository.save(newUser);
+        UserRegisterResponseDTO userRegisterResponseDTO = new UserRegisterResponseDTO();
+        userRegisterResponseDTO.setName(newUser.getName());
+        userRegisterResponseDTO.setImageUrl(newUser.getProfilePicture());
+        userRegisterResponseDTO.setIsVerified(newUser.getIsVerified());
+        userRegisterResponseDTO.setEmail(newUser.getEmail());
+        userRegisterResponseDTO.setRole(newUser.getRole());
+        String tokenValue = UUID.randomUUID().toString();
+        authRedisRepository.saveVerificationLink(user.getEmail(),tokenValue);
+        String htmlBody = "<html>" +
+                "<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;'>" +
+                "<div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px;'>" +
+
+                "<div style='text-align: center; background-color: #FABC3F; padding: 20px;'>" +
+                "<img src='https://res.cloudinary.com/dv9bbdl6i/image/upload/v1724211850/HiiMart/hiimartV1_rgwy5e.png' alt='Your Site' style='width: 50px;'>" +
+                "</div>" +
+
+                "<div style='text-align: center; padding: 40px 20px;'>" +
+                "<h1 style='color: #E85C0D;'>Thanks for Signing Up!</h1>" +
+                "<h2 style='color: #E85C0D;'>Verify Your E-mail Address</h2>" +
+                "<p style='color: #333;'>Hi,<br>You're almost ready to get started. Please click on the button below to verify your email address</p>" +
+                "<a href='http://localhost:3000/manage-password?token=" + tokenValue +"&email=" + user.getEmail() + "' style='text-decoration: none;'>" +
+                "<button style='background-color: #C7253E; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;'>VERIFY YOUR EMAIL</button>" +
+                "</a>" +
+                "</div>" +
+
+                "<div style='background-color: #e0e0e0; padding: 20px; text-align: center;'>" +
+                "<p style='color: #333;'>Get in touch:<br>+62 815 8608 1551<br>HiiMart@gmail.com</p>" +
+                "<p style='color: #999;'>Copyrights © Company All Rights Reserved</p>" +
+                "</div>" +
+                "</div>" +
+                "</body>" +
+                "</html>";
+        emailService.sendEmail(user.getEmail(), "Complete Registration for Hii Mart!", htmlBody);
+        return userRegisterResponseDTO;
     }
 
     @Override

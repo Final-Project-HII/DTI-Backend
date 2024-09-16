@@ -27,6 +27,8 @@ public class WarehouseServiceImpl implements WarehouseService {
     private final WarehouseRepository warehouseRepository;
     private final AddressService addressService;
 
+
+
     public WarehouseServiceImpl(WarehouseRepository warehouseRepository, AddressService addressService) {
         this.warehouseRepository = warehouseRepository;
         this.addressService = addressService;
@@ -48,8 +50,8 @@ public class WarehouseServiceImpl implements WarehouseService {
 
 
     @Override
-    public Warehouse findNearestWarehouse(Long addressId) {
-        Address address = addressService.getAddressById(addressId);
+    public Warehouse findNearestWarehouse(String email) {
+        Address address = addressService.getActiveUserAddress(email);
         return warehouseRepository.findNearestWarehouse(address.getLat(), address.getLon());
     }
 

@@ -26,9 +26,15 @@ public class UserController {
         this.userService = userService;
     }
     @PostMapping("/register")
-    public ResponseEntity<Response<User>> register(@Valid @RequestBody UserRegisterRequestDTO userRegisterRequestDto) {
+    public ResponseEntity<Response<UserRegisterResponseDTO>> register(@Valid @RequestBody UserRegisterRequestDTO userRegisterRequestDto) {
         return Response.successfulResponse("User registered successfully", userService.register(userRegisterRequestDto));
     }
+
+    @PostMapping("/register-admin")
+    public ResponseEntity<Response<UserRegisterResponseDTO>> registerAdmin(@Valid @RequestBody AdminRegisterRequestDTO adminRegisterRequestDto) {
+        return Response.successfulResponse("Admin registered successfully", userService.registerAdmin(adminRegisterRequestDto));
+    }
+
 
     @PostMapping("/register-google")
     public ResponseEntity<Response<User>> registerSocial(@RequestBody UserRegisterSocialRequestDTO userRegisterSocialRequestDto) {

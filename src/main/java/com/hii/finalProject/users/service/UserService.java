@@ -15,7 +15,9 @@ public interface UserService {
     Optional<UserDTO> updateUser(Long id, UserDTO userDTO);
     void deleteUser(Long id);
 
-    User register(UserRegisterRequestDTO user);
+    UserRegisterResponseDTO register(UserRegisterRequestDTO user);
+
+    UserRegisterResponseDTO registerAdmin(AdminRegisterRequestDTO user);
     User registerSocial(UserRegisterSocialRequestDTO user);
 
     User setPassword(ManagePasswordDTO data);
