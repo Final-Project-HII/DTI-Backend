@@ -4,12 +4,14 @@ import com.hii.finalProject.city.entity.City;
 import com.hii.finalProject.users.entity.User;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.ColumnDefault;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "address")
+@Table(name = "address",schema = "developmentfp")
 public class Address {
 
     @Id
@@ -19,6 +21,13 @@ public class Address {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+
+    @Column(name = "name", length = 255)
+    private String name;
+
+    @Column(name = "phone_number", length = 15)
+    private String phoneNumber;
 
     @Column(name = "address_line", length = 255)
     private String addressLine;
@@ -39,10 +48,28 @@ public class Address {
     @Column(name = "is_active")
     private Boolean isActive = false;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
 
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_at")
+    private Instant createdAt;
+
+
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private Instant updatedAt;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @PrePersist
+    protected void onCreate(){
+        createdAt = Instant.now();
+        updatedAt = Instant.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = Instant.now();
+    }
 }
 
