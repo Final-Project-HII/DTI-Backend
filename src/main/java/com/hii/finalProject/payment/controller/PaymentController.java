@@ -1,9 +1,12 @@
 package com.hii.finalProject.payment.controller;
 
+import com.hii.finalProject.payment.entity.PaymentMethod;
 import com.hii.finalProject.payment.entity.PaymentRequest;
 import com.hii.finalProject.payment.entity.PaymentStatus;
 import com.hii.finalProject.payment.service.PaymentService;
+import com.hii.finalProject.paymentProof.service.impl.PaymentProofServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,55 +18,86 @@ import java.util.Map;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final PaymentProofServiceImpl paymentProofServiceImpl;
 
-    public PaymentController(PaymentService paymentService) {
+    public PaymentController(PaymentService paymentService, PaymentProofServiceImpl paymentProofServiceImpl) {
         this.paymentService = paymentService;
+        this.paymentProofServiceImpl = paymentProofServiceImpl;
     }
 
     @PostMapping("/create")
-    public ResponseEntity<String> createPayment(@RequestParam Long orderId, @RequestParam String bank) {
+    public ResponseEntity<String> createPayment(
+            @RequestParam Long orderId,
+            @RequestParam String paymentMethod,
+            @RequestParam(required = false) String bank,
+            @RequestParam(required = false) String proofImageUrl
+    ) {
+        PaymentMethod method;
         try {
-            String response = paymentService.createVirtualAccountCode(orderId, bank);
-            return ResponseEntity.ok(response);
+            method = PaymentMethod.valueOf(paymentMethod.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid payment method: " + paymentMethod);
+        }
+
+        try {
+            String result = paymentService.processPayment(orderId, method, bank, proofImageUrl);
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error creating payment: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create payment: " + e.getMessage());
         }
     }
 
-    @GetMapping("/status/{orderId}")
-    public ResponseEntity<Map<String, String>> checkPaymentStatus(@PathVariable String orderId) {
+    @GetMapping("/{orderId}/status")
+    public ResponseEntity<String> getPaymentStatus(@PathVariable Long orderId) {
         try {
-            String transactionStatus = paymentService.getTransactionStatus(orderId);
-            return ResponseEntity.ok(Map.of("transaction_status", transactionStatus));
+            PaymentStatus status = paymentService.getTransactionStatus(orderId);
+            return ResponseEntity.ok(status.toString());
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to retrieve payment status");
         }
     }
 
-    @PostMapping("/manual")
-    public ResponseEntity<String> processManualPayment(@RequestParam Long orderId, @RequestParam String proofImageUrl) {
+    @PostMapping("/{orderId}/approve-proof")
+    public ResponseEntity<String> approvePaymentProof(@PathVariable Long orderId) {
         try {
-            String response = paymentService.processManualPayment(orderId, proofImageUrl);
-            return ResponseEntity.ok(response);
+            paymentService.updatePaymentStatus(orderId, PaymentStatus.COMPLETED);
+            return ResponseEntity.ok("Payment proof approved successfully");
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error processing manual payment: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to approve payment proof");
         }
     }
 
-    @PostMapping("/simulate-status")
-    public ResponseEntity<String> simulatePaymentStatusChange(@RequestParam Long orderId, @RequestParam PaymentStatus newStatus) {
+    @PostMapping("/{orderId}/reject-proof")
+    public ResponseEntity<String> rejectPaymentProof(@PathVariable Long orderId) {
         try {
-            paymentService.simulatePaymentStatusChange(orderId, newStatus);
-            return ResponseEntity.ok("Payment status updated successfully");
+            paymentService.updatePaymentStatus(orderId, PaymentStatus.FAILED);
+            return ResponseEntity.ok("Payment proof rejected successfully");
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error updating payment status: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to reject payment proof");
         }
     }
 
-//    @PostMapping("/create")
-//    public String createPayment(@RequestBody PaymentRequest paymentRequest) {
-//        return paymentService.createTransaction(paymentRequest);
-//
-//    }
+    @PostMapping("/approve-payment/{paymentId}")
+    public ResponseEntity<String> approvePayment(@PathVariable Long paymentId) {
+        try {
+            // Update the payment status to COMPLETED
+            paymentService.updatePaymentStatus(paymentId, PaymentStatus.COMPLETED);
+            return ResponseEntity.ok("Payment approved successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to approve payment");
+        }
+    }
+
+    @PostMapping("/midtrans-callback")
+    public ResponseEntity<String> handleMidtransCallback(@RequestBody String callbackPayload) {
+        try {
+            paymentService.processMidtransCallback(callbackPayload);
+            return ResponseEntity.ok("Callback processed successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to process Midtrans callback: " + e.getMessage());
+        }
+    }
+
 
 }
