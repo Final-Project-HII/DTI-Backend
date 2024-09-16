@@ -2,6 +2,7 @@ package com.hii.finalProject.order.controller;
 
 import com.hii.finalProject.auth.helpers.Claims;
 import com.hii.finalProject.order.dto.OrderDTO;
+import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.order.service.OrderService;
 import com.hii.finalProject.users.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,7 +82,7 @@ public class OrderController {
     }
 
     @PutMapping("/{orderId}/status")
-    public ResponseEntity<OrderDTO> updateOrderStatus(@PathVariable Long orderId, @RequestParam String status) {
+    public ResponseEntity<OrderDTO> updateOrderStatus(@PathVariable Long orderId, @RequestParam OrderStatus status) {
         OrderDTO updatedOrder = orderService.updateOrderStatus(orderId, status);
         return ResponseEntity.ok(updatedOrder);
     }

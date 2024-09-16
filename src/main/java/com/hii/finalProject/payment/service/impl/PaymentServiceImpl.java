@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hii.finalProject.cart.entity.Cart;
 import com.hii.finalProject.cart.service.CartService;
 import com.hii.finalProject.order.dto.OrderDTO;
+import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.order.service.OrderService;
 import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import com.hii.finalProject.payment.entity.*;
@@ -109,7 +110,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             paymentProofRepository.save(paymentProof);
 
-            orderService.updateOrderStatus(orderId, "PENDING");
+            orderService.updateOrderStatus(orderId, OrderStatus.PAYMENT_PENDING);
 
             result = "Manual payment proof received and being processed for order: " + orderId;
         } else {
@@ -189,7 +190,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setStatus(paymentStatus);
             paymentRepository.save(payment);
 
-            String orderStatus = mapToOrderStatus(paymentStatus);
+            OrderStatus orderStatus = mapToOrderStatus(paymentStatus);
             orderService.updateOrderStatus(Long.parseLong(orderId), orderStatus);
 
             log.info("Successfully processed Midtrans callback for order: " + orderId);
@@ -208,7 +209,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setStatus(status);
         paymentRepository.save(payment);
 
-        String orderStatus = mapToOrderStatus(status);
+        OrderStatus orderStatus = mapToOrderStatus(status);
         orderService.updateOrderStatus(orderId, orderStatus);
     }
 
@@ -248,17 +249,17 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
-    private String mapToOrderStatus(PaymentStatus paymentStatus) {
+    private OrderStatus mapToOrderStatus(PaymentStatus paymentStatus) {
         switch (paymentStatus) {
             case COMPLETED:
-                return "PAID";
+                return OrderStatus.PAYMENT_SUCCESS;
             case PENDING:
-                return "PENDING";
+                return OrderStatus.PAYMENT_PENDING;
             case FAILED:
             case REFUNDED:
-                return "PAYMENT_FAILED";
+                return OrderStatus.CANCELLED;
             default:
-                return "UNKNOWN";
+                throw new IllegalArgumentException("Unknown payment status: " + paymentStatus);
         }
     }
 

@@ -97,7 +97,9 @@ public class Order {
     @Column(name = "order_date")
     private LocalDateTime orderDate;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private OrderStatus status;
 
     @Column(name = "total_amount")
     private Double totalAmount;

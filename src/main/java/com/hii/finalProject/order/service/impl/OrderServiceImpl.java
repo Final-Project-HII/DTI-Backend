@@ -4,13 +4,17 @@ import com.hii.finalProject.cart.entity.Cart;
 import com.hii.finalProject.cart.service.CartService;
 import com.hii.finalProject.order.dto.OrderDTO;
 import com.hii.finalProject.order.entity.Order;
+import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.order.repository.OrderRepository;
 import com.hii.finalProject.order.service.OrderService;
 import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import com.hii.finalProject.orderItem.entity.OrderItem;
+import com.hii.finalProject.payment.entity.PaymentStatus;
+import com.hii.finalProject.payment.service.PaymentService;
 import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,13 +31,15 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final CartService cartService;
     private final ProductRepository productRepository;
+    private final PaymentService paymentService;
 
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
-                            CartService cartService, ProductRepository productRepository) {
+                            CartService cartService, ProductRepository productRepository, @Lazy PaymentService paymentService) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
         this.productRepository = productRepository;
+        this.paymentService = paymentService;
     }
 
     @Override
@@ -51,7 +57,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = new Order();
         order.setUser(user);
         order.setOrderDate(LocalDateTime.now());
-        order.setStatus("PENDING");
+        order.setStatus(OrderStatus.PAYMENT_PENDING);
 
         double totalAmount = 0;
 
@@ -69,10 +75,6 @@ public class OrderServiceImpl implements OrderService {
         order.setTotalAmount(totalAmount);
 
         Order savedOrder = orderRepository.save(order);
-
-//        // Clear the cart after creating the order
-//        cart.getItems().clear();
-//        cartService.updateCart(userId, cart);
 
         return convertToDTO(savedOrder);
     }
@@ -92,12 +94,27 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderDTO updateOrderStatus(Long orderId, String status) {
+    public OrderDTO updateOrderStatus(Long orderId, OrderStatus status) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
         order.setStatus(status);
         Order updatedOrder = orderRepository.save(order);
+
+        updateOrderStatusByPaymentStatus(orderId);
+
         return convertToDTO(updatedOrder);
+    }
+
+    @Transactional
+    public void updateOrderStatusByPaymentStatus(Long orderId) {
+        PaymentStatus paymentStatus = paymentService.getTransactionStatus(orderId);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+        if (paymentStatus == PaymentStatus.COMPLETED) {
+            order.setStatus(OrderStatus.PAYMENT_SUCCESS);
+            orderRepository.save(order);
+        }
     }
 
     @Override
@@ -105,7 +122,12 @@ public class OrderServiceImpl implements OrderService {
         Page<Order> orders;
 
         if (status != null && !status.isEmpty()) {
-            orders = orderRepository.findByUserIdAndStatus(userId, status, pageable);
+            try {
+                OrderStatus orderStatus = OrderStatus.valueOf(status.toUpperCase());
+                orders = orderRepository.findByUserIdAndStatus(userId, orderStatus, pageable);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid order status: " + status);
+            }
         } else if (startDate != null && endDate != null) {
             orders = orderRepository.findByUserIdAndOrderDateBetween(userId, startDate, endDate, pageable);
         } else {
@@ -121,7 +143,7 @@ public class OrderServiceImpl implements OrderService {
         dto.setUserId(order.getUser().getId());
         dto.setItems(order.getItems().stream().map(this::convertToOrderItemDTO).collect(Collectors.toList()));
         dto.setOrderDate(order.getOrderDate());
-        dto.setStatus(order.getStatus());
+        dto.setStatus(order.getStatus().name());
         dto.setTotalAmount(order.getTotalAmount());
         return dto;
     }
