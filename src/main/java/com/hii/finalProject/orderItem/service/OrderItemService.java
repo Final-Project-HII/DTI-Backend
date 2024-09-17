@@ -7,6 +7,6 @@ import java.util.List;
 public interface OrderItemService {
     OrderItemDTO getOrderItemById(Long orderItemId);
     List<OrderItemDTO> getOrderItemsByOrderId(Long orderId);
-    OrderItemDTO updateOrderItemQuantity(Long orderItemId, Integer quantity);
+    OrderItemDTO updateOrderItem(Long orderItemId, OrderItemDTO orderItemDTO);
     void deleteOrderItem(Long orderItemId);
 }

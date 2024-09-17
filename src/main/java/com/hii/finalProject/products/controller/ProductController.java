@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Arrays;
 import java.util.List;
-
+ 
 @RestController
 @RequestMapping("/api/product")
 public class ProductController {

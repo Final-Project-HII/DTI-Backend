@@ -77,6 +77,11 @@ public class CartServiceImpl implements CartService {
         redisTemplate.delete("cartDTOs::" + userId);
     }
 
+    @Override
+    public void clearCart(Long userId) {
+
+    }
+
     private CartDTO convertToDTO(Cart cart) {
         CartDTO cartDTO = new CartDTO();
         cartDTO.setId(cart.getId());
