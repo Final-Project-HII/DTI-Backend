@@ -12,6 +12,7 @@ public class CategoriesResponseDto {
     private Long id;
     private String name;
     private List<Long> products;
+    private String categoryImage;
     private Instant createdAt;
     private Instant updatedAt;
 }

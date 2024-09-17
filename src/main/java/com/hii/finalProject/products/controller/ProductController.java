@@ -16,9 +16,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Arrays;
 import java.util.List;
-
+ 
 @RestController
-@RequestMapping("/product")
+@RequestMapping("/api/product")
 public class ProductController {
     private final ProductService productService;
     public ProductController(ProductService productService){
@@ -59,7 +59,6 @@ public class ProductController {
             @PathVariable Long id,
             @RequestPart(value = "product") String updateProductRequestDtoJson,
             @RequestPart(value = "newImages", required = false) List<MultipartFile> newImages) {
-        // Convert JSON string to UpdateProductRequestDto object
         UpdateProductRequestDto updateProductRequestDto = convertJsonToObject(updateProductRequestDtoJson, UpdateProductRequestDto.class);
         ProductListDtoResponse updatedProduct = productService.updateProduct(id, updateProductRequestDto, newImages);
         return ResponseEntity.ok(updatedProduct);
@@ -78,7 +77,10 @@ public class ProductController {
             throw new RuntimeException("Error converting JSON to object", e);
         }
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 423291b057eafb8a7a624ea1eaa74ce310be6ebd
 }
 
 //DENGAN CUSTOM EXCEPTION

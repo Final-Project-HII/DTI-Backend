@@ -20,7 +20,7 @@ public class WarehouseDTO {
         newWarehouse.setAddressLine(addressLine);
         City city = new City();
         city.setId(cityId);
-        newWarehouse.setCityId(city);
+        newWarehouse.setCity(city);
         newWarehouse.setPostalCode(postalCode);
         newWarehouse.setLat(lat);
         newWarehouse.setLon(lon);
