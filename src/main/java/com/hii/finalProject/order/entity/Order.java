@@ -4,14 +4,17 @@ import com.hii.finalProject.address.entity.Address;
 import com.hii.finalProject.courier.entity.Courier;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.warehouse.entity.Warehouse;
+import com.hii.finalProject.orderItem.entity.OrderItem;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
-@Table(name = "orders")
+@Table(name = "orders", schema = "developmentfp")
 public class Order {
 
     @Id
@@ -19,6 +22,7 @@ public class Order {
     @SequenceGenerator(name = "order_id_gen", sequenceName = "order_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
+
 
     @Column(name = "invoice_id")
     private String invoiceId;
@@ -35,9 +39,9 @@ public class Order {
     @JoinColumn(name = "address_id", nullable = false)
     private Address address;
 
-//    @Enumerated(EnumType.STRING)
-//    @Column(name = "status", nullable = false)
-//    private OrderStatus status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private OrderStatus status;
 
     @Column(name = "original_amount", nullable = false)
     private BigDecimal originalAmount;
@@ -54,6 +58,9 @@ public class Order {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "courier_id", nullable = false)
     private Courier courier;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> items = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

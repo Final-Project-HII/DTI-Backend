@@ -1,5 +1,6 @@
 package com.hii.finalProject.stock.controller;
 
+
 import com.hii.finalProject.auth.helpers.Claims;
 import com.hii.finalProject.response.Response;
 import com.hii.finalProject.stock.dto.StockDtoRequest;
@@ -30,6 +31,7 @@ public class StockController {
     public ResponseEntity<Response<StockDtoResponse>> createStock(@RequestBody StockDtoRequest stockDtoRequest) {
 //        var claims = Claims.getClaimsFromJwt();
 //        var email = (String) claims.get("sub");
+
         StockDtoResponse createdStock = stockService.createStock(stockDtoRequest);
         return Response.successfulResponse("stock created successfully", createdStock);
     }
@@ -48,7 +50,6 @@ public class StockController {
         List<StockDtoResponse> stocks = stockService.getAllStock();
         return Response.successfulResponse("Stocks successfully fetched", stocks);
     }
-
 
 //    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
     @DeleteMapping("/{id}")

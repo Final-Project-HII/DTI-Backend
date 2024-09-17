@@ -5,6 +5,7 @@ import com.hii.finalProject.warehouse.dto.WarehouseDTO;
 import com.hii.finalProject.warehouse.dto.WarehouseDetailResponseDto;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.warehouse.service.WarehouseService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,8 +25,13 @@ public class WarehouseController {
 
 
     @GetMapping("")
-    public ResponseEntity<Response<List<Warehouse>>> getWarehouseList(){
-        return Response.successfulResponse("Warehouse list is successfully fetched", warehouseService.getAllWarehouses());
+    public ResponseEntity<Response<Page<Warehouse>>> getWarehouseList(@RequestParam(value = "name",required = false) String name, @RequestParam(value = "cityName",required = false) String cityName, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size){
+        return Response.successfulResponse("Warehouse list is successfully fetched", warehouseService.getAllWarehouses(name,cityName, page,size));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Response<Warehouse>> getWarehouseById(@PathVariable("id") Long id){
+        return Response.successfulResponse("Warehouse with id " + id +" is successfully fetched", warehouseService.getWarehouseById(id));
     }
 
     @PostMapping("")
@@ -35,6 +41,7 @@ public class WarehouseController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Response<Warehouse>> updateWarehouse(@PathVariable("id") Long id, @RequestBody WarehouseDTO data){
+        System.out.println(data);
         return Response.successfulResponse("Warehouse has been successfully updated",warehouseService.updateWarehouse(id,data));
     }
     @DeleteMapping("/{id}")
@@ -42,12 +49,9 @@ public class WarehouseController {
         warehouseService.deleteWarehouse(id);
         return Response.successfulResponse("Warehouse has been successfully deleted");
     }
-    @GetMapping("/{id}")
-    public ResponseEntity<Response<WarehouseDetailResponseDto>> getWarehouseById(@PathVariable Long id) {
-        WarehouseDetailResponseDto warehouseDetail = warehouseService.getWarehouseDetailById(id);
-        return Response.successfulResponse(
-                "Warehouse detail fetched successfully",
-                warehouseDetail
-        );
+
+    @GetMapping("/nearest-warehouse/{id}")
+    public ResponseEntity<Response<Warehouse>> getNearestWarehouse(@PathVariable("id") Long addressId){
+        return Response.successfulResponse("Nearest warehouse is successfully fetched", warehouseService.findNearestWarehouse(addressId));
     }
 }

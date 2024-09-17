@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface UserService {
     List<UserDTO> getAllUsers();
     Optional<UserDTO> getUserById(Long id);
-    Optional<UserDTO> getUserByEmail(String email);
+    Long getUserByEmail(String email);
     UserDTO createUser(UserDTO userDTO);
     Optional<UserDTO> updateUser(Long id, UserDTO userDTO);
     void deleteUser(Long id);
@@ -29,6 +29,6 @@ public interface UserService {
 
     String sendResetPasswordLink(String email);
     Boolean checkResetPasswordLinkIsValid(CheckResetPasswordLinkDTO data);
-    boolean canManageWarehouse(User user, Integer warehouseId);
+
 }
 
