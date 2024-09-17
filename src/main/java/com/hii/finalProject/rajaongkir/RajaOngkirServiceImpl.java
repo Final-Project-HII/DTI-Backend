@@ -1,4 +1,4 @@
-package com.hii.finalProject.city.service;
+package com.hii.finalProject.rajaongkir;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hii.finalProject.city.entity.City;
@@ -62,25 +62,26 @@ public class RajaOngkirServiceImpl {
         city.setName(result.getCityName());
         return city;
     }
+
+    @Data
+    class RajaOngkirResponse {
+        private RajaOngkirData rajaongkir;
+    }
+
+    @Data
+    class RajaOngkirData {
+        @JsonProperty("results")
+        private List<RajaOngkirCityResult> results;  // Changed to List
+    }
+
+    @Data
+    class RajaOngkirCityResult {
+        @JsonProperty("city_id")
+        private String cityId;
+
+        @JsonProperty("city_name")
+        private String cityName;
+
+    }
 }
 
-@Data
-class RajaOngkirResponse {
-    private RajaOngkirData rajaongkir;
-}
-
-@Data
-class RajaOngkirData {
-    @JsonProperty("results")
-    private List<RajaOngkirCityResult> results;  // Changed to List
-}
-
-@Data
-class RajaOngkirCityResult {
-    @JsonProperty("city_id")
-    private String cityId;
-
-    @JsonProperty("city_name")
-    private String cityName;
-
-}

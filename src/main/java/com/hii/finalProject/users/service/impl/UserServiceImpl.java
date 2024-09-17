@@ -9,25 +9,24 @@ import com.hii.finalProject.users.dto.*;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
 import com.hii.finalProject.users.service.UserService;
-import jakarta.mail.internet.MimeMessage;
+import com.hii.finalProject.users.specification.UserSpecification;
+import com.hii.finalProject.warehouse.entity.Warehouse;
+import com.hii.finalProject.warehouse.specification.WarehouseListSpecification;
 import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
-import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -95,7 +94,7 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public UserRegisterResponseDTO register(UserRegisterRequestDTO user) {
+    public UserResponseDTO register(UserRegisterRequestDTO user) {
         Optional<User> userData = userRepository.findByEmail(user.getEmail());
         if(userData.isPresent()){
             throw new DataNotFoundException("Email has already been registered");
@@ -103,12 +102,12 @@ public class UserServiceImpl implements UserService {
 
         User newUser = user.toEntity();
         userRepository.save(newUser);
-        UserRegisterResponseDTO userRegisterResponseDTO = new UserRegisterResponseDTO();
-        userRegisterResponseDTO.setName(newUser.getName());
-        userRegisterResponseDTO.setImageUrl(newUser.getProfilePicture());
-        userRegisterResponseDTO.setIsVerified(newUser.getIsVerified());
-        userRegisterResponseDTO.setEmail(newUser.getEmail());
-        userRegisterResponseDTO.setRole(newUser.getRole());
+        UserResponseDTO userResponseDTO = new UserResponseDTO();
+        userResponseDTO.setName(newUser.getName());
+        userResponseDTO.setImageUrl(newUser.getProfilePicture());
+        userResponseDTO.setIsVerified(newUser.getIsVerified());
+        userResponseDTO.setEmail(newUser.getEmail());
+        userResponseDTO.setRole(newUser.getRole());
         String tokenValue = UUID.randomUUID().toString();
         authRedisRepository.saveVerificationLink(user.getEmail(),tokenValue);
         String htmlBody = "<html>" +
@@ -136,23 +135,24 @@ public class UserServiceImpl implements UserService {
                 "</body>" +
                 "</html>";
         emailService.sendEmail(user.getEmail(), "Complete Registration for Hii Mart!", htmlBody);
-        return userRegisterResponseDTO;
+        return userResponseDTO;
     }
 
     @Override
-    public UserRegisterResponseDTO registerAdmin(AdminRegisterRequestDTO user) {
+    public UserResponseDTO registerAdmin(AdminRegisterRequestDTO user) {
         Optional<User> userData = userRepository.findByEmail(user.getEmail());
         if(userData.isPresent()){
             throw new DataNotFoundException("Email has already been registered");
         }
         User newUser = user.toEntity();
         userRepository.save(newUser);
-        UserRegisterResponseDTO userRegisterResponseDTO = new UserRegisterResponseDTO();
-        userRegisterResponseDTO.setName(newUser.getName());
-        userRegisterResponseDTO.setImageUrl(newUser.getProfilePicture());
-        userRegisterResponseDTO.setIsVerified(newUser.getIsVerified());
-        userRegisterResponseDTO.setEmail(newUser.getEmail());
-        userRegisterResponseDTO.setRole(newUser.getRole());
+        UserResponseDTO userResponseDTO = new UserResponseDTO();
+        userResponseDTO.setName(newUser.getName());
+        userResponseDTO.setImageUrl(newUser.getProfilePicture());
+        userResponseDTO.setIsVerified(newUser.getIsVerified());
+        userResponseDTO.setEmail(newUser.getEmail());
+        userResponseDTO.setRole(newUser.getRole());
+        userResponseDTO.setWarehouseId(newUser.getWarehouse().getId());
         String tokenValue = UUID.randomUUID().toString();
         authRedisRepository.saveVerificationLink(user.getEmail(),tokenValue);
         String htmlBody = "<html>" +
@@ -180,7 +180,7 @@ public class UserServiceImpl implements UserService {
                 "</body>" +
                 "</html>";
         emailService.sendEmail(user.getEmail(), "Complete Registration for Hii Mart!", htmlBody);
-        return userRegisterResponseDTO;
+        return userResponseDTO;
     }
 
     @Override
@@ -381,6 +381,28 @@ public class UserServiceImpl implements UserService {
         data.setPhoneNumber(userData.getPhoneNumber());
         data.setDisplayName(userData.getName());
         return data;
+    }
+
+    @Override
+    public Page<UserResponseDTO> getAllUser(String email, String role, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Specification<User> specification = Specification.where(UserSpecification.byEmail(email).and(UserSpecification.byRole(role)));
+        Page<User> userPage = userRepository.findAll(specification, pageable);
+
+        List<UserResponseDTO> userDTOList = userPage.getContent().stream()
+                .map(user -> {
+                    UserResponseDTO userData = new UserResponseDTO();
+                    userData.setEmail(user.getEmail());
+                    userData.setRole(user.getRole());
+                    userData.setImageUrl(user.getProfilePicture());
+                    userData.setIsVerified(user.getIsVerified());
+                    userData.setWarehouseId(user.getWarehouse().getId());
+                    userData.setName(user.getName());
+                    return userData;
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(userDTOList, pageable, userPage.getTotalElements());
     }
 
     private UserDTO convertToDTO(User user) {

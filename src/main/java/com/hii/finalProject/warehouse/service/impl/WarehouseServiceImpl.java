@@ -63,7 +63,6 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     @Override
     public Warehouse updateWarehouse(Long id, WarehouseDTO data) {
-        System.out.println(data);
         Warehouse existingWarehouse = warehouseRepository.findById(id).orElseThrow(() -> new DataNotFoundException("Warehouse with ID " + id + " is not found"));
         existingWarehouse.setName(data.getName());
         existingWarehouse.setAddressLine(data.getAddressLine());

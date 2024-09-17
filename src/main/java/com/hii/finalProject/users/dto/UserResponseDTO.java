@@ -4,9 +4,10 @@ import com.hii.finalProject.users.entity.Role;
 import lombok.Data;
 
 @Data
-public class UserRegisterResponseDTO {
+public class UserResponseDTO {
     private String name;
     private String imageUrl;
+    private Long warehouseId;
     private Boolean isVerified;
     private String email;
     private Role role;
