@@ -1,8 +1,9 @@
 package com.hii.finalProject.stockMutation.entity;
 
 public enum StockMutationStatus {
-    PENDING,
+    REQUESTED,
     APPROVED,
-    REJECTED,
-    COMPLETED
+    IN_TRANSIT,
+    COMPLETED,
+    CANCELLED
 }

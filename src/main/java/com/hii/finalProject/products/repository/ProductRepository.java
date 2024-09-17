@@ -17,6 +17,7 @@ public interface ProductRepository extends JpaRepository <Product, Long>, JpaSpe
     @Modifying
     @Query("DELETE FROM Product p WHERE p.id = :id")
     int deleteProductById(@Param("id") Long id);
+    boolean existsByNameIgnoreCase(String name);
 
 //    Optional<List<Product>> findByUserId(Long userId);
 }

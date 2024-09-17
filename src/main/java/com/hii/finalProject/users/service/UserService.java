@@ -30,8 +30,5 @@ public interface UserService {
     String sendResetPasswordLink(String email);
     Boolean checkResetPasswordLinkIsValid(CheckResetPasswordLinkDTO data);
 
-    ProfileResponseDTO updateProfile(String email, ProfileRequestDTO profileRequestDTO);
-
-    ProfileResponseDTO getProfileData(String email);
 }
 

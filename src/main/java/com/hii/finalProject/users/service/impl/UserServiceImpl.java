@@ -6,6 +6,7 @@ import com.hii.finalProject.cloudinary.CloudinaryService;
 import com.hii.finalProject.email.service.EmailService;
 import com.hii.finalProject.exceptions.DataNotFoundException;
 import com.hii.finalProject.users.dto.*;
+import com.hii.finalProject.users.entity.Role;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
 import com.hii.finalProject.users.service.UserService;
@@ -69,6 +70,11 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new DataNotFoundException("User not found with email: " + email));
     }
 
+    @Override
+    public boolean canManageWarehouse(User user, Integer warehouseId) {
+        return user.getRole() == Role.SUPER ||
+                (user.getRole() == Role.ADMIN && user.getWarehouseId().equals(warehouseId));
+    }
 
     @Override
     public UserDTO createUser(UserDTO userDTO) {
