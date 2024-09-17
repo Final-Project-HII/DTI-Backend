@@ -90,7 +90,7 @@ public class SecurityConfig {
 //                    auth.requestMatchers("/api/orders/**").permitAll();
 //                    auth.requestMatchers("/api/carts/**").authenticated();
 //                    auth.requestMatchers("/api/cart-items/**").authenticated();
-                    auth.anyRequest().authenticated();
+                    auth.anyRequest().permitAll();
                 })
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer((oauth2) -> {
