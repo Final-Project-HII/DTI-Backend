@@ -2,6 +2,7 @@ package com.hii.finalProject.warehouse.controller;
 
 import com.hii.finalProject.response.Response;
 import com.hii.finalProject.warehouse.dto.WarehouseDTO;
+import com.hii.finalProject.warehouse.dto.WarehouseDetailResponseDto;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.warehouse.service.WarehouseService;
 import org.springframework.http.HttpStatus;
@@ -41,33 +42,12 @@ public class WarehouseController {
         warehouseService.deleteWarehouse(id);
         return Response.successfulResponse("Warehouse has been successfully deleted");
     }
-//    @GetMapping
-//    public ResponseEntity<List<Warehouse>> getAllWarehouses() {
-//        return ResponseEntity.ok(warehouseService.getAllWarehouses());
-//    }
-//
-//    @GetMapping("/{id}")
-//    public ResponseEntity<Warehouse> getWarehouseById(@PathVariable Long id) {
-//        return warehouseService.getWarehouseById(id)
-//                .map(ResponseEntity::ok)
-//                .orElse(ResponseEntity.notFound().build());
-//    }
-//
-//    @PostMapping
-//    public ResponseEntity<Warehouse> createWarehouse(@RequestBody Warehouse warehouse) {
-//        return ResponseEntity.ok(warehouseService.createWarehouse(warehouse));
-//    }
-//
-//    @PutMapping("/{id}")
-//    public ResponseEntity<Warehouse> updateWarehouse(@PathVariable Long id, @RequestBody Warehouse warehouse) {
-//        return warehouseService.updateWarehouse(id, warehouse)
-//                .map(ResponseEntity::ok)
-//                .orElse(ResponseEntity.notFound().build());
-//    }
-//
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> deleteWarehouse(@PathVariable Long id) {
-//        warehouseService.deleteWarehouse(id);
-//        return ResponseEntity.noContent().build();
-//    }
+    @GetMapping("/{id}")
+    public ResponseEntity<Response<WarehouseDetailResponseDto>> getWarehouseById(@PathVariable Long id) {
+        WarehouseDetailResponseDto warehouseDetail = warehouseService.getWarehouseDetailById(id);
+        return Response.successfulResponse(
+                "Warehouse detail fetched successfully",
+                warehouseDetail
+        );
+    }
 }

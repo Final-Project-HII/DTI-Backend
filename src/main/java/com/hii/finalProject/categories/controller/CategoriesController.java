@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@RequestMapping("/category")
+@RequestMapping("/api/category")
 public class CategoriesController {
     private final CategoriesService categoriesService;
     public CategoriesController(CategoriesService categoriesService){
