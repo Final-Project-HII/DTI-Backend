@@ -43,10 +43,15 @@ public class ProductServiceImpl implements ProductService{
     private final ProductImageService productImageService;
     private final ProductImageRepository productImageRepository;
     private final EntityManager entityManager;
+<<<<<<< HEAD
+
+    public ProductServiceImpl(ProductRepository productRepository, EntityManager entityManager,  ProductImageRepository productImageRepository, CategoriesRepository categoriesRepository, CloudinaryService cloudinaryService, ProductImageService productImageService){
+=======
     private final StockRepository stockRepository;
 
     public ProductServiceImpl(StockRepository stockRepository, ProductRepository productRepository, EntityManager entityManager,  ProductImageRepository productImageRepository, CategoriesRepository categoriesRepository, CloudinaryService cloudinaryService, ProductImageService productImageService){
 
+>>>>>>> 423291b057eafb8a7a624ea1eaa74ce310be6ebd
         this.productRepository = productRepository;
         this.categoriesRepository = categoriesRepository;
         this.cloudinaryService = cloudinaryService;
