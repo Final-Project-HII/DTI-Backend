@@ -1,7 +1,11 @@
 package com.hii.finalProject.order.service.impl;
 
+import com.hii.finalProject.address.entity.Address;
+import com.hii.finalProject.address.repository.AddressRepository;
 import com.hii.finalProject.cart.entity.Cart;
 import com.hii.finalProject.cart.service.CartService;
+import com.hii.finalProject.courier.entity.Courier;
+import com.hii.finalProject.courier.repository.CourierRepository;
 import com.hii.finalProject.order.dto.OrderDTO;
 import com.hii.finalProject.order.entity.Order;
 import com.hii.finalProject.order.entity.OrderStatus;
@@ -9,19 +13,19 @@ import com.hii.finalProject.order.repository.OrderRepository;
 import com.hii.finalProject.order.service.OrderService;
 import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import com.hii.finalProject.orderItem.entity.OrderItem;
-import com.hii.finalProject.payment.entity.PaymentStatus;
-import com.hii.finalProject.payment.service.PaymentService;
+import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
-import org.springframework.context.annotation.Lazy;
+import com.hii.finalProject.warehouse.entity.Warehouse;
+import com.hii.finalProject.warehouse.repository.WarehouseRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,22 +35,34 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final CartService cartService;
     private final ProductRepository productRepository;
-    private final PaymentService paymentService;
+    private final AddressRepository addressRepository;
+    private final WarehouseRepository warehouseRepository;
+    private final CourierRepository courierRepository;
 
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
-                            CartService cartService, ProductRepository productRepository, @Lazy PaymentService paymentService) {
+                            CartService cartService, ProductRepository productRepository,
+                            AddressRepository addressRepository, WarehouseRepository warehouseRepository,
+                            CourierRepository courierRepository) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
         this.productRepository = productRepository;
-        this.paymentService = paymentService;
+        this.addressRepository = addressRepository;
+        this.warehouseRepository = warehouseRepository;
+        this.courierRepository = courierRepository;
     }
 
     @Override
     @Transactional
-    public OrderDTO createOrder(Long userId) {
+    public OrderDTO createOrder(Long userId, Long warehouseId, Long addressId, Long courierId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                .orElseThrow(() -> new RuntimeException("Warehouse not found with id: " + warehouseId));
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new RuntimeException("Address not found with id: " + addressId));
+        Courier courier = courierRepository.findById(courierId)
+                .orElseThrow(() -> new RuntimeException("Courier not found with id: " + courierId));
 
         Cart cart = cartService.getCartEntity(userId);
 
@@ -56,28 +72,46 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = new Order();
         order.setUser(user);
-        order.setOrderDate(LocalDateTime.now());
-        order.setStatus(OrderStatus.PAYMENT_PENDING);
+        order.setWarehouse(warehouse);
+        order.setAddress(address);
+        order.setCourier(courier);
+        order.setStatus(OrderStatus.pending_payment);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
 
-        double totalAmount = 0;
+        BigDecimal originalAmount = BigDecimal.ZERO;
+        int totalWeight = 0;
+        int totalQuantity = 0;
 
         for (com.hii.finalProject.cartItem.entity.CartItem cartItem : cart.getItems()) {
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
             orderItem.setProduct(cartItem.getProduct());
             orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setPrice(Double.valueOf(cartItem.getProduct().getPrice()));
+            orderItem.setPrice(BigDecimal.valueOf(cartItem.getProduct().getPrice()));
+            orderItem.setProductSnapshot(createProductSnapshot(cartItem.getProduct()));
 
             order.getItems().add(orderItem);
-            totalAmount += orderItem.getPrice() * orderItem.getQuantity();
+            originalAmount = originalAmount.add(orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())));
+            totalWeight += cartItem.getProduct().getWeight() * cartItem.getQuantity();
+            totalQuantity += cartItem.getQuantity();
         }
 
-        order.setTotalAmount(totalAmount);
+        order.setOriginalAmount(originalAmount);
+        order.setFinalAmount(originalAmount); // You might want to apply discounts or shipping costs here
+        order.setTotalWeight(totalWeight);
+        order.setTotalQuantity(totalQuantity);
 
+        // Save the order using the standard save method
         Order savedOrder = orderRepository.save(order);
+
+        // Clear the cart after creating the order
+        cartService.clearCart(userId);
 
         return convertToDTO(savedOrder);
     }
+
+
 
     @Override
     public OrderDTO getOrderById(Long orderId) {
@@ -99,22 +133,7 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
         order.setStatus(status);
         Order updatedOrder = orderRepository.save(order);
-
-        updateOrderStatusByPaymentStatus(orderId);
-
         return convertToDTO(updatedOrder);
-    }
-
-    @Transactional
-    public void updateOrderStatusByPaymentStatus(Long orderId) {
-        PaymentStatus paymentStatus = paymentService.getTransactionStatus(orderId);
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-
-        if (paymentStatus == PaymentStatus.COMPLETED) {
-            order.setStatus(OrderStatus.PAYMENT_SUCCESS);
-            orderRepository.save(order);
-        }
     }
 
     @Override
@@ -129,7 +148,7 @@ public class OrderServiceImpl implements OrderService {
                 throw new RuntimeException("Invalid order status: " + status);
             }
         } else if (startDate != null && endDate != null) {
-            orders = orderRepository.findByUserIdAndOrderDateBetween(userId, startDate, endDate, pageable);
+            orders = orderRepository.findByUserIdAndCreatedAtBetween(userId, startDate, endDate, pageable);
         } else {
             orders = orderRepository.findByUserId(userId, pageable);
         }
@@ -140,11 +159,18 @@ public class OrderServiceImpl implements OrderService {
     private OrderDTO convertToDTO(Order order) {
         OrderDTO dto = new OrderDTO();
         dto.setId(order.getId());
+        dto.setInvoiceId(order.getInvoiceId());
         dto.setUserId(order.getUser().getId());
+        dto.setWarehouseId(order.getWarehouse().getId());
+        dto.setAddressId(order.getAddress().getId());
         dto.setItems(order.getItems().stream().map(this::convertToOrderItemDTO).collect(Collectors.toList()));
-        dto.setOrderDate(order.getOrderDate());
-        dto.setStatus(order.getStatus().name());
-        dto.setTotalAmount(order.getTotalAmount());
+        dto.setOrderDate(order.getCreatedAt());
+        dto.setStatus(order.getStatus().name());  // Convert ENUM to string for DTO
+        dto.setOriginalAmount(order.getOriginalAmount());
+        dto.setFinalAmount(order.getFinalAmount());
+        dto.setTotalWeight(order.getTotalWeight());
+        dto.setTotalQuantity(order.getTotalQuantity());
+        dto.setCourierId(order.getCourier().getId());
         return dto;
     }
 
@@ -156,5 +182,11 @@ public class OrderServiceImpl implements OrderService {
         dto.setQuantity(orderItem.getQuantity());
         dto.setPrice(orderItem.getPrice());
         return dto;
+    }
+
+    private String createProductSnapshot(Product product) {
+        // Implement this method to create a JSON representation of the product
+        // You might want to use a JSON library like Jackson or Gson
+        return ""; // Placeholder
     }
 }

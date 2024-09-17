@@ -8,14 +8,12 @@ import com.hii.finalProject.users.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -31,10 +29,13 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<OrderDTO> createOrder() {
+    public ResponseEntity<OrderDTO> createOrder(
+            @RequestParam Long warehouseId,
+            @RequestParam Long addressId,
+            @RequestParam Long courierId) {
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
         Long userId = userService.getUserByEmail(userEmail);
-        OrderDTO orderDTO = orderService.createOrder(userId);
+        OrderDTO orderDTO = orderService.createOrder(userId, warehouseId, addressId, courierId);
         return ResponseEntity.ok(orderDTO);
     }
 
@@ -48,7 +49,7 @@ public class OrderController {
     public ResponseEntity<Page<OrderDTO>> getUserOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "orderDate") String sortBy,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection) {
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
         Long userId = userService.getUserByEmail(userEmail);
@@ -60,7 +61,6 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
-
     @GetMapping("/filtered")
     public ResponseEntity<Page<OrderDTO>> getFilteredOrders(
             @RequestParam(required = false) String status,
@@ -68,7 +68,7 @@ public class OrderController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "orderDate") String sortBy,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection) {
 
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
@@ -82,7 +82,9 @@ public class OrderController {
     }
 
     @PutMapping("/{orderId}/status")
-    public ResponseEntity<OrderDTO> updateOrderStatus(@PathVariable Long orderId, @RequestParam OrderStatus status) {
+    public ResponseEntity<OrderDTO> updateOrderStatus(
+            @PathVariable Long orderId,
+            @RequestParam OrderStatus status) {
         OrderDTO updatedOrder = orderService.updateOrderStatus(orderId, status);
         return ResponseEntity.ok(updatedOrder);
     }

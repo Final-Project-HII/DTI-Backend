@@ -19,4 +19,6 @@ public interface CartService {
     CartDTO updateCart(Long userId, Cart updatedCart);
 
     void clearCartCache(Long userId);
+
+    void clearCart(Long userId);
 }

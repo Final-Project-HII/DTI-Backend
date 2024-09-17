@@ -6,10 +6,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public interface OrderService {
-    OrderDTO createOrder(Long userId);
+    OrderDTO createOrder(Long userId, Long warehouseId, Long addressId, Long courierId);
     OrderDTO getOrderById(Long orderId);
     Page<OrderDTO> getOrdersByUserId(Long userId, Pageable pageable);
     OrderDTO updateOrderStatus(Long orderId, OrderStatus status);

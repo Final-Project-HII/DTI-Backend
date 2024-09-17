@@ -1,12 +1,15 @@
 package com.hii.finalProject.order.entity;
 
 public enum OrderStatus {
-    PAYMENT_PENDING,
-    PAYMENT_SUCCESS,
-    CONFIRMATION,
-    PROCESS,
-    SHIPPED,
-    DELIVERED,
-    CANCELLED
+    pending_payment,
+    confirmation,
+    process,
+    shipped,
+    delivered,
+    cancelled;
 
+    @Override
+    public String toString() {
+        return name().toLowerCase();
+    }
 }

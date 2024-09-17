@@ -83,7 +83,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             Payment payment = new Payment();
             payment.setOrderId(orderId);
-            payment.setAmount(BigDecimal.valueOf(order.getTotalAmount()));
+            payment.setAmount(order.getFinalAmount());
             payment.setPaymentMethod(PaymentMethod.PAYMENT_GATEWAY);
             payment.setStatus(PaymentStatus.PENDING);
             payment.setName("Midtrans Payment for Order " + orderId);
@@ -94,7 +94,7 @@ public class PaymentServiceImpl implements PaymentService {
         } else if (paymentMethod == PaymentMethod.PAYMENT_PROOF) {
             Payment payment = new Payment();
             payment.setOrderId(orderId);
-            payment.setAmount(BigDecimal.valueOf(order.getTotalAmount()));
+            payment.setAmount(order.getFinalAmount());
             payment.setPaymentMethod(PaymentMethod.PAYMENT_PROOF);
             payment.setStatus(PaymentStatus.PENDING);
             payment.setName("Manual Payment for Order " + orderId);
@@ -110,7 +110,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             paymentProofRepository.save(paymentProof);
 
-            orderService.updateOrderStatus(orderId, OrderStatus.PAYMENT_PENDING);
+            orderService.updateOrderStatus(orderId, OrderStatus.pending_payment);
 
             result = "Manual payment proof received and being processed for order: " + orderId;
         } else {
@@ -252,12 +252,12 @@ public class PaymentServiceImpl implements PaymentService {
     private OrderStatus mapToOrderStatus(PaymentStatus paymentStatus) {
         switch (paymentStatus) {
             case COMPLETED:
-                return OrderStatus.PAYMENT_SUCCESS;
+                return OrderStatus.confirmation;
             case PENDING:
-                return OrderStatus.PAYMENT_PENDING;
+                return OrderStatus.pending_payment;
             case FAILED:
             case REFUNDED:
-                return OrderStatus.CANCELLED;
+                return OrderStatus.cancelled;
             default:
                 throw new IllegalArgumentException("Unknown payment status: " + paymentStatus);
         }
@@ -267,7 +267,7 @@ public class PaymentServiceImpl implements PaymentService {
         String paymentType = "bank_transfer";
         PaymentTransactionDetails paymentTransactionDetails = new PaymentTransactionDetails();
         paymentTransactionDetails.setOrder_id(order.getId().toString());
-        paymentTransactionDetails.setGross_amount(order.getTotalAmount().intValue());
+        paymentTransactionDetails.setGross_amount(order.getOriginalAmount().intValue());
 
         BankTransfer bankTransfer = new BankTransfer();
         bankTransfer.setBank(bank);
