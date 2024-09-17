@@ -3,6 +3,7 @@ package com.hii.finalProject.warehouse.controller;
 import com.hii.finalProject.auth.helpers.Claims;
 import com.hii.finalProject.response.Response;
 import com.hii.finalProject.warehouse.dto.WarehouseDTO;
+import com.hii.finalProject.warehouse.dto.WarehouseDetailResponseDto;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.warehouse.service.WarehouseService;
 import org.springframework.data.domain.Page;

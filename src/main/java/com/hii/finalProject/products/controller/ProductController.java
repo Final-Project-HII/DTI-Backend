@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Arrays;
 import java.util.List;
-
+ 
 @RestController
 @RequestMapping("/api/product")
 public class ProductController {
@@ -30,10 +30,6 @@ public class ProductController {
             @RequestParam("productImages") List<MultipartFile> productImages) {
         ProductListDtoResponse createdProduct = productService.createProduct(productRequestDTO, productImages);
         return new ResponseEntity<>(createdProduct, HttpStatus.CREATED);
-    }
-    private boolean isValidImageExtension(String fileName) {
-        String[] validExtensions = {".jpg", ".jpeg", ".png", ".gif"};
-        return Arrays.stream(validExtensions).anyMatch(ext -> fileName.toLowerCase().endsWith(ext));
     }
     @GetMapping
     public ResponseEntity<Page<ProductListDtoResponse>> getAllProducts(

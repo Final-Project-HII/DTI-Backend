@@ -2,6 +2,7 @@ package com.hii.finalProject.warehouse.service;
 
 
 import com.hii.finalProject.warehouse.dto.WarehouseDTO;
+import com.hii.finalProject.warehouse.dto.WarehouseDetailResponseDto;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import org.springframework.data.domain.Page;
 
@@ -14,6 +15,5 @@ public interface WarehouseService {
     Warehouse createWarehouse(WarehouseDTO data);
     Warehouse updateWarehouse(Long id, WarehouseDTO data);
     void deleteWarehouse(Long id);
-
     Warehouse findNearestWarehouse(String email);
 }

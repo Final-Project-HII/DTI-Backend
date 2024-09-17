@@ -6,7 +6,13 @@ import com.hii.finalProject.address.service.impl.AddressServiceImpl;
 import com.hii.finalProject.address.specification.AddressListSpecification;
 import com.hii.finalProject.city.entity.City;
 import com.hii.finalProject.exceptions.DataNotFoundException;
+import com.hii.finalProject.products.entity.Product;
+import com.hii.finalProject.stock.dto.StockDtoResponse;
+import com.hii.finalProject.stock.dto.StockDtoWarehouseResponse;
+import com.hii.finalProject.stock.entity.Stock;
+import com.hii.finalProject.stock.service.StockServiceImpl;
 import com.hii.finalProject.warehouse.dto.WarehouseDTO;
+import com.hii.finalProject.warehouse.dto.WarehouseDetailResponseDto;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.warehouse.repository.WarehouseRepository;
 import com.hii.finalProject.warehouse.service.WarehouseService;
@@ -21,13 +27,12 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class WarehouseServiceImpl implements WarehouseService {
     private final WarehouseRepository warehouseRepository;
     private final AddressService addressService;
-
-
 
     public WarehouseServiceImpl(WarehouseRepository warehouseRepository, AddressService addressService) {
         this.warehouseRepository = warehouseRepository;
@@ -63,6 +68,7 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     @Override
     public Warehouse updateWarehouse(Long id, WarehouseDTO data) {
+        System.out.println(data);
         Warehouse existingWarehouse = warehouseRepository.findById(id).orElseThrow(() -> new DataNotFoundException("Warehouse with ID " + id + " is not found"));
         existingWarehouse.setName(data.getName());
         existingWarehouse.setAddressLine(data.getAddressLine());
@@ -75,13 +81,30 @@ public class WarehouseServiceImpl implements WarehouseService {
         return warehouseRepository.save(existingWarehouse);
     }
 
-
-
-
     @Override
     public void deleteWarehouse(Long id) {
         Warehouse warehouse = warehouseRepository.findById(id).orElseThrow(() -> new DataNotFoundException("Warehouse with ID " + id + " is not found"));
         warehouse.setDeletedAt(Instant.now());
         warehouseRepository.save(warehouse);
     }
+  
+    private StockDtoWarehouseResponse convertStockToDto(Stock stock) {
+        StockDtoWarehouseResponse responseDto = new StockDtoWarehouseResponse();
+        responseDto.setId(stock.getId());
+        responseDto.setProductId(stock.getProduct().getId());
+        responseDto.setProductName(stock.getProduct().getName());
+        responseDto.setQuantity(stock.getQuantity());
+
+        if (stock.getProduct().getCategories() != null) {
+            responseDto.setCategoryId(stock.getProduct().getCategories().getId());
+            responseDto.setCategoryName(stock.getProduct().getCategories().getName());
+        }
+
+        return responseDto;
+    }
+    @Override
+    public Optional<Warehouse> findById(Long warehouseId) {
+        return warehouseRepository.findById(warehouseId);
+    }
+
 }

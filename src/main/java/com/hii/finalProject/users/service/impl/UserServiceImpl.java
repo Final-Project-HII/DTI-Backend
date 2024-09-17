@@ -6,6 +6,7 @@ import com.hii.finalProject.cloudinary.CloudinaryService;
 import com.hii.finalProject.email.service.EmailService;
 import com.hii.finalProject.exceptions.DataNotFoundException;
 import com.hii.finalProject.users.dto.*;
+import com.hii.finalProject.users.entity.Role;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
 import com.hii.finalProject.users.service.UserService;
@@ -24,7 +25,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -68,6 +72,11 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new DataNotFoundException("User not found with email: " + email));
     }
 
+    @Override
+    public boolean canManageWarehouse(User user, Integer warehouseId) {
+        return user.getRole() == Role.SUPER ||
+                (user.getRole() == Role.ADMIN && user.getWarehouseId().equals(warehouseId));
+    }
 
     @Override
     public UserDTO createUser(UserDTO userDTO) {
@@ -348,9 +357,6 @@ public class UserServiceImpl implements UserService {
     }
 
 
-
-
-
     @Override
     @CachePut(value = "getProfileData",key = "#email")
     public ProfileResponseDTO updateProfile(String email, ProfileRequestDTO profileRequestDTO) {
@@ -382,6 +388,7 @@ public class UserServiceImpl implements UserService {
         data.setDisplayName(userData.getName());
         return data;
     }
+
 
     @Override
     public Page<UserResponseDTO> getAllUser(String email, String role, int page, int size) {

@@ -6,6 +6,8 @@ import com.hii.finalProject.stock.dto.StockDtoRequest;
 import com.hii.finalProject.stock.dto.StockDtoResponse;
 import com.hii.finalProject.stock.entity.Stock;
 import com.hii.finalProject.stock.repository.StockRepository;
+import com.hii.finalProject.users.entity.User;
+import com.hii.finalProject.users.repository.UserRepository;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.warehouse.repository.WarehouseRepository;
 import org.springframework.stereotype.Service;
@@ -18,11 +20,13 @@ public class StockServiceImpl implements StockService{
     private final StockRepository stockRepository;
     private final ProductRepository productRepository;
     private final WarehouseRepository warehouseRepository;
+    private final UserRepository userRepository;
 
-    public StockServiceImpl(StockRepository stockRepository, ProductRepository productRepository, WarehouseRepository warehouseRepository){
+    public StockServiceImpl(StockRepository stockRepository, ProductRepository productRepository, WarehouseRepository warehouseRepository, UserRepository userRepository){
         this.stockRepository = stockRepository;
         this.productRepository = productRepository;
         this.warehouseRepository = warehouseRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -77,8 +81,7 @@ public class StockServiceImpl implements StockService{
         Stock updatedStock = stockRepository.save(existingStock);
         return convertToDto(updatedStock);
     }
-
-    private StockDtoResponse convertToDto(Stock stock) {
+    public StockDtoResponse convertToDto(Stock stock) {
         StockDtoResponse responseDto = new StockDtoResponse();
         responseDto.setId(stock.getId());
         responseDto.setProductId(stock.getProduct().getId());
@@ -92,4 +95,6 @@ public class StockServiceImpl implements StockService{
         }
         return responseDto;
     }
+    //manualUpdate
+
 }

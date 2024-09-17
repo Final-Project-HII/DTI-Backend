@@ -1,5 +1,4 @@
-package com.hii.finalProject.order.controller;
-
+package com.hii.finalProject.orderItem.controller;
 
 import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import com.hii.finalProject.orderItem.service.OrderItemService;
@@ -32,11 +31,9 @@ public class OrderItemController {
         return ResponseEntity.ok(orderItems);
     }
 
-    @PutMapping("/{orderItemId}/quantity")
-    public ResponseEntity<OrderItemDTO> updateOrderItemQuantity(
-            @PathVariable Long orderItemId,
-            @RequestParam Integer quantity) {
-        OrderItemDTO updatedOrderItem = orderItemService.updateOrderItemQuantity(orderItemId, quantity);
+    @PutMapping("/{orderItemId}")
+    public ResponseEntity<OrderItemDTO> updateOrderItem(@PathVariable Long orderItemId, @RequestBody OrderItemDTO orderItemDTO) {
+        OrderItemDTO updatedOrderItem = orderItemService.updateOrderItem(orderItemId, orderItemDTO);
         return ResponseEntity.ok(updatedOrderItem);
     }
 
