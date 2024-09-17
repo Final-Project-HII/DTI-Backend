@@ -55,8 +55,8 @@ public class WarehouseServiceImpl implements WarehouseService {
 
 
     @Override
-    public Warehouse findNearestWarehouse(Long addressId) {
-        Address address = addressService.getAddressById(addressId);
+    public Warehouse findNearestWarehouse(String email) {
+        Address address = addressService.getActiveUserAddress(email);
         return warehouseRepository.findNearestWarehouse(address.getLat(), address.getLon());
     }
 
@@ -81,42 +81,13 @@ public class WarehouseServiceImpl implements WarehouseService {
         return warehouseRepository.save(existingWarehouse);
     }
 
-
-
-
     @Override
     public void deleteWarehouse(Long id) {
         Warehouse warehouse = warehouseRepository.findById(id).orElseThrow(() -> new DataNotFoundException("Warehouse with ID " + id + " is not found"));
         warehouse.setDeletedAt(Instant.now());
         warehouseRepository.save(warehouse);
     }
-    @Override
-    public WarehouseDetailResponseDto getWarehouseDetailById(Long id) {
-        Warehouse warehouse = warehouseRepository.findById(id)
-                .orElseThrow(() -> new DataNotFoundException("Warehouse with ID " + id + " is not found"));
-        List<Stock> stocks = warehouse.getStocks();
-        return getWarehouseDetail(warehouse, stocks);
-    }
-
-    private WarehouseDetailResponseDto getWarehouseDetail(Warehouse warehouse, List<Stock> stocks) {
-        WarehouseDetailResponseDto responseDto = new WarehouseDetailResponseDto();
-        responseDto.setId(warehouse.getId());
-        responseDto.setName(warehouse.getName());
-        responseDto.setAddressLine(warehouse.getAddressLine());
-        responseDto.setPostalCode(warehouse.getPostalCode());
-        responseDto.setLat(warehouse.getLat());
-        responseDto.setLon(warehouse.getLon());
-        responseDto.setUpdatedAt(warehouse.getUpdatedAt());
-        responseDto.setCreatedAt(warehouse.getCreatedAt());
-
-        // Konversi Stock ke StockDtoResponse
-        List<StockDtoWarehouseResponse> stockDtoResponses = stocks.stream()
-                .map(this::convertStockToDto)  // Menggunakan metode konversi lokal
-                .collect(Collectors.toList());
-        responseDto.setStocks(stockDtoResponses);
-
-        return responseDto;
-    }
+  
     private StockDtoWarehouseResponse convertStockToDto(Stock stock) {
         StockDtoWarehouseResponse responseDto = new StockDtoWarehouseResponse();
         responseDto.setId(stock.getId());

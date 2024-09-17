@@ -16,7 +16,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-
 @Entity
 @Table(name = "warehouse",schema = "developmentfp")
 @Data
@@ -60,13 +59,7 @@ public class Warehouse {
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
-
-    @PrePersist
-    protected void onCreate(){
-        createdAt = Instant.now();
-        updatedAt = Instant.now();
-    }
-
+  
     @OneToMany(mappedBy = "origin")
     @JsonIgnore
     private List<StockMutation> outgoingMutations = new ArrayList<>();
@@ -75,9 +68,14 @@ public class Warehouse {
     @JsonIgnore
     private List<StockMutation> incomingMutations = new ArrayList<>();
 
+    @PrePersist
+    protected void onCreate(){
+        createdAt = Instant.now();
+        updatedAt = Instant.now();
+    }
+  
     @PreUpdate
     protected void onUpdate() {
         updatedAt = Instant.now();
     }
-
 }

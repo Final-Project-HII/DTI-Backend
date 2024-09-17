@@ -15,6 +15,5 @@ public interface WarehouseService {
     Warehouse createWarehouse(WarehouseDTO data);
     Warehouse updateWarehouse(Long id, WarehouseDTO data);
     void deleteWarehouse(Long id);
-    Warehouse findNearestWarehouse(Long addressId);
-
+    Warehouse findNearestWarehouse(String email);
 }

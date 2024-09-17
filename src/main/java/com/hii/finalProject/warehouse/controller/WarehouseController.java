@@ -1,5 +1,6 @@
 package com.hii.finalProject.warehouse.controller;
 
+import com.hii.finalProject.auth.helpers.Claims;
 import com.hii.finalProject.response.Response;
 import com.hii.finalProject.warehouse.dto.WarehouseDTO;
 import com.hii.finalProject.warehouse.dto.WarehouseDetailResponseDto;
@@ -50,8 +51,10 @@ public class WarehouseController {
         return Response.successfulResponse("Warehouse has been successfully deleted");
     }
 
-    @GetMapping("/nearest-warehouse/{id}")
-    public ResponseEntity<Response<Warehouse>> getNearestWarehouse(@PathVariable("id") Long addressId){
-        return Response.successfulResponse("Nearest warehouse is successfully fetched", warehouseService.findNearestWarehouse(addressId));
+    @GetMapping("/nearest-warehouse")
+    public ResponseEntity<Response<Warehouse>> getNearestWarehouse(){
+        var claims = Claims.getClaimsFromJwt();
+        var email = (String) claims.get("sub");
+        return Response.successfulResponse("Nearest warehouse is successfully fetched", warehouseService.findNearestWarehouse(email));
     }
 }
