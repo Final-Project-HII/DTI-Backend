@@ -1,8 +1,10 @@
 package com.hii.finalProject.products.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hii.finalProject.categories.entity.Categories;
 import com.hii.finalProject.image.entity.ProductImage;
 import com.hii.finalProject.stock.entity.Stock;
+import com.hii.finalProject.stockMutation.entity.StockMutation;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,12 +32,14 @@ public class Product implements Serializable {
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
+    @JsonIgnore
     private Categories categories;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> productImages = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Stock> stocks = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
@@ -43,6 +47,10 @@ public class Product implements Serializable {
 
     @Column(name = "updated_at", nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private Instant updatedAt = Instant.now();
+
+    @OneToMany(mappedBy = "product")
+    @JsonIgnore
+    private List<StockMutation> stockMutations = new ArrayList<>();
 
 //    @Column(name = "deleted_at")
 //    private Instant deletedAt;
