@@ -33,10 +33,14 @@ public interface UserService {
     String sendResetPasswordLink(String email);
     Boolean checkResetPasswordLinkIsValid(CheckResetPasswordLinkDTO data);
 
+//    boolean canManageWarehouse(User user, Integer warehouseId);
+
+
     ProfileResponseDTO updateProfile(String email, ProfileRequestDTO profileRequestDTO);
 
     ProfileResponseDTO getProfileData(String email);
 
     Page<UserResponseDTO> getAllUser(String email, String role, int page, int size);
+
 }
 

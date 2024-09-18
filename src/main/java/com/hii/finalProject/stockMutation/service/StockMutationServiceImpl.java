@@ -150,8 +150,13 @@ public class StockMutationServiceImpl implements StockMutationService {
         if (email != null) {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new DataNotFoundException("User not found"));
+
+//            if (user.getWarehouseId() != null) {
+//                dto.setLoginWarehouseId(user.getWarehouseId().longValue());
+
             if (user.getWarehouse().getId() != null) {
                 dto.setLoginWarehouseId(user.getWarehouse().getId());
+
             }
         }
 

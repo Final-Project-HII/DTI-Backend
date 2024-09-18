@@ -33,10 +33,12 @@ import java.util.stream.Collectors;
 @Service
 public class WarehouseServiceImpl implements WarehouseService {
     private final WarehouseRepository warehouseRepository;
+    private final StockServiceImpl stockService;
     private final AddressService addressService;
 
-    public WarehouseServiceImpl(WarehouseRepository warehouseRepository, AddressService addressService) {
+    public WarehouseServiceImpl(WarehouseRepository warehouseRepository, StockServiceImpl stockService, AddressService addressService) {
         this.warehouseRepository = warehouseRepository;
+        this.stockService = stockService;
         this.addressService = addressService;
     }
 
@@ -54,6 +56,7 @@ public class WarehouseServiceImpl implements WarehouseService {
             Pageable pageable = PageRequest.of(page, size);
             return warehouseRepository.findAll(specification, pageable);
         }
+
     }
 
     @Override
@@ -97,7 +100,36 @@ public class WarehouseServiceImpl implements WarehouseService {
         warehouse.setDeletedAt(Instant.now());
         warehouseRepository.save(warehouse);
     }
-  
+
+    @Override
+    public WarehouseDetailResponseDto getWarehouseDetailById(Long id) {
+        Warehouse warehouse = warehouseRepository.findById(id)
+                .orElseThrow(() -> new DataNotFoundException("Warehouse with ID " + id + " is not found"));
+        List<Stock> stocks = warehouse.getStocks();
+        return getWarehouseDetail(warehouse, stocks);
+    }
+
+    private WarehouseDetailResponseDto getWarehouseDetail(Warehouse warehouse, List<Stock> stocks) {
+        WarehouseDetailResponseDto responseDto = new WarehouseDetailResponseDto();
+        responseDto.setId(warehouse.getId());
+        responseDto.setName(warehouse.getName());
+        responseDto.setAddressLine(warehouse.getAddressLine());
+        responseDto.setPostalCode(warehouse.getPostalCode());
+        responseDto.setLat(warehouse.getLat());
+        responseDto.setLon(warehouse.getLon());
+        responseDto.setUpdatedAt(warehouse.getUpdatedAt());
+        responseDto.setCreatedAt(warehouse.getCreatedAt());
+
+        // Konversi Stock ke StockDtoResponse
+        List<StockDtoWarehouseResponse> stockDtoResponses = stocks.stream()
+                .map(this::convertStockToDto)  // Menggunakan metode konversi lokal
+                .collect(Collectors.toList());
+        responseDto.setStocks(stockDtoResponses);
+
+        return responseDto;
+    }
+
+
     private StockDtoWarehouseResponse convertStockToDto(Stock stock) {
         StockDtoWarehouseResponse responseDto = new StockDtoWarehouseResponse();
         responseDto.setId(stock.getId());
@@ -111,6 +143,11 @@ public class WarehouseServiceImpl implements WarehouseService {
         }
 
         return responseDto;
+    }
+
+    @Override
+    public Optional<Warehouse> findById(Long warehouseId) {
+        return warehouseRepository.findById(warehouseId);
     }
 
 }

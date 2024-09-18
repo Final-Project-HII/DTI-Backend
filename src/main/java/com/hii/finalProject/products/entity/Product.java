@@ -39,9 +39,7 @@ public class Product implements Serializable {
     private List<ProductImage> productImages = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-
     @JsonIgnore
-
     private List<Stock> stocks = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
@@ -54,6 +52,7 @@ public class Product implements Serializable {
     @JsonIgnore
     private List<StockMutation> stockMutations = new ArrayList<>();
 }
+
 
 //    @Column(name = "deleted_at")
 //    private Instant deletedAt;
