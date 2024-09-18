@@ -53,6 +53,7 @@ public class Product implements Serializable {
     @OneToMany(mappedBy = "product")
     @JsonIgnore
     private List<StockMutation> stockMutations = new ArrayList<>();
+}
 
 //    @Column(name = "deleted_at")
 //    private Instant deletedAt;

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface WarehouseService {
-    Page<Warehouse> getAllWarehouses(String name, String cityName, int page, int size);
+    Page<Warehouse> getAllWarehouses(String name, String cityName, int page, Integer size);
     Warehouse getWarehouseById(Long id);
     Warehouse createWarehouse(WarehouseDTO data);
     Warehouse updateWarehouse(Long id, WarehouseDTO data);

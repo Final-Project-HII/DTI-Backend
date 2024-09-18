@@ -85,23 +85,6 @@ public class UserController {
     }
 
 
-
-    @GetMapping("/profile")
-    public ResponseEntity<Response<ProfileResponseDTO>> getProfileData(){
-        var claims = Claims.getClaimsFromJwt();
-        var email = (String) claims.get("sub");
-        return Response.successfulResponse("Profile data has been fetched",userService.getProfileData(email));
-    }
-
-    @PutMapping("/profile")
-    public ResponseEntity<Response<ProfileResponseDTO>> updateProfile(@ModelAttribute ProfileRequestDTO profileRequestDTO) {
-        var claims = Claims.getClaimsFromJwt();
-        var email = (String) claims.get("sub");
-        return Response.successfulResponse("User profile update successfully", userService.updateProfile(email,profileRequestDTO));
-    }
-
-
-
     @GetMapping("/profile")
     public ResponseEntity<Response<ProfileResponseDTO>> getProfileData(){
         var claims = Claims.getClaimsFromJwt();

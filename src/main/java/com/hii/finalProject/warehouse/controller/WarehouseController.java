@@ -26,7 +26,7 @@ public class WarehouseController {
 
 
     @GetMapping("")
-    public ResponseEntity<Response<Page<Warehouse>>> getWarehouseList(@RequestParam(value = "name",required = false) String name, @RequestParam(value = "cityName",required = false) String cityName, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size){
+    public ResponseEntity<Response<Page<Warehouse>>> getWarehouseList(@RequestParam(value = "name",required = false) String name, @RequestParam(value = "cityName",required = false) String cityName, @RequestParam(defaultValue = "0") int page, @RequestParam(required = false) Integer size){
         return Response.successfulResponse("Warehouse list is successfully fetched", warehouseService.getAllWarehouses(name,cityName, page,size));
     }
 

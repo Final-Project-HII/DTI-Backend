@@ -18,6 +18,7 @@ import com.hii.finalProject.warehouse.repository.WarehouseRepository;
 import com.hii.finalProject.warehouse.service.WarehouseService;
 import com.hii.finalProject.warehouse.specification.WarehouseListSpecification;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.geo.Point;
@@ -39,11 +40,20 @@ public class WarehouseServiceImpl implements WarehouseService {
         this.addressService = addressService;
     }
 
-    @Override
-    public Page<Warehouse> getAllWarehouses(String name, String cityName, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Specification<Warehouse> specification = Specification.where(WarehouseListSpecification.byWarehouseName(name).and(WarehouseListSpecification.byCity(cityName)).and(WarehouseListSpecification.notDeleted()));
-        return warehouseRepository.findAll(specification,pageable);
+    public Page<Warehouse> getAllWarehouses(String name, String cityName, int page, Integer size) {
+        Specification<Warehouse> specification = Specification.where(WarehouseListSpecification.byWarehouseName(name)
+                .and(WarehouseListSpecification.byCity(cityName))
+                .and(WarehouseListSpecification.notDeleted()));
+
+        if (size == null) {
+            // If size is null, return all results without pagination
+            List<Warehouse> allWarehouses = warehouseRepository.findAll(specification);
+            return new PageImpl<>(allWarehouses);
+        } else {
+            // If size is provided, use pagination
+            Pageable pageable = PageRequest.of(page, size);
+            return warehouseRepository.findAll(specification, pageable);
+        }
     }
 
     @Override
@@ -101,10 +111,6 @@ public class WarehouseServiceImpl implements WarehouseService {
         }
 
         return responseDto;
-    }
-    @Override
-    public Optional<Warehouse> findById(Long warehouseId) {
-        return warehouseRepository.findById(warehouseId);
     }
 
 }

@@ -62,26 +62,25 @@ public class RajaOngkirServiceImpl {
         city.setName(result.getCityName());
         return city;
     }
+}
+@Data
+class RajaOngkirResponse {
+    private RajaOngkirData rajaongkir;
+}
 
-    @Data
-    class RajaOngkirResponse {
-        private RajaOngkirData rajaongkir;
-    }
+@Data
+class RajaOngkirData {
+    @JsonProperty("results")
+    private List<RajaOngkirCityResult> results;  // Changed to List
+}
 
-    @Data
-    class RajaOngkirData {
-        @JsonProperty("results")
-        private List<RajaOngkirCityResult> results;  // Changed to List
-    }
+@Data
+class RajaOngkirCityResult {
+    @JsonProperty("city_id")
+    private String cityId;
 
-    @Data
-    class RajaOngkirCityResult {
-        @JsonProperty("city_id")
-        private String cityId;
+    @JsonProperty("city_name")
+    private String cityName;
 
-        @JsonProperty("city_name")
-        private String cityName;
-
-    }
 }
 

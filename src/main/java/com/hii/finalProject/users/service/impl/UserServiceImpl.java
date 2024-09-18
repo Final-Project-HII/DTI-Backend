@@ -73,12 +73,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean canManageWarehouse(User user, Integer warehouseId) {
-        return user.getRole() == Role.SUPER ||
-                (user.getRole() == Role.ADMIN && user.getWarehouseId().equals(warehouseId));
-    }
-
-    @Override
     public UserDTO createUser(UserDTO userDTO) {
         User user = convertToEntity(userDTO);
         User savedUser = userRepository.save(user);
@@ -311,11 +305,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public String sendResetPasswordLink(String email) {
         Optional<User> userData = userRepository.findByEmail(email);
+        if(userData.isEmpty() || (userData.get().getPassword() == null && userData.get().getIsVerified())){
+            return "Not Registered";
+        }
         if(!userData.get().getIsVerified()){
             return "Not Verified";
-        }
-        if(userData.isEmpty() || userData.get().getPassword() == null){
-            return "Not Registered";
         }
         if (authRedisRepository.isResetPasswordLinkValid(email)) {
             authRedisRepository.deleteResetPasswordLink(email);
