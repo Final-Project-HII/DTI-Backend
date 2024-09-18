@@ -50,7 +50,7 @@ public class WarehouseServiceImpl implements WarehouseService {
     @Override
     public Warehouse findNearestWarehouse(Long addressId) {
         Address address = addressService.getAddressById(addressId);
-        return warehouseRepository.findNearestWarehouse(address.getLat(), address.getLon());
+        return warehouseRepository.findNearestWarehouse(address.getLon(), address.getLat());
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.hii.finalProject.auth.helpers.Claims;
 import com.hii.finalProject.order.dto.OrderDTO;
 import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.order.service.OrderService;
+import com.hii.finalProject.response.Response;
 import com.hii.finalProject.users.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -46,7 +47,7 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<OrderDTO>> getUserOrders(
+    public ResponseEntity<Response<Page<OrderDTO>>> getUserOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -58,7 +59,7 @@ public class OrderController {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
         Page<OrderDTO> orders = orderService.getOrdersByUserId(userId, pageRequest);
-        return ResponseEntity.ok(orders);
+        return Response.successfulResponse("orders succesfull fetched", orders);
     }
 
     @GetMapping("/filtered")
