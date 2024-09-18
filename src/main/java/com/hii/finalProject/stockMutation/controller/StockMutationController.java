@@ -55,6 +55,7 @@ public class StockMutationController {
 //
 //        return Response.successfulResponse("Stock Mutation processed successfully", response);
 //    }
+
     @PutMapping("/process")
     @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<Response<StockMutationResponseDto>> processMutation(
@@ -86,6 +87,7 @@ public class StockMutationController {
 
         return Response.successfulResponse("User Stock Mutations retrieved successfully", response);
     }
+
 //    @GetMapping("/user")
 //    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
 //    public ResponseEntity<Response<List<StockMutationResponseDto>>> getAllStock() {

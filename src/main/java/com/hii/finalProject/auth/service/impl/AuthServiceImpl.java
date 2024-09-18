@@ -11,11 +11,10 @@ import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
 import com.hii.finalProject.users.service.UserService;
 import lombok.extern.java.Log;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -32,12 +31,14 @@ public class AuthServiceImpl implements AuthService {
 
     private final AuthRedisRepository authRedisRepository;
     private final UserService userService;
+    private final JwtDecoder jwtDecoder;
 
-    public AuthServiceImpl(JwtEncoder jwtEncoder, UserRepository userRepository, AuthRedisRepository authRedisRepository, UserService userService) {
+    public AuthServiceImpl(JwtEncoder jwtEncoder, UserRepository userRepository, AuthRedisRepository authRedisRepository, UserService userService, @Qualifier("jwtDecoder") JwtDecoder jwtDecoder) {
         this.jwtEncoder = jwtEncoder;
         this.userRepository = userRepository;
         this.authRedisRepository = authRedisRepository;
         this.userService = userService;
+        this.jwtDecoder = jwtDecoder;
     }
 
     @Override
@@ -106,5 +107,24 @@ public class AuthServiceImpl implements AuthService {
         authRedisRepository.saveJwtKey(data.getEmail(), jwt);
         response.setAccessToken(jwt);
         return response;
+    }
+
+    @Override
+    public void logout(String token) {
+        try {
+            Jwt jwt = jwtDecoder.decode(token);
+            String userEmail = jwt.getSubject();
+
+            // Remove the token from Redis
+            authRedisRepository.deleteJwtKey(userEmail);
+
+            // Add the token to a blacklist
+            authRedisRepository.blackListJwt(userEmail, token);
+
+            log.info("User logged out: " + userEmail);
+        } catch (JwtException e) {
+            log.warning("Invalid token during logout: " + e.getMessage());
+            throw new RuntimeException("Invalid token");
+        }
     }
 }

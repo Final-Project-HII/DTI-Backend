@@ -8,11 +8,11 @@ import com.hii.finalProject.stockMutation.entity.StockMutation;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.ColumnDefault;
-
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
 
 @Entity
 @Table(name = "warehouse",schema = "developmentfp")
@@ -30,7 +30,7 @@ public class Warehouse {
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "city_id", nullable = false)
-    private City cityId;
+    private City city;
 
     @Column(name = "postal_code", nullable = false)
     private String postalCode;
@@ -54,12 +54,9 @@ public class Warehouse {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
-
-    @PrePersist
-    protected void onCreate(){
-        createdAt = Instant.now();
-        updatedAt = Instant.now();
-    }
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+  
     @OneToMany(mappedBy = "origin")
     @JsonIgnore
     private List<StockMutation> outgoingMutations = new ArrayList<>();
@@ -67,4 +64,14 @@ public class Warehouse {
     @OneToMany(mappedBy = "destination")
     @JsonIgnore
     private List<StockMutation> incomingMutations = new ArrayList<>();
+
+    @PrePersist
+    protected void onCreate(){
+        createdAt = Instant.now();
+        updatedAt = Instant.now();
+    }
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = Instant.now();
+    }
 }
