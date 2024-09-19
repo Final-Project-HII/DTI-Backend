@@ -23,7 +23,6 @@ public class OrderController {
     private final OrderService orderService;
     private final UserService userService;
 
-    @Autowired
     public OrderController(OrderService orderService, UserService userService) {
         this.orderService = orderService;
         this.userService = userService;
@@ -31,12 +30,12 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<OrderDTO> createOrder(
-            @RequestParam Long warehouseId,
             @RequestParam Long addressId,
             @RequestParam Long courierId) {
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
         Long userId = userService.getUserByEmail(userEmail);
-        OrderDTO orderDTO = orderService.createOrder(userId, warehouseId, addressId, courierId);
+        Long placeholderWarehouseId = null; // or use any valid placeholder value
+        OrderDTO orderDTO = orderService.createOrder(userId, placeholderWarehouseId, addressId, courierId);
         return ResponseEntity.ok(orderDTO);
     }
 
