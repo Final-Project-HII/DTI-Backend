@@ -22,12 +22,6 @@ public class Cart implements Serializable {
     @Column(name = "id", nullable = false)
     private Long id;
 
-//    @OneToOne(fetch = FetchType.LAZY, optional = false)
-//    @JoinColumn(name = "user_id",referencedColumnName = "id", nullable = false)
-//    @ToString.Exclude
-//    @EqualsAndHashCode.Exclude
-
-
     @NotNull(message = "User id is required")
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id", referencedColumnName = "id")

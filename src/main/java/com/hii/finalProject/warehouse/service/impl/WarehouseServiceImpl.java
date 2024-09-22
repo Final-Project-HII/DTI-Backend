@@ -67,7 +67,8 @@ public class WarehouseServiceImpl implements WarehouseService {
     @Override
     public Warehouse findNearestWarehouse(String email) {
         Address address = addressService.getActiveUserAddress(email);
-        return warehouseRepository.findNearestWarehouse(address.getLat(), address.getLon());
+        System.out.println(address);
+        return warehouseRepository.findNearestWarehouse(address.getLon(),address.getLat());
     }
 
     @Override
