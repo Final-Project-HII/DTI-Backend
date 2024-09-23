@@ -62,8 +62,8 @@ public class CartItemServiceImpl implements CartItemService {
         String cartItemKey = "cartItems::" + userId + ":" + productId;
         redisTemplate.opsForValue().set(cartItemKey, dto, 1, TimeUnit.HOURS);
 
-        // Clear cart DTO cache to force a refresh
-        cartService.clearCartCache(userId);
+        // Update cart totals
+        cartService.updateCartTotals(userId);
 
         return dto;
     }
@@ -104,11 +104,9 @@ public class CartItemServiceImpl implements CartItemService {
 
         CartItemDTO dto = convertToDTO(updatedItem);
 
-        // Update cart item cache
         String cartItemKey = "cartItems::" + userId + ":" + productId;
         redisTemplate.opsForValue().set(cartItemKey, dto, 1, TimeUnit.HOURS);
 
-        // Clear cart DTO cache to force a refresh
         cartService.clearCartCache(userId);
 
         return dto;
@@ -124,10 +122,14 @@ public class CartItemServiceImpl implements CartItemService {
 
     private CartItemDTO convertToDTO(CartItem cartItem) {
         CartItemDTO dto = new CartItemDTO();
+        dto.setId(cartItem.getId());
         dto.setProductId(cartItem.getProduct().getId());
         dto.setProductName(cartItem.getProduct().getName());
         dto.setQuantity(cartItem.getQuantity());
-//        dto.setPrice(cartItem.getProduct().getPrice());
+        dto.setPrice(cartItem.getProduct().getPrice());
+        dto.setTotalPrice(cartItem.getQuantity() * cartItem.getProduct().getPrice());
+        dto.setWeight(cartItem.getProduct().getWeight());
+        dto.setTotalWeight(cartItem.getQuantity() * cartItem.getProduct().getWeight());
         return dto;
     }
 }

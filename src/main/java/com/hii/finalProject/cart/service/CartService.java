@@ -6,19 +6,12 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 
 public interface CartService {
-    @Cacheable(value = "cartDTOs", key = "#userId")
     CartDTO getCartDTO(Long userId);
-
     Cart getCartEntity(Long userId);
-
-    @CachePut(value = "cartDTOs", key = "#userId")
     CartDTO createCartDTO(Long userId);
-
     Cart createCartEntity(Long userId);
-
     CartDTO updateCart(Long userId, Cart updatedCart);
-
     void clearCartCache(Long userId);
-
     void clearCart(Long userId);
+    void updateCartTotals(Long userId);
 }

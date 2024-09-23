@@ -8,8 +8,6 @@ import com.hii.finalProject.cartItem.dto.CartItemDTO;
 import com.hii.finalProject.cartItem.entity.CartItem;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +28,6 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-//    @Cacheable(value = "cartDTOs", key = "#userId")
     public CartDTO getCartDTO(Long userId) {
         Cart cart = getCartEntity(userId);
         return convertToDTO(cart);
@@ -48,7 +45,6 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-//    @CachePut(value = "cartDTOs", key = "#userId")
     public CartDTO createCartDTO(Long userId) {
         Cart cart = createCartEntity(userId);
         return convertToDTO(cart);
@@ -79,14 +75,38 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public void clearCart(Long userId) {
-
+        Cart cart = getCartEntity(userId);
+        cart.getItems().clear();
+        cartRepository.save(cart);
+        clearCartCache(userId);
     }
+
+    @Override
+    @Transactional
+    public void updateCartTotals(Long userId) {
+        Cart cart = getCartEntity(userId);
+        int totalPrice = 0;
+        int totalWeight = 0;
+
+        for (CartItem item : cart.getItems()) {
+            totalPrice += item.getQuantity() * item.getProduct().getPrice();
+            totalWeight += item.getQuantity() * item.getProduct().getWeight();
+        }
+
+        cart.setTotalPrice(totalPrice);
+        cart.setTotalWeight(totalWeight);
+        cartRepository.save(cart);
+        clearCartCache(userId);
+    }
+
 
     private CartDTO convertToDTO(Cart cart) {
         CartDTO cartDTO = new CartDTO();
         cartDTO.setId(cart.getId());
         cartDTO.setUserId(cart.getUser().getId());
         cartDTO.setItems(cart.getItems().stream().map(this::convertToCartItemDTO).toList());
+        cartDTO.setTotalPrice(cart.getTotalPrice());
+        cartDTO.setTotalWeight(cart.getTotalWeight());
         return cartDTO;
     }
 
@@ -96,7 +116,10 @@ public class CartServiceImpl implements CartService {
         dto.setProductId(cartItem.getProduct().getId());
         dto.setProductName(cartItem.getProduct().getName());
         dto.setQuantity(cartItem.getQuantity());
-        dto.setPrice(Double.valueOf(cartItem.getProduct().getPrice()));
+        dto.setPrice(cartItem.getProduct().getPrice());
+        dto.setTotalPrice(cartItem.getQuantity() * cartItem.getProduct().getPrice());
+        dto.setWeight(cartItem.getProduct().getWeight());
+        dto.setTotalWeight(cartItem.getQuantity() * cartItem.getProduct().getWeight());
         return dto;
     }
 }
