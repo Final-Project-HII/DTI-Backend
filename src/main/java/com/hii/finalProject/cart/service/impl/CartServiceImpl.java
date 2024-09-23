@@ -12,7 +12,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class CartServiceImpl implements CartService {
@@ -28,6 +30,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public CartDTO getCartDTO(Long userId) {
         Cart cart = getCartEntity(userId);
         return convertToDTO(cart);
@@ -104,9 +107,25 @@ public class CartServiceImpl implements CartService {
         CartDTO cartDTO = new CartDTO();
         cartDTO.setId(cart.getId());
         cartDTO.setUserId(cart.getUser().getId());
-        cartDTO.setItems(cart.getItems().stream().map(this::convertToCartItemDTO).toList());
-        cartDTO.setTotalPrice(cart.getTotalPrice());
-        cartDTO.setTotalWeight(cart.getTotalWeight());
+
+        List<CartItemDTO> itemDTOs = cart.getItems().stream()
+                .map(this::convertToCartItemDTO)
+                .collect(Collectors.toList());
+
+        cartDTO.setItems(itemDTOs);
+
+        // Recalculate total price and total weight
+        int totalPrice = itemDTOs.stream()
+                .mapToInt(CartItemDTO::getTotalPrice)
+                .sum();
+
+        int totalWeight = itemDTOs.stream()
+                .mapToInt(CartItemDTO::getTotalWeight)
+                .sum();
+
+        cartDTO.setTotalPrice(totalPrice);
+        cartDTO.setTotalWeight(totalWeight);
+
         return cartDTO;
     }
 
