@@ -22,11 +22,17 @@ public class CartController {
     }
 
     @GetMapping
-
     public ResponseEntity<CartDTO> getCart() {
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
         Long userId = userService.getUserByEmail(userEmail);
         CartDTO cartDTO = cartService.getCartDTO(userId);
         return ResponseEntity.ok(cartDTO);
+    }
+
+    @GetMapping("/total-weight")
+    public ResponseEntity<Integer> getCartTotalWeight() {
+        String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
+        Integer totalWeight = cartService.getCartTotalWeight(userEmail);
+        return ResponseEntity.ok(totalWeight);
     }
 }

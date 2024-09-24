@@ -8,6 +8,7 @@ import com.hii.finalProject.cartItem.dto.CartItemDTO;
 import com.hii.finalProject.cartItem.entity.CartItem;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
+import com.hii.finalProject.users.service.UserService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,11 +23,13 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final UserService userService;
 
-    public CartServiceImpl(CartRepository cartRepository, UserRepository userRepository, RedisTemplate<String, Object> redisTemplate) {
+    public CartServiceImpl(CartRepository cartRepository, UserRepository userRepository, RedisTemplate<String, Object> redisTemplate, UserService userService) {
         this.cartRepository = cartRepository;
         this.userRepository = userRepository;
         this.redisTemplate = redisTemplate;
+        this.userService = userService;
     }
 
     @Override
@@ -100,6 +103,13 @@ public class CartServiceImpl implements CartService {
         cart.setTotalWeight(totalWeight);
         cartRepository.save(cart);
         clearCartCache(userId);
+    }
+
+    @Override
+    public Integer getCartTotalWeight(String userEmail) {
+        Long userId = userService.getUserByEmail(userEmail);
+        CartDTO cartDTO = getCartDTO(userId);
+        return cartDTO.getTotalWeight();
     }
 
 

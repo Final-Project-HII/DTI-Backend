@@ -14,4 +14,5 @@ public interface CartService {
     void clearCartCache(Long userId);
     void clearCart(Long userId);
     void updateCartTotals(Long userId);
+    Integer getCartTotalWeight(String userEmail);
 }

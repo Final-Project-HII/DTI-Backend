@@ -26,4 +26,5 @@ public class OrderDTO {
     private String courierName;
     private String originCity;
     private String destinationCity;
+
 }
