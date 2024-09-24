@@ -1,6 +1,8 @@
 package com.hii.finalProject.stock.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import jakarta.persistence.*;
@@ -20,10 +22,12 @@ public class Stock {
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
+    @JsonIgnore
     private Product product;
 
     @ManyToOne
     @JoinColumn(name = "warehouse_id", nullable = false)
+    @JsonBackReference
     private Warehouse warehouse;
 
     @Column(name = "quantity", nullable = false)

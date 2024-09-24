@@ -3,6 +3,7 @@ package com.hii.finalProject.users.service;
 
 import com.hii.finalProject.users.dto.*;
 import com.hii.finalProject.users.entity.User;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +16,9 @@ public interface UserService {
     Optional<UserDTO> updateUser(Long id, UserDTO userDTO);
     void deleteUser(Long id);
 
-    User register(UserRegisterRequestDTO user);
+    UserResponseDTO register(UserRegisterRequestDTO user);
+
+    UserResponseDTO registerAdmin(AdminRegisterRequestDTO user);
     User registerSocial(UserRegisterSocialRequestDTO user);
 
     User setPassword(ManagePasswordDTO data);
@@ -30,8 +33,14 @@ public interface UserService {
     String sendResetPasswordLink(String email);
     Boolean checkResetPasswordLinkIsValid(CheckResetPasswordLinkDTO data);
 
+//    boolean canManageWarehouse(User user, Integer warehouseId);
+
+
     ProfileResponseDTO updateProfile(String email, ProfileRequestDTO profileRequestDTO);
 
     ProfileResponseDTO getProfileData(String email);
+
+    Page<UserResponseDTO> getAllUser(String email, String role, int page, int size);
+
 }
 

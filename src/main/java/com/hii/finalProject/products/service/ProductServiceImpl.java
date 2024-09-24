@@ -3,6 +3,7 @@ package com.hii.finalProject.products.service;
 import com.hii.finalProject.categories.entity.Categories;
 import com.hii.finalProject.categories.repository.CategoriesRepository;
 import com.hii.finalProject.cloudinary.CloudinaryService;
+import com.hii.finalProject.exceptions.UniqueNameViolationException;
 import com.hii.finalProject.image.dto.ProductImageRequestDto;
 import com.hii.finalProject.image.dto.ProductImageResponseDto;
 import com.hii.finalProject.image.entity.ProductImage;
@@ -14,7 +15,6 @@ import com.hii.finalProject.products.dto.UpdateProductRequestDto;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.stock.dto.StockDtoProductResponse;
-import com.hii.finalProject.stock.dto.StockDtoResponse;
 import com.hii.finalProject.stock.entity.Stock;
 import com.hii.finalProject.stock.repository.StockRepository;
 import jakarta.persistence.EntityManager;
@@ -180,6 +180,17 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     public ProductListDtoResponse createProduct(NewProductRequestDto productRequestDTO, List<MultipartFile> productImages) {
+        // Validasi input
+        if (productRequestDTO.getName() == null || productRequestDTO.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Product name cannot be null or empty");
+        }
+
+        String productName = productRequestDTO.getName().trim();
+
+        // Cek apakah nama product sudah ada
+        if (productRepository.existsByNameIgnoreCase(productName)) {
+            throw new UniqueNameViolationException("Product", productName);
+        }
         Product product = mapToProduct(productRequestDTO);
         Categories categories = categoriesRepository.findById(productRequestDTO.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));

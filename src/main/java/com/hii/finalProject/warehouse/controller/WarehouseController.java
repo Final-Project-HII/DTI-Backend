@@ -1,7 +1,9 @@
 package com.hii.finalProject.warehouse.controller;
 
+import com.hii.finalProject.auth.helpers.Claims;
 import com.hii.finalProject.response.Response;
 import com.hii.finalProject.warehouse.dto.WarehouseDTO;
+import com.hii.finalProject.warehouse.dto.WarehouseDetailResponseDto;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.warehouse.service.WarehouseService;
 import org.springframework.data.domain.Page;
@@ -24,7 +26,7 @@ public class WarehouseController {
 
 
     @GetMapping("")
-    public ResponseEntity<Response<Page<Warehouse>>> getWarehouseList(@RequestParam(value = "name",required = false) String name, @RequestParam(value = "cityName",required = false) String cityName, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size){
+    public ResponseEntity<Response<Page<Warehouse>>> getWarehouseList(@RequestParam(value = "name",required = false) String name, @RequestParam(value = "cityName",required = false) String cityName, @RequestParam(defaultValue = "0") int page, @RequestParam(required = false) Integer size){
         return Response.successfulResponse("Warehouse list is successfully fetched", warehouseService.getAllWarehouses(name,cityName, page,size));
     }
 
@@ -49,8 +51,19 @@ public class WarehouseController {
         return Response.successfulResponse("Warehouse has been successfully deleted");
     }
 
-    @GetMapping("/nearest-warehouse/{id}")
-    public ResponseEntity<Response<Warehouse>> getNearestWarehouse(@PathVariable("id") Long addressId){
-        return Response.successfulResponse("Nearest warehouse is successfully fetched", warehouseService.findNearestWarehouse(addressId));
+//    @GetMapping("/{id}")
+//    public ResponseEntity<Response<WarehouseDetailResponseDto>> getWarehouseById(@PathVariable Long id) {
+//        WarehouseDetailResponseDto warehouseDetail = warehouseService.getWarehouseDetailById(id);
+//        return Response.successfulResponse(
+//                "Warehouse detail fetched successfully",
+//                warehouseDetail
+//        );
+
+
+    @GetMapping("/nearest-warehouse")
+    public ResponseEntity<Response<Warehouse>> getNearestWarehouse(){
+        var claims = Claims.getClaimsFromJwt();
+        var email = (String) claims.get("sub");
+        return Response.successfulResponse("Nearest warehouse is successfully fetched", warehouseService.findNearestWarehouse(email));
     }
 }

@@ -1,38 +1,45 @@
 package com.hii.finalProject.stockMutation.entity;
 
-import com.hii.finalProject.stockMutation.entity.MutationType;
-import com.hii.finalProject.stockMutation.entity.StockMutationStatus;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.hii.finalProject.products.entity.Product;
+import com.hii.finalProject.warehouse.entity.Warehouse;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "stock_mutations")
+@Table(name = "stock_mutations", schema = "developmentfp")
+
 public class StockMutation {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "stock_mutation_id_gen")
-    @SequenceGenerator(name = "stock_mutation_id_gen", sequenceName = "stock_mutation_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "product_id", nullable = false)
-    private Integer productId;
+    @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
+    @JsonBackReference
+    private Product product;
 
-    @Column(name = "origin", nullable = false)
-    private Integer origin;
+    @ManyToOne
+    @JoinColumn(name = "origin", nullable = false)
+    private Warehouse origin;
 
-    @Column(name = "destination", nullable = false)
-    private Integer destination;
+    @ManyToOne
+    @JoinColumn(name = "destination", nullable = false)
+    private Warehouse destination;
 
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "mutation_type", nullable = false)
-    private MutationType mutationType = MutationType.MANUAL;
+//    @Enumerated(EnumType.STRING)
+    @Column(name = "mutation_type")
+    private MutationType mutationType;
 
-    @Column(name = "status", nullable = false)
+//    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
     private StockMutationStatus status;
 
     @Column(name = "remarks")
@@ -51,7 +58,7 @@ public class StockMutation {
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     @Column(name = "completed_at")
-    private LocalDateTime completedAt;
+    private LocalDateTime completedAt = LocalDateTime.now();
 
     @PreUpdate
     protected void onUpdate() {
