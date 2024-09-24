@@ -88,8 +88,8 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = new Order();
         order.setUser(user);
-        String invoiceId = generateInvoiceId();
-        order.setInvoiceId(invoiceId);
+//        String invoiceId = generateInvoiceId();
+//        order.setInvoiceId(invoiceId);
         order.setWarehouse(nearestWarehouse);
         order.setAddress(address);
         order.setCourier(courier);
@@ -127,17 +127,17 @@ public class OrderServiceImpl implements OrderService {
         return convertToDTO(savedOrder);
     }
 
-    private String generateInvoiceId() {
-        LocalDateTime now = LocalDateTime.now();
-        String datePart = now.format(DATE_FORMATTER);
-        String sequencePart = String.format("%04d", sequence.getAndIncrement());
-
-        if (sequence.get() > 9999) {
-            sequence.set(1);
-        }
-
-        return INVOICE_PREFIX + "-" + datePart + "-" + sequencePart;
-    }
+//    private String generateInvoiceId() {
+//        LocalDateTime now = LocalDateTime.now();
+//        String datePart = now.format(DATE_FORMATTER);
+//        String sequencePart = String.format("%04d", sequence.getAndIncrement());
+//
+//        if (sequence.get() > 9999) {
+//            sequence.set(1);
+//        }
+//
+//        return INVOICE_PREFIX + "-" + datePart + "-" + sequencePart;
+//    }
 
 
     @Override
