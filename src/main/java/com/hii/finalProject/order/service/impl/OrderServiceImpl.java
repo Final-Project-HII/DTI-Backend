@@ -25,8 +25,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -111,20 +113,52 @@ public class OrderServiceImpl implements OrderService {
 
             order.getItems().add(orderItem);
             originalAmount = originalAmount.add(orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())));
-            totalWeight += cartItem.getProduct().getWeight() * cartItem.getQuantity();
             totalQuantity += cartItem.getQuantity();
         }
 
         order.setOriginalAmount(originalAmount);
-        order.setFinalAmount(originalAmount);
-        order.setTotalWeight(totalWeight);
         order.setTotalQuantity(totalQuantity);
+
+        Integer totalWeightInGrams = cartService.getCartTotalWeight(user.getEmail());
+        order.setTotalWeight(totalWeightInGrams);
+
+        BigDecimal totalWeightInKg = BigDecimal.valueOf(totalWeightInGrams)
+                .divide(BigDecimal.valueOf(1000), 2, RoundingMode.HALF_UP);
+
+        // Calculate dummy shipping cost
+        BigDecimal shippingCost = calculateDummyShippingCost(courier, totalWeightInKg, nearestWarehouse, address);
+        order.setShippingCost(shippingCost);
+
+        // Calculate final amount
+        BigDecimal finalAmount = originalAmount.add(shippingCost);
+        order.setFinalAmount(finalAmount);
 
         Order savedOrder = orderRepository.save(order);
 
-        cartService.clearCart(userId);
-
         return convertToDTO(savedOrder);
+    }
+
+    private BigDecimal calculateDummyShippingCost(Courier courier, BigDecimal totalWeightInKg, Warehouse warehouse, Address address) {
+        // Base cost
+        BigDecimal baseCost = new BigDecimal("10.00");
+
+        // Cost per kg (random between $0.50 and $2.00)
+        BigDecimal costPerKg = BigDecimal.valueOf(0.50 + new Random().nextDouble() * 1.50)
+                .setScale(2, RoundingMode.HALF_UP);
+
+        // Distance factor (random between 1.0 and 2.0)
+        BigDecimal distanceFactor = BigDecimal.valueOf(1.0 + new Random().nextDouble())
+                .setScale(2, RoundingMode.HALF_UP);
+
+        // Courier factor (random between 0.8 and 1.2)
+        BigDecimal courierFactor = BigDecimal.valueOf(0.8 + new Random().nextDouble() * 0.4)
+                .setScale(2, RoundingMode.HALF_UP);
+
+        // Calculate shipping cost
+        BigDecimal weightCost = costPerKg.multiply(totalWeightInKg);
+        BigDecimal totalCost = baseCost.add(weightCost).multiply(distanceFactor).multiply(courierFactor);
+
+        return totalCost.setScale(2, RoundingMode.HALF_UP);
     }
 
     private String generateInvoiceId() {

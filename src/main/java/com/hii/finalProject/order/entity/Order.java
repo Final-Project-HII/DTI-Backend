@@ -59,6 +59,9 @@ public class Order {
     @JoinColumn(name = "courier_id", nullable = false)
     private Courier courier;
 
+    @Column(name = "shipping_cost", nullable = false)
+    private BigDecimal shippingCost;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
