@@ -1,9 +1,12 @@
 package com.hii.finalProject.payment.controller;
 
+import com.hii.finalProject.payment.entity.Payment;
 import com.hii.finalProject.payment.entity.PaymentMethod;
 import com.hii.finalProject.payment.entity.PaymentRequest;
 import com.hii.finalProject.payment.entity.PaymentStatus;
 import com.hii.finalProject.payment.service.PaymentService;
+import com.hii.finalProject.paymentProof.entity.PaymentProof;
+import com.hii.finalProject.paymentProof.service.PaymentProofService;
 import com.hii.finalProject.paymentProof.service.impl.PaymentProofServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -18,11 +22,11 @@ import java.util.Map;
 public class PaymentController {
 
     private final PaymentService paymentService;
-    private final PaymentProofServiceImpl paymentProofServiceImpl;
+    private final PaymentProofService paymentProofService;
 
-    public PaymentController(PaymentService paymentService, PaymentProofServiceImpl paymentProofServiceImpl) {
+    public PaymentController(PaymentService paymentService, PaymentProofService paymentProofService) {
         this.paymentService = paymentService;
-        this.paymentProofServiceImpl = paymentProofServiceImpl;
+        this.paymentProofService = paymentProofService;
     }
 
     @PostMapping("/create")
@@ -48,14 +52,36 @@ public class PaymentController {
     }
 
     @GetMapping("/{orderId}/status")
-    public ResponseEntity<String> getPaymentStatus(@PathVariable Long orderId) {
+    public ResponseEntity<?> getPaymentStatus(@PathVariable Long orderId) {
         try {
-            PaymentStatus status = paymentService.getTransactionStatus(orderId);
-            return ResponseEntity.ok(status.toString());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to retrieve payment status");
+            Payment payment = paymentService.getPaymentByOrderId(orderId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("orderId", payment.getOrderId());
+            response.put("amount", payment.getAmount());
+            response.put("paymentMethod", payment.getPaymentMethod().toString());
+            response.put("status", payment.getStatus().toString());
+            response.put("createdAt", payment.getCreatedAt());
+
+            if (payment.getPaymentMethod() == PaymentMethod.PAYMENT_PROOF) {
+                PaymentProof paymentProof = payment.getPaymentProof();
+                if (paymentProof != null) {
+                    response.put("paymentProofUrl", paymentProof.getPaymentProofUrl());
+                }
+            } else if (payment.getPaymentMethod() == PaymentMethod.PAYMENT_GATEWAY) {
+                response.put("transactionId", payment.getName());
+            }
+
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("statusCode", 404);
+            errorResponse.put("message", "Payment not found for order: " + orderId);
+            errorResponse.put("success", false);
+            return ResponseEntity.status(404).body(errorResponse);
         }
     }
+
 
     @PostMapping("/{orderId}/approve-proof")
     public ResponseEntity<String> approvePaymentProof(@PathVariable Long orderId) {

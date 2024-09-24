@@ -146,6 +146,12 @@ public class PaymentServiceImpl implements PaymentService {
         return PaymentStatus.FAILED;
     }
 
+    @Override
+    public Payment getPaymentByOrderId(Long orderId) {
+        return paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderId));
+    }
+
     private PaymentStatus getMidtransTransactionStatus(Long orderId) {
         String url = "https://api.sandbox.midtrans.com/v2/" + orderId + "/status";
         HttpHeaders headers = new HttpHeaders();
