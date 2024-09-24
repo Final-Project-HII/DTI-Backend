@@ -1,6 +1,7 @@
 package com.hii.finalProject.users.specification;
 
 import com.hii.finalProject.address.entity.Address;
+import com.hii.finalProject.users.entity.Role;
 import com.hii.finalProject.users.entity.User;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -16,9 +17,9 @@ public class UserSpecification {
         });
     }
 
-    public static Specification<User  > byRole(String role) {
+    public static Specification<User  > byRole(Role role) {
         return ((root, query, cb) -> {
-            if(role == null || role.isEmpty()){
+            if(role == null){
                 return cb.conjunction();
             }
             return cb.equal(root.get("role"), role);

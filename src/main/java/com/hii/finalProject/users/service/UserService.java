@@ -9,12 +9,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
-    List<UserDTO> getAllUsers();
     Optional<UserDTO> getUserById(Long id);
     Long getUserByEmail(String email);
     UserDTO createUser(UserDTO userDTO);
     Optional<UserDTO> updateUser(Long id, UserDTO userDTO);
     void deleteUser(Long id);
+
+    UserResponseDTO updateAdmin(AdminRegisterRequestDTO adminRegisterRequestDTO);
 
     UserResponseDTO register(UserRegisterRequestDTO user);
 
@@ -41,6 +42,7 @@ public interface UserService {
     ProfileResponseDTO getProfileData(String email);
 
     Page<UserResponseDTO> getAllUser(String email, String role, int page, int size);
-
+  
+    void toogleActiveUser(Long id);
 }
 
