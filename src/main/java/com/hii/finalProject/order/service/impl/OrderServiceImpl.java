@@ -57,12 +57,21 @@ public class OrderServiceImpl implements OrderService {
     public OrderDTO createOrder(Long userId, Long warehouseId, Long addressId, Long courierId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        Warehouse warehouse = warehouseRepository.findById(warehouseId)
-                .orElseThrow(() -> new RuntimeException("Warehouse not found with id: " + warehouseId));
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new RuntimeException("Address not found with id: " + addressId));
         Courier courier = courierRepository.findById(courierId)
                 .orElseThrow(() -> new RuntimeException("Courier not found with id: " + courierId));
+
+//        Warehouse nearestWarehouse = warehouseRepository.findAll().get(0);
+//        if (nearestWarehouse == null) {
+//            throw new RuntimeException("No warehouse found");
+//        }
+
+        Warehouse nearestWarehouse = warehouseRepository.findNearestWarehouse(address.getLon(), address.getLat());
+        if (nearestWarehouse == null) {
+            throw new RuntimeException("No warehouse found");
+        }
+        System.out.println(nearestWarehouse);
 
         Cart cart = cartService.getCartEntity(userId);
 
@@ -72,7 +81,7 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = new Order();
         order.setUser(user);
-        order.setWarehouse(warehouse);
+        order.setWarehouse(nearestWarehouse);
         order.setAddress(address);
         order.setCourier(courier);
         order.setStatus(OrderStatus.pending_payment);
@@ -98,14 +107,12 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setOriginalAmount(originalAmount);
-        order.setFinalAmount(originalAmount); // You might want to apply discounts or shipping costs here
+        order.setFinalAmount(originalAmount);
         order.setTotalWeight(totalWeight);
         order.setTotalQuantity(totalQuantity);
 
-        // Save the order using the standard save method
         Order savedOrder = orderRepository.save(order);
 
-        // Clear the cart after creating the order
         cartService.clearCart(userId);
 
         return convertToDTO(savedOrder);
@@ -162,15 +169,19 @@ public class OrderServiceImpl implements OrderService {
         dto.setInvoiceId(order.getInvoiceId());
         dto.setUserId(order.getUser().getId());
         dto.setWarehouseId(order.getWarehouse().getId());
+        dto.setWarehouseName(order.getWarehouse().getName());
         dto.setAddressId(order.getAddress().getId());
         dto.setItems(order.getItems().stream().map(this::convertToOrderItemDTO).collect(Collectors.toList()));
         dto.setOrderDate(order.getCreatedAt());
-        dto.setStatus(order.getStatus().name());  // Convert ENUM to string for DTO
+        dto.setStatus(order.getStatus().name());
         dto.setOriginalAmount(order.getOriginalAmount());
         dto.setFinalAmount(order.getFinalAmount());
         dto.setTotalWeight(order.getTotalWeight());
         dto.setTotalQuantity(order.getTotalQuantity());
         dto.setCourierId(order.getCourier().getId());
+        dto.setCourierName(order.getCourier().getCourier());
+        dto.setOriginCity(order.getWarehouse().getCity().getName());
+        dto.setDestinationCity(order.getAddress().getCity().getName());
         return dto;
     }
 

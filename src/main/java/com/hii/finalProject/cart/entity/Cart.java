@@ -32,6 +32,12 @@ public class Cart implements Serializable {
     @EqualsAndHashCode.Exclude
     private List<CartItem> items = new ArrayList<>();
 
+    @Column(name = "total_price")
+    private Integer totalPrice = 0;
+
+    @Column(name = "total_weight")
+    private Integer totalWeight = 0;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

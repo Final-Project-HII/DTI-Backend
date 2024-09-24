@@ -81,6 +81,7 @@ public class StockServiceImpl implements StockService{
         Stock updatedStock = stockRepository.save(existingStock);
         return convertToDto(updatedStock);
     }
+
     public StockDtoResponse convertToDto(Stock stock) {
         StockDtoResponse responseDto = new StockDtoResponse();
         responseDto.setId(stock.getId());

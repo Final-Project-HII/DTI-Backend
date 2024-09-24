@@ -65,6 +65,14 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new DataNotFoundException("User not found with email: " + email));
     }
 
+
+//    @Override
+//    public boolean canManageWarehouse(User user, Integer warehouseId) {
+//        return user.getRole() == Role.SUPER ||
+//                (user.getRole() == Role.ADMIN && user.getWarehouseId().equals(warehouseId));
+//    }
+
+
     @Override
     public UserDTO createUser(UserDTO userDTO) {
         User user = convertToEntity(userDTO);

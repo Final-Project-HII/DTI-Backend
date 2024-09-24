@@ -51,6 +51,15 @@ public class WarehouseController {
         return Response.successfulResponse("Warehouse has been successfully deleted");
     }
 
+//    @GetMapping("/{id}")
+//    public ResponseEntity<Response<WarehouseDetailResponseDto>> getWarehouseById(@PathVariable Long id) {
+//        WarehouseDetailResponseDto warehouseDetail = warehouseService.getWarehouseDetailById(id);
+//        return Response.successfulResponse(
+//                "Warehouse detail fetched successfully",
+//                warehouseDetail
+//        );
+
+
     @GetMapping("/nearest-warehouse")
     public ResponseEntity<Response<Warehouse>> getNearestWarehouse(){
         var claims = Claims.getClaimsFromJwt();
