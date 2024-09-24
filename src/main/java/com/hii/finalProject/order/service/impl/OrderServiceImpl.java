@@ -72,6 +72,8 @@ public class OrderServiceImpl implements OrderService {
 //            throw new RuntimeException("No warehouse found");
 //        }
 
+        //
+
         Warehouse nearestWarehouse = warehouseRepository.findNearestWarehouse(address.getLon(), address.getLat());
         if (nearestWarehouse == null) {
             throw new RuntimeException("No warehouse found");
