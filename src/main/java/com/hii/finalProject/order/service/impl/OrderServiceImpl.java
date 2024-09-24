@@ -117,10 +117,12 @@ public class OrderServiceImpl implements OrderService {
             order.getItems().add(orderItem);
             originalAmount = originalAmount.add(orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())));
             totalQuantity += cartItem.getQuantity();
+            totalWeight += cartItem.getProduct().getWeight() * cartItem.getQuantity();
         }
 
         order.setOriginalAmount(originalAmount);
         order.setTotalQuantity(totalQuantity);
+        order.setTotalWeight(totalWeight);
 
         //Get shipping cost directly from courier service
         Integer shippingCost = courierService.getCourierPrice(courierId);
