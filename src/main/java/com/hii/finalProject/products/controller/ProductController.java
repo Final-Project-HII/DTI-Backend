@@ -31,10 +31,6 @@ public class ProductController {
         ProductListDtoResponse createdProduct = productService.createProduct(productRequestDTO, productImages);
         return new ResponseEntity<>(createdProduct, HttpStatus.CREATED);
     }
-    private boolean isValidImageExtension(String fileName) {
-        String[] validExtensions = {".jpg", ".jpeg", ".png", ".gif"};
-        return Arrays.stream(validExtensions).anyMatch(ext -> fileName.toLowerCase().endsWith(ext));
-    }
     @GetMapping
     public ResponseEntity<Page<ProductListDtoResponse>> getAllProducts(
             @RequestParam(required = false) String search,

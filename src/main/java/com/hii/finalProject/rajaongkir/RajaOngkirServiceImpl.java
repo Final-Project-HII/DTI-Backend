@@ -1,4 +1,4 @@
-package com.hii.finalProject.city.service;
+package com.hii.finalProject.rajaongkir;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hii.finalProject.city.entity.City;
@@ -63,7 +63,6 @@ public class RajaOngkirServiceImpl {
         return city;
     }
 }
-
 @Data
 class RajaOngkirResponse {
     private RajaOngkirData rajaongkir;
@@ -84,3 +83,4 @@ class RajaOngkirCityResult {
     private String cityName;
 
 }
+

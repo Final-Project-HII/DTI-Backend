@@ -1,5 +1,7 @@
 package com.hii.finalProject.categories.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hii.finalProject.products.entity.Product;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -21,6 +23,7 @@ public class Categories {
     private String name;
 
     @OneToMany(mappedBy = "categories", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonIgnore
     private List<Product> products = new ArrayList<>();
     @Column(name = "category_image")
     private String categoryImage;
