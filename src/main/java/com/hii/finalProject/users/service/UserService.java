@@ -9,12 +9,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
-    List<UserDTO> getAllUsers();
     Optional<UserDTO> getUserById(Long id);
     Long getUserByEmail(String email);
     UserDTO createUser(UserDTO userDTO);
     Optional<UserDTO> updateUser(Long id, UserDTO userDTO);
     void deleteUser(Long id);
+
+    UserResponseDTO updateAdmin(AdminRegisterRequestDTO adminRegisterRequestDTO);
 
     UserResponseDTO register(UserRegisterRequestDTO user);
 
@@ -33,7 +34,7 @@ public interface UserService {
     String sendResetPasswordLink(String email);
     Boolean checkResetPasswordLinkIsValid(CheckResetPasswordLinkDTO data);
 
-//    boolean canManageWarehouse(User user, Integer warehouseId);
+
 
 
     ProfileResponseDTO updateProfile(String email, ProfileRequestDTO profileRequestDTO);
@@ -42,5 +43,6 @@ public interface UserService {
 
     Page<UserResponseDTO> getAllUser(String email, String role, int page, int size);
 
+    void toggleActiveUser(Long id);
 }
 

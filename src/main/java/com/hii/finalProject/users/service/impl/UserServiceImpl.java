@@ -54,13 +54,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDTO> getAllUsers() {
-        return userRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public Optional<UserDTO> getUserById(Long id) {
         return userRepository.findById(id).map(this::convertToDTO);
     }
@@ -100,6 +93,24 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
+    }
+
+    @Override
+    public UserResponseDTO updateAdmin(AdminRegisterRequestDTO adminRegisterRequestDTO) {
+        User user = userRepository.findByEmail(adminRegisterRequestDTO.getEmail()).orElseThrow(() -> new DataNotFoundException("User not found"));
+        user.setName(adminRegisterRequestDTO.getName());
+        Warehouse warehouse = new Warehouse();
+        warehouse.setId(adminRegisterRequestDTO.getWarehouseId());
+        user.setWarehouse(warehouse);
+        userRepository.save(user);
+        UserResponseDTO userResponseDTO = new UserResponseDTO();
+        userResponseDTO.setName(user.getName());
+        userResponseDTO.setImageUrl(user.getProfilePicture());
+        userResponseDTO.setIsVerified(user.getIsVerified());
+        userResponseDTO.setEmail(user.getEmail());
+        userResponseDTO.setRole(user.getRole());
+        userResponseDTO.setWarehouseId(user.getWarehouse().getId());
+        return userResponseDTO;
     }
 
 
@@ -388,6 +399,7 @@ public class UserServiceImpl implements UserService {
         data.setAvatar(cloudinaryService.generateUrl(userData.getProfilePicture()));
         data.setPhoneNumber(userData.getPhoneNumber());
         data.setDisplayName(userData.getName());
+        data.setPassword(userData.getPassword());
         return data;
     }
 
@@ -395,23 +407,44 @@ public class UserServiceImpl implements UserService {
     @Override
     public Page<UserResponseDTO> getAllUser(String email, String role, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Specification<User> specification = Specification.where(UserSpecification.byEmail(email).and(UserSpecification.byRole(role)));
+        Role roleEnum = null;
+        if (role != null && !role.isEmpty()) {
+            try {
+                roleEnum = Role.valueOf(role.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                roleEnum = null;
+            }
+        }
+        Specification<User> specification = Specification.where(UserSpecification.byEmail(email).and(UserSpecification.byRole(roleEnum)));
         Page<User> userPage = userRepository.findAll(specification, pageable);
 
         List<UserResponseDTO> userDTOList = userPage.getContent().stream()
                 .map(user -> {
                     UserResponseDTO userData = new UserResponseDTO();
+                    userData.setId(user.getId());
                     userData.setEmail(user.getEmail());
                     userData.setRole(user.getRole());
                     userData.setImageUrl(user.getProfilePicture());
                     userData.setIsVerified(user.getIsVerified());
-                    userData.setWarehouseId(user.getWarehouse().getId());
+                    userData.setWarehouseId(user.getWarehouse() != null ? user.getWarehouse().getId() : null);
                     userData.setName(user.getName());
+                    userData.setIsActive(user.getDeletedAt()==null);
                     return userData;
                 })
                 .collect(Collectors.toList());
 
         return new PageImpl<>(userDTOList, pageable, userPage.getTotalElements());
+    }
+
+    @Override
+    public void toggleActiveUser(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new DataNotFoundException("User with ID " + id + " is not found"));
+        if(user.getDeletedAt() != null){
+            user.setDeletedAt(null);
+        }else{
+            user.setDeletedAt(Instant.now());
+        }
+        userRepository.save(user);
     }
 
     private UserDTO convertToDTO(User user) {

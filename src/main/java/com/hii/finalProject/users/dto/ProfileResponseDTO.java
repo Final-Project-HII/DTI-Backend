@@ -10,4 +10,5 @@ public class ProfileResponseDTO {
     private String displayName;
     private String phoneNumber;
     private String avatar;
+    private String password;
 }
