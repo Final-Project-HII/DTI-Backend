@@ -437,7 +437,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void toogleActiveUser(Long id) {
+    public void toggleActiveUser(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new DataNotFoundException("User with ID " + id + " is not found"));
         if(user.getDeletedAt() != null){
             user.setDeletedAt(null);

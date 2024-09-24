@@ -25,10 +25,10 @@ public class CourierController {
 
 
     @GetMapping("")
-    public ResponseEntity<Response<List<ShippingCostDTO>>> getCourierData(@RequestBody CourierDataRequestDTO courierDataRequestDTO) {
+    public ResponseEntity<Response<List<CourierDTO>>> getCourierData() {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");
-        return Response.successfulResponse("Shipping cost data has been fetched", courierService.getAllCouriers(courierDataRequestDTO,email));
+        return Response.successfulResponse("Shipping data has been fetched", courierService.getAllCouriers(email));
     }
 
 }

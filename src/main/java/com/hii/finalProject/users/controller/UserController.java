@@ -100,8 +100,8 @@ public class UserController {
 
 
     @PutMapping("/toggle-active-user/{id}")
-    public ResponseEntity<Response<Object>> toogleActiveUser(@PathVariable Long id) {
-        userService.toogleActiveUser(id);
+    public ResponseEntity<Response<Object>> toggleActiveUser(@PathVariable Long id) {
+        userService.toggleActiveUser(id);
         return Response.successfulResponse("User active status has been changed");
     }
 }

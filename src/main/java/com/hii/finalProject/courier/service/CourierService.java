@@ -9,11 +9,10 @@ import java.util.Optional;
 
 public interface CourierService {
 
-    CourierDTO saveCourier(CourierDTO courierDTO);
 
-    Optional<CourierDTO> getCourierById(Long id);
-
-    List<ShippingCostDTO> getAllCouriers(CourierDataRequestDTO courierDataRequestDTO, String email);
+    List<CourierDTO> getAllCouriers(String email);
 
     void deleteCourier(Long id);
+
+    Integer getCourierPrice(Long id);
 }
