@@ -6,6 +6,7 @@ import com.hii.finalProject.cart.entity.Cart;
 import com.hii.finalProject.cart.service.CartService;
 import com.hii.finalProject.courier.entity.Courier;
 import com.hii.finalProject.courier.repository.CourierRepository;
+import com.hii.finalProject.courier.service.CourierService;
 import com.hii.finalProject.order.dto.OrderDTO;
 import com.hii.finalProject.order.entity.Order;
 import com.hii.finalProject.order.entity.OrderStatus;
@@ -38,6 +39,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final CartService cartService;
+    private final CourierService courierService;
     private final ProductRepository productRepository;
     private final AddressRepository addressRepository;
     private final WarehouseRepository warehouseRepository;
@@ -49,7 +51,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
                             CartService cartService, ProductRepository productRepository,
                             AddressRepository addressRepository, WarehouseRepository warehouseRepository,
-                            CourierRepository courierRepository) {
+                            CourierRepository courierRepository, CourierService courierService) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
@@ -57,6 +59,7 @@ public class OrderServiceImpl implements OrderService {
         this.addressRepository = addressRepository;
         this.warehouseRepository = warehouseRepository;
         this.courierRepository = courierRepository;
+        this.courierService = courierService;
     }
 
     @Override
@@ -119,18 +122,12 @@ public class OrderServiceImpl implements OrderService {
         order.setOriginalAmount(originalAmount);
         order.setTotalQuantity(totalQuantity);
 
-        Integer totalWeightInGrams = cartService.getCartTotalWeight(user.getEmail());
-        order.setTotalWeight(totalWeightInGrams);
-
-        BigDecimal totalWeightInKg = BigDecimal.valueOf(totalWeightInGrams)
-                .divide(BigDecimal.valueOf(1000), 2, RoundingMode.HALF_UP);
-
-        // Calculate dummy shipping cost
-        BigDecimal shippingCost = calculateDummyShippingCost(courier, totalWeightInKg, nearestWarehouse, address);
-        order.setShippingCost(shippingCost);
+        //Get shipping cost directly from courier service
+        Integer shippingCost = courierService.getCourierPrice(courierId);
+        order.setShippingCost(BigDecimal.valueOf(shippingCost));
 
         // Calculate final amount
-        BigDecimal finalAmount = originalAmount.add(shippingCost);
+        BigDecimal finalAmount = originalAmount.add(BigDecimal.valueOf(shippingCost));
         order.setFinalAmount(finalAmount);
 
         Order savedOrder = orderRepository.save(order);
@@ -138,28 +135,6 @@ public class OrderServiceImpl implements OrderService {
         return convertToDTO(savedOrder);
     }
 
-    private BigDecimal calculateDummyShippingCost(Courier courier, BigDecimal totalWeightInKg, Warehouse warehouse, Address address) {
-        // Base cost
-        BigDecimal baseCost = new BigDecimal("10.00");
-
-        // Cost per kg (random between $0.50 and $2.00)
-        BigDecimal costPerKg = BigDecimal.valueOf(0.50 + new Random().nextDouble() * 1.50)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        // Distance factor (random between 1.0 and 2.0)
-        BigDecimal distanceFactor = BigDecimal.valueOf(1.0 + new Random().nextDouble())
-                .setScale(2, RoundingMode.HALF_UP);
-
-        // Courier factor (random between 0.8 and 1.2)
-        BigDecimal courierFactor = BigDecimal.valueOf(0.8 + new Random().nextDouble() * 0.4)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        // Calculate shipping cost
-        BigDecimal weightCost = costPerKg.multiply(totalWeightInKg);
-        BigDecimal totalCost = baseCost.add(weightCost).multiply(distanceFactor).multiply(courierFactor);
-
-        return totalCost.setScale(2, RoundingMode.HALF_UP);
-    }
 
     private String generateInvoiceId() {
         LocalDateTime now = LocalDateTime.now();
