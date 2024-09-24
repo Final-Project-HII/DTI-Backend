@@ -1,5 +1,6 @@
 package com.hii.finalProject.users.controller;
 
+import com.hii.finalProject.address.entity.Address;
 import com.hii.finalProject.auth.helpers.Claims;
 import com.hii.finalProject.response.Response;
 import com.hii.finalProject.users.dto.*;
@@ -33,6 +34,11 @@ public class UserController {
     @PostMapping("/register-admin")
     public ResponseEntity<Response<UserResponseDTO>> registerAdmin(@Valid @RequestBody AdminRegisterRequestDTO adminRegisterRequestDto) {
         return Response.successfulResponse("Admin registered successfully", userService.registerAdmin(adminRegisterRequestDto));
+    }
+
+    @PutMapping("/update-admin")
+    public ResponseEntity<Response<UserResponseDTO>> updateAdmin(@Valid @RequestBody AdminRegisterRequestDTO adminRegisterRequestDto) {
+        return Response.successfulResponse("Admin update successfully", userService.updateAdmin(adminRegisterRequestDto));
     }
 
 
@@ -90,5 +96,12 @@ public class UserController {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");
         return Response.successfulResponse("Profile data has been fetched",userService.getProfileData(email));
+    }
+
+
+    @PutMapping("/toggle-active-user/{id}")
+    public ResponseEntity<Response<Object>> toogleActiveUser(@PathVariable Long id) {
+        userService.toogleActiveUser(id);
+        return Response.successfulResponse("User active status has been changed");
     }
 }

@@ -46,7 +46,6 @@ public class WarehouseServiceImpl implements WarehouseService {
                 .and(WarehouseListSpecification.notDeleted()));
 
         if (size == null) {
-            // If size is null, return all results without pagination
             List<Warehouse> allWarehouses = warehouseRepository.findAll(specification);
             return new PageImpl<>(allWarehouses);
         } else {
