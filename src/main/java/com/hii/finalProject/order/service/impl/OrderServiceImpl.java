@@ -229,6 +229,7 @@ public class OrderServiceImpl implements OrderService {
         dto.setOrderDate(order.getCreatedAt());
         dto.setStatus(order.getStatus().name());
         dto.setOriginalAmount(order.getOriginalAmount());
+        dto.setShippingCost(order.getShippingCost());
         dto.setFinalAmount(order.getFinalAmount());
         dto.setTotalWeight(order.getTotalWeight());
         dto.setTotalQuantity(order.getTotalQuantity());
