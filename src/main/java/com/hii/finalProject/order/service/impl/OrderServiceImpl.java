@@ -26,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +40,9 @@ public class OrderServiceImpl implements OrderService {
     private final AddressRepository addressRepository;
     private final WarehouseRepository warehouseRepository;
     private final CourierRepository courierRepository;
+    private static final String INVOICE_PREFIX = "INV";
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private final AtomicInteger sequence = new AtomicInteger(1);
 
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
                             CartService cartService, ProductRepository productRepository,
@@ -81,6 +86,8 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = new Order();
         order.setUser(user);
+        String invoiceId = generateInvoiceId();
+        order.setInvoiceId(invoiceId);
         order.setWarehouse(nearestWarehouse);
         order.setAddress(address);
         order.setCourier(courier);
@@ -118,6 +125,17 @@ public class OrderServiceImpl implements OrderService {
         return convertToDTO(savedOrder);
     }
 
+    private String generateInvoiceId() {
+        LocalDateTime now = LocalDateTime.now();
+        String datePart = now.format(DATE_FORMATTER);
+        String sequencePart = String.format("%04d", sequence.getAndIncrement());
+
+        if (sequence.get() > 9999) {
+            sequence.set(1);
+        }
+
+        return INVOICE_PREFIX + "-" + datePart + "-" + sequencePart;
+    }
 
 
     @Override
