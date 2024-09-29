@@ -17,6 +17,7 @@ import com.hii.finalProject.orderItem.entity.OrderItem;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.products.service.ProductService;
+import com.hii.finalProject.stock.service.StockService;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
 import com.hii.finalProject.warehouse.entity.Warehouse;
@@ -39,7 +40,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final CartService cartService;
     private final CourierService courierService;
-    private final ProductService productService;
+    private final StockService stockService;
     private final ProductRepository productRepository;
     private final AddressRepository addressRepository;
     private final WarehouseRepository warehouseRepository;
@@ -51,7 +52,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
                             CartService cartService, ProductRepository productRepository,
                             AddressRepository addressRepository, WarehouseRepository warehouseRepository,
-                            CourierRepository courierRepository, CourierService courierService, ProductService productService) {
+                            CourierRepository courierRepository, CourierService courierService, StockService stockService) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
@@ -60,7 +61,7 @@ public class OrderServiceImpl implements OrderService {
         this.warehouseRepository = warehouseRepository;
         this.courierRepository = courierRepository;
         this.courierService = courierService;
-        this.productService = productService;
+        this.stockService = stockService;
     }
 
     @Override
@@ -206,7 +207,7 @@ public class OrderServiceImpl implements OrderService {
 
         // Reduce stock for each item in the order
         for (OrderItem item : order.getItems()) {
-            productService.reduceStock(item.getProduct().getId(), item.getQuantity());
+            stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
         }
 
         order.setStatus(OrderStatus.confirmation);
@@ -214,7 +215,6 @@ public class OrderServiceImpl implements OrderService {
         Order updatedOrder = orderRepository.save(order);
 
         // Additional post-payment processing can be added here
-        // For example, sending confirmation emails, updating inventory, etc.
 
         return convertToDTO(updatedOrder);
     }

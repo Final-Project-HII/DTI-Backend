@@ -18,7 +18,4 @@ public interface ProductService {
     ProductListDtoResponse getProductById(Long id);
     ProductListDtoResponse updateProduct(Long id, UpdateProductRequestDto updateProductRequestDto, List<MultipartFile> newImages);
     void deleteProduct(Long id);
-
-    @Transactional
-    void reduceStock(Long productId, int quantity);
 }

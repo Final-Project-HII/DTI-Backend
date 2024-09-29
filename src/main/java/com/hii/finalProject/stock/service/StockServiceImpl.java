@@ -6,11 +6,11 @@ import com.hii.finalProject.stock.dto.StockDtoRequest;
 import com.hii.finalProject.stock.dto.StockDtoResponse;
 import com.hii.finalProject.stock.entity.Stock;
 import com.hii.finalProject.stock.repository.StockRepository;
-import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.warehouse.repository.WarehouseRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -98,4 +98,22 @@ public class StockServiceImpl implements StockService{
     }
     //manualUpdate
 
+    @Override
+    @Transactional
+    public void reduceStock(Long productId, Long warehouseId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                .orElseThrow(() -> new RuntimeException("Warehouse not found"));
+
+        Stock stock = stockRepository.findByProductAndWarehouse(product, warehouse)
+                .orElseThrow(() -> new RuntimeException("Stock not found"));
+
+//        if (stock.getQuantity() < quantity) {
+//            throw new InsufficientStockException("Not enough stock for product: " + product.getName());
+//        }
+
+        stock.setQuantity(stock.getQuantity() - quantity);
+        stockRepository.save(stock);
+    }
 }
