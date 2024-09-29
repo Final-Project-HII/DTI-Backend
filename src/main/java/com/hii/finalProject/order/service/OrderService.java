@@ -16,6 +16,5 @@ public interface OrderService {
     Page<OrderDTO> getFilteredOrders(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
 
-    @Transactional
-    void handleSuccessfulPayment(Long orderId);
+
 }

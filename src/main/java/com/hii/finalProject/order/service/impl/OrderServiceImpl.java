@@ -169,12 +169,33 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderDTO updateOrderStatus(Long orderId, OrderStatus status) {
+    public OrderDTO updateOrderStatus(Long orderId, OrderStatus newStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-        order.setStatus(status);
+
+        OrderStatus oldStatus = order.getStatus();
+        order.setStatus(newStatus);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        if (newStatus == OrderStatus.confirmation && oldStatus != OrderStatus.confirmation) {
+            handleOrderConfirmation(order);
+        }
+
         Order updatedOrder = orderRepository.save(order);
         return convertToDTO(updatedOrder);
+    }
+
+    private void handleOrderConfirmation(Order order) {
+        // Find the nearest warehouse if not already assigned
+        if (order.getWarehouse() == null) {
+            Warehouse nearestWarehouse = warehouseService.findNearestWarehouse(order.getUser().getEmail());
+            order.setWarehouse(nearestWarehouse);
+        }
+
+        // Reduce stock for each item in the order
+        for (OrderItem item : order.getItems()) {
+            stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+        }
     }
 
     @Override
@@ -197,31 +218,7 @@ public class OrderServiceImpl implements OrderService {
         return orders.map(this::convertToDTO);
     }
 
-    @Override
-    @Transactional
-    public void handleSuccessfulPayment(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
-        if (order.getStatus() != OrderStatus.pending_payment) {
-            throw new RuntimeException("Order is not in pending payment status");
-        }
-
-        // Find the nearest warehouse if not already assigned
-        if (order.getWarehouse() == null) {
-            Warehouse nearestWarehouse = warehouseService.findNearestWarehouse(order.getUser().getEmail());
-            order.setWarehouse(nearestWarehouse);
-        }
-
-        // Reduce stock for each item in the order
-        for (OrderItem item : order.getItems()) {
-            stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
-        }
-
-        order.setStatus(OrderStatus.confirmation);
-        order.setUpdatedAt(LocalDateTime.now());
-        orderRepository.save(order);
-    }
 
     private OrderDTO convertToDTO(Order order) {
         OrderDTO dto = new OrderDTO();

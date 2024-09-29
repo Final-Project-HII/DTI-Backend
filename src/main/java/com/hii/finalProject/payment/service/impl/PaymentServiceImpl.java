@@ -199,10 +199,6 @@ public class PaymentServiceImpl implements PaymentService {
             OrderStatus orderStatus = mapToOrderStatus(paymentStatus);
             orderService.updateOrderStatus(Long.parseLong(orderId), orderStatus);
 
-            if (paymentStatus == PaymentStatus.COMPLETED) {
-                orderService.handleSuccessfulPayment(Long.parseLong(orderId));
-            }
-
             log.info("Successfully processed Midtrans callback for order: " + orderId);
         } catch (Exception e) {
             log.severe("Error processing Midtrans callback: " + e.getMessage());
