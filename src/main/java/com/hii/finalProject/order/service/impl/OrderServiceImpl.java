@@ -16,7 +16,6 @@ import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import com.hii.finalProject.orderItem.entity.OrderItem;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
-import com.hii.finalProject.products.service.ProductService;
 import com.hii.finalProject.stock.service.StockService;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
@@ -200,7 +199,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderDTO markOrderAsPaid(Long orderId) {
+    public void handleSuccessfulPayment(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
@@ -221,11 +220,7 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(OrderStatus.confirmation);
         order.setUpdatedAt(LocalDateTime.now());
-        Order updatedOrder = orderRepository.save(order);
-
-        // Additional post-payment processing can be added here
-
-        return convertToDTO(updatedOrder);
+        orderRepository.save(order);
     }
 
     private OrderDTO convertToDTO(Order order) {
