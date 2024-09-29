@@ -107,10 +107,10 @@ public class StockServiceImpl implements StockService{
                 .orElseThrow(() -> new RuntimeException("Warehouse not found"));
 
         Stock stock = stockRepository.findByProductAndWarehouse(product, warehouse)
-                .orElseThrow(() -> new RuntimeException("Stock not found"));
+                .orElseThrow(() -> new RuntimeException("Stock not found for this product in the specified warehouse"));
 
 //        if (stock.getQuantity() < quantity) {
-//            throw new InsufficientStockException("Not enough stock for product: " + product.getName());
+//            throw new InsufficientStockException("Not enough stock for product: " + product.getName() + " in warehouse: " + warehouse.getName());
 //        }
 
         stock.setQuantity(stock.getQuantity() - quantity);

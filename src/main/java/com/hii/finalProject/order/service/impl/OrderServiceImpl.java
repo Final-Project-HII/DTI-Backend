@@ -22,6 +22,7 @@ import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.warehouse.repository.WarehouseRepository;
+import com.hii.finalProject.warehouse.service.WarehouseService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class OrderServiceImpl implements OrderService {
     private final CartService cartService;
     private final CourierService courierService;
     private final StockService stockService;
+    private final WarehouseService warehouseService;
     private final ProductRepository productRepository;
     private final AddressRepository addressRepository;
     private final WarehouseRepository warehouseRepository;
@@ -52,7 +54,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
                             CartService cartService, ProductRepository productRepository,
                             AddressRepository addressRepository, WarehouseRepository warehouseRepository,
-                            CourierRepository courierRepository, CourierService courierService, StockService stockService) {
+                            CourierRepository courierRepository, CourierService courierService, StockService stockService, WarehouseService warehouseService) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
@@ -62,6 +64,7 @@ public class OrderServiceImpl implements OrderService {
         this.courierRepository = courierRepository;
         this.courierService = courierService;
         this.stockService = stockService;
+        this.warehouseService = warehouseService;
     }
 
     @Override
@@ -203,6 +206,12 @@ public class OrderServiceImpl implements OrderService {
 
         if (order.getStatus() != OrderStatus.pending_payment) {
             throw new RuntimeException("Order is not in pending payment status");
+        }
+
+        // Find the nearest warehouse if not already assigned
+        if (order.getWarehouse() == null) {
+            Warehouse nearestWarehouse = warehouseService.findNearestWarehouse(order.getUser().getEmail());
+            order.setWarehouse(nearestWarehouse);
         }
 
         // Reduce stock for each item in the order
