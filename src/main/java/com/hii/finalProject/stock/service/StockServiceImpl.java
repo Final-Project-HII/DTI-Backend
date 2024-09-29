@@ -1,5 +1,6 @@
 package com.hii.finalProject.stock.service;
 
+import com.hii.finalProject.exceptions.InsufficientStockException;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.stock.dto.StockDtoRequest;
@@ -109,9 +110,11 @@ public class StockServiceImpl implements StockService{
         Stock stock = stockRepository.findByProductAndWarehouse(product, warehouse)
                 .orElseThrow(() -> new RuntimeException("Stock not found for this product in the specified warehouse"));
 
-//        if (stock.getQuantity() < quantity) {
-//            throw new InsufficientStockException("Not enough stock for product: " + product.getName() + " in warehouse: " + warehouse.getName());
-//        }
+        if (stock.getQuantity() < quantity) {
+            throw new InsufficientStockException("Not enough stock for product: " + product.getName()
+                    + " in warehouse: " + warehouse.getName()
+                    + ". Required: " + quantity + ", Available: " + stock.getQuantity());
+        }
 
         stock.setQuantity(stock.getQuantity() - quantity);
         stockRepository.save(stock);

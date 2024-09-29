@@ -7,6 +7,8 @@ import com.hii.finalProject.cart.service.CartService;
 import com.hii.finalProject.courier.entity.Courier;
 import com.hii.finalProject.courier.repository.CourierRepository;
 import com.hii.finalProject.courier.service.CourierService;
+import com.hii.finalProject.exceptions.InsufficientStockException;
+import com.hii.finalProject.exceptions.OrderProcessingException;
 import com.hii.finalProject.order.dto.OrderDTO;
 import com.hii.finalProject.order.entity.Order;
 import com.hii.finalProject.order.entity.OrderStatus;
@@ -30,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -186,15 +190,24 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void handleOrderConfirmation(Order order) {
-        // Find the nearest warehouse if not already assigned
         if (order.getWarehouse() == null) {
             Warehouse nearestWarehouse = warehouseService.findNearestWarehouse(order.getUser().getEmail());
             order.setWarehouse(nearestWarehouse);
         }
 
-        // Reduce stock for each item in the order
+        List<String> insufficientStockItems = new ArrayList<>();
+
         for (OrderItem item : order.getItems()) {
-            stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+            try {
+                stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+            } catch (InsufficientStockException e) {
+                insufficientStockItems.add(item.getProduct().getName() + " (Ordered: " + item.getQuantity() + ")");
+            }
+        }
+
+        if (!insufficientStockItems.isEmpty()) {
+            // Rollback the entire operation
+            throw new OrderProcessingException("Insufficient stock for items: " + String.join(", ", insufficientStockItems));
         }
     }
 
