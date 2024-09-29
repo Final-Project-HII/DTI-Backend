@@ -266,6 +266,34 @@ public class ProductServiceImpl implements ProductService{
         return product;
     }
 
+    @Override
+    @Transactional
+    public void reduceStock(Long productId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+
+        List<Stock> stocks = stockRepository.findByProduct(product);
+        int remainingQuantity = quantity;
+
+        for (Stock stock : stocks) {
+            if (remainingQuantity <= 0) break;
+
+            int stockQuantity = stock.getQuantity();
+            if (stockQuantity >= remainingQuantity) {
+                stock.setQuantity(stockQuantity - remainingQuantity);
+                remainingQuantity = 0;
+            } else {
+                stock.setQuantity(0);
+                remainingQuantity -= stockQuantity;
+            }
+            stockRepository.save(stock);
+        }
+
+        if (remainingQuantity > 0) {
+            throw new RuntimeException("Not enough stock available for product: " + product.getName());
+        }
+    }
+
 }
 
 

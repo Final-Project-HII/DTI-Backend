@@ -16,6 +16,7 @@ import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import com.hii.finalProject.orderItem.entity.OrderItem;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
+import com.hii.finalProject.products.service.ProductService;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
 import com.hii.finalProject.warehouse.entity.Warehouse;
@@ -26,10 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -40,6 +39,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final CartService cartService;
     private final CourierService courierService;
+    private final ProductService productService;
     private final ProductRepository productRepository;
     private final AddressRepository addressRepository;
     private final WarehouseRepository warehouseRepository;
@@ -51,7 +51,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
                             CartService cartService, ProductRepository productRepository,
                             AddressRepository addressRepository, WarehouseRepository warehouseRepository,
-                            CourierRepository courierRepository, CourierService courierService) {
+                            CourierRepository courierRepository, CourierService courierService, ProductService productService) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
@@ -60,6 +60,7 @@ public class OrderServiceImpl implements OrderService {
         this.warehouseRepository = warehouseRepository;
         this.courierRepository = courierRepository;
         this.courierService = courierService;
+        this.productService = productService;
     }
 
     @Override
@@ -191,6 +192,31 @@ public class OrderServiceImpl implements OrderService {
         }
 
         return orders.map(this::convertToDTO);
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO markOrderAsPaid(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+        if (order.getStatus() != OrderStatus.pending_payment) {
+            throw new RuntimeException("Order is not in pending payment status");
+        }
+
+        // Reduce stock for each item in the order
+        for (OrderItem item : order.getItems()) {
+            productService.reduceStock(item.getProduct().getId(), item.getQuantity());
+        }
+
+        order.setStatus(OrderStatus.confirmation);
+        order.setUpdatedAt(LocalDateTime.now());
+        Order updatedOrder = orderRepository.save(order);
+
+        // Additional post-payment processing can be added here
+        // For example, sending confirmation emails, updating inventory, etc.
+
+        return convertToDTO(updatedOrder);
     }
 
     private OrderDTO convertToDTO(Order order) {
