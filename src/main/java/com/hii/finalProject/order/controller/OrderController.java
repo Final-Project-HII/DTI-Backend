@@ -4,6 +4,7 @@ import com.hii.finalProject.auth.helpers.Claims;
 import com.hii.finalProject.order.dto.OrderDTO;
 import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.order.service.OrderService;
+import com.hii.finalProject.response.Response;
 import com.hii.finalProject.users.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,7 +23,6 @@ public class OrderController {
     private final OrderService orderService;
     private final UserService userService;
 
-    @Autowired
     public OrderController(OrderService orderService, UserService userService) {
         this.orderService = orderService;
         this.userService = userService;
@@ -30,12 +30,12 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<OrderDTO> createOrder(
-            @RequestParam Long warehouseId,
             @RequestParam Long addressId,
             @RequestParam Long courierId) {
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
         Long userId = userService.getUserByEmail(userEmail);
-        OrderDTO orderDTO = orderService.createOrder(userId, warehouseId, addressId, courierId);
+        Long placeholderWarehouseId = null; // or use any valid placeholder value
+        OrderDTO orderDTO = orderService.createOrder(userId, placeholderWarehouseId, addressId, courierId);
         return ResponseEntity.ok(orderDTO);
     }
 
@@ -46,7 +46,7 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<OrderDTO>> getUserOrders(
+    public ResponseEntity<Response<Page<OrderDTO>>> getUserOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -58,7 +58,7 @@ public class OrderController {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
         Page<OrderDTO> orders = orderService.getOrdersByUserId(userId, pageRequest);
-        return ResponseEntity.ok(orders);
+        return Response.successfulResponse("orders succesfull fetched", orders);
     }
 
     @GetMapping("/filtered")

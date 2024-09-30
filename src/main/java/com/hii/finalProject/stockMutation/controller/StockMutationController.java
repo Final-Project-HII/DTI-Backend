@@ -37,7 +37,6 @@ public class StockMutationController {
 
         return Response.successfulResponse("Stock Mutation registered successfully", response);
     }
-
     @PutMapping("/process")
     @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<Response<StockMutationResponseDto>> processMutation(
@@ -69,32 +68,30 @@ public class StockMutationController {
 
         return Response.successfulResponse("User Stock Mutations retrieved successfully", response);
     }
-@GetMapping
-@PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
-public ResponseEntity<Response<Page<StockMutationResponseDto>>> getAllStockMutations(
-        @RequestParam(required = false) Long originWarehouseId,
-        @RequestParam(required = false) Long destinationWarehouseId,
-        @RequestParam(required = false) String productName,
-        @RequestParam(required = false) StockMutationStatus status, // Changed from StockMutationStatus to String
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdAtStart,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdAtEnd,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime updatedAtStart,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime updatedAtEnd,
-        @RequestParam(defaultValue = "createdAt") String sortBy,
-        @RequestParam(defaultValue = "desc") String sortDirection,
-        Pageable pageable
-) {
-    var claims = Claims.getClaimsFromJwt();
-    var email = (String) claims.get("sub");
-    Page<StockMutationResponseDto> response = stockMutationService.getAllStockMutations(
-            email, originWarehouseId, destinationWarehouseId, productName, status,
-            createdAtStart, createdAtEnd, updatedAtStart, updatedAtEnd,
-            sortBy, sortDirection, pageable
-    );
-
-
-    return Response.successfulResponse("Stock Mutations retrieved successfully", response);
-}
+    @GetMapping
+    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
+    public ResponseEntity<Response<Page<StockMutationResponseDto>>> getAllStockMutations(
+            @RequestParam(required = false) Long originWarehouseId,
+            @RequestParam(required = false) Long destinationWarehouseId,
+            @RequestParam(required = false) String productName,
+            @RequestParam(required = false) StockMutationStatus status, // Changed from StockMutationStatus to String
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdAtStart,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdAtEnd,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime updatedAtStart,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime updatedAtEnd,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection,
+            Pageable pageable
+    ) {
+        var claims = Claims.getClaimsFromJwt();
+        var email = (String) claims.get("sub");
+        Page<StockMutationResponseDto> response = stockMutationService.getAllStockMutations(
+                email, originWarehouseId, destinationWarehouseId, productName, status,
+                createdAtStart, createdAtEnd, updatedAtStart, updatedAtEnd,
+                sortBy, sortDirection, pageable
+        );
+        return Response.successfulResponse("Stock Mutations retrieved successfully", response);
+    }
     @GetMapping("/journal")
     @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<Response<Page<StockMutationJournalDto>>> getStockReports(

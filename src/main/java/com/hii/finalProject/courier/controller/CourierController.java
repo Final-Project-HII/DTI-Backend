@@ -1,7 +1,11 @@
 package com.hii.finalProject.courier.controller;
 
+import com.hii.finalProject.auth.helpers.Claims;
 import com.hii.finalProject.courier.dto.CourierDTO;
+import com.hii.finalProject.courier.dto.CourierDataRequestDTO;
 import com.hii.finalProject.courier.service.CourierService;
+import com.hii.finalProject.rajaongkir.ShippingCostDTO;
+import com.hii.finalProject.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,33 +14,21 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/couriers")
+@RequestMapping("/api/couriers")
 public class CourierController {
 
-    @Autowired
-    private CourierService courierService;
+    private final CourierService courierService;
 
-    @PostMapping
-    public ResponseEntity<CourierDTO> createCourier(@RequestBody CourierDTO courierDTO) {
-        CourierDTO savedCourier = courierService.saveCourier(courierDTO);
-        return ResponseEntity.ok(savedCourier);
+    public CourierController(CourierService courierService) {
+        this.courierService = courierService;
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CourierDTO> getCourierById(@PathVariable Long id) {
-        Optional<CourierDTO> courier = courierService.getCourierById(id);
-        return courier.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+
+    @GetMapping("")
+    public ResponseEntity<Response<List<CourierDTO>>> getCourierData() {
+        var claims = Claims.getClaimsFromJwt();
+        var email = (String) claims.get("sub");
+        return Response.successfulResponse("Shipping data has been fetched", courierService.getAllCouriers(email));
     }
 
-    @GetMapping
-    public ResponseEntity<List<CourierDTO>> getAllCouriers() {
-        List<CourierDTO> couriers = courierService.getAllCouriers();
-        return ResponseEntity.ok(couriers);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCourier(@PathVariable Long id) {
-        courierService.deleteCourier(id);
-        return ResponseEntity.noContent().build();
-    }
 }

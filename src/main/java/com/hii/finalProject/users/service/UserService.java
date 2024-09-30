@@ -5,42 +5,27 @@ import com.hii.finalProject.users.dto.*;
 import com.hii.finalProject.users.entity.User;
 import org.springframework.data.domain.Page;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
-    List<UserDTO> getAllUsers();
     Optional<UserDTO> getUserById(Long id);
     Long getUserByEmail(String email);
     UserDTO createUser(UserDTO userDTO);
     Optional<UserDTO> updateUser(Long id, UserDTO userDTO);
     void deleteUser(Long id);
-
+    UserResponseDTO updateAdmin(AdminRegisterRequestDTO adminRegisterRequestDTO);
     UserResponseDTO register(UserRegisterRequestDTO user);
-
     UserResponseDTO registerAdmin(AdminRegisterRequestDTO user);
     User registerSocial(UserRegisterSocialRequestDTO user);
-
     User setPassword(ManagePasswordDTO data);
-
     String checkVerificationLink(CheckVerificationLinkDTO data);
-
-
     void newVerificationLink(String email);
-
     void newResetPasswordLink(String email);
-
     String sendResetPasswordLink(String email);
     Boolean checkResetPasswordLinkIsValid(CheckResetPasswordLinkDTO data);
-
-//    boolean canManageWarehouse(User user, Integer warehouseId);
-
-
     ProfileResponseDTO updateProfile(String email, ProfileRequestDTO profileRequestDTO);
-
     ProfileResponseDTO getProfileData(String email);
-
     Page<UserResponseDTO> getAllUser(String email, String role, int page, int size);
-
+    void toggleActiveUser(Long id);
 }
 

@@ -22,4 +22,9 @@ public class OrderDTO {
     private Integer totalWeight;
     private Integer totalQuantity;
     private Long courierId;
+    private String warehouseName;
+    private String courierName;
+    private String originCity;
+    private String destinationCity;
+
 }

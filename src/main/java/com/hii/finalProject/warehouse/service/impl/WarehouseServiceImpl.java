@@ -48,7 +48,6 @@ public class WarehouseServiceImpl implements WarehouseService {
                 .and(WarehouseListSpecification.notDeleted()));
 
         if (size == null) {
-            // If size is null, return all results without pagination
             List<Warehouse> allWarehouses = warehouseRepository.findAll(specification);
             return new PageImpl<>(allWarehouses);
         } else {
@@ -68,9 +67,11 @@ public class WarehouseServiceImpl implements WarehouseService {
 
 
     @Override
+
     public Warehouse findNearestWarehouse(String email) {
         Address address = addressService.getActiveUserAddress(email);
-        return warehouseRepository.findNearestWarehouse(address.getLat(), address.getLon());
+        System.out.println(address);
+        return warehouseRepository.findNearestWarehouse(address.getLon(),address.getLat());
     }
 
     @Override

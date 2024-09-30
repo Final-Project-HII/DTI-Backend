@@ -10,5 +10,8 @@ public class CartItemDTO implements Serializable {
     private Long productId;
     private String productName;
     private Integer quantity;
-    private Double price;
+    private Integer price;
+    private Integer totalPrice;
+    private Integer weight;
+    private Integer totalWeight;
 }
