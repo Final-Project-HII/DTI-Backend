@@ -10,9 +10,5 @@ import java.util.List;
 
 @Repository
 public interface StockMutationRepository extends JpaRepository <StockMutation, Long>, JpaSpecificationExecutor<StockMutation> {
-    List<StockMutation> findByOriginIdOrDestinationId(Long originId, Long destinationId);
-//    List<StockMutation> findByStatus(StockMutationStatus status);
-//    List<StockMutation> findByOriginWarehouse(Long warehouseId);
-//    List<StockMutation> findByDestinationWarehouseId(Long warehouseId);
 
 }

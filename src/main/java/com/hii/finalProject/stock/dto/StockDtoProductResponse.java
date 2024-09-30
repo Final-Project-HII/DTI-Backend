@@ -10,13 +10,6 @@ public class StockDtoProductResponse {
     private String warehouseName;
     private Integer quantity;
 
-    public static StockDtoProductResponse convertFromStock(Stock stock) {
-        StockDtoProductResponse responseDto = new StockDtoProductResponse();
-        responseDto.setId(stock.getId());
-        responseDto.setWarehouseId(stock.getWarehouse().getId());
-        responseDto.setWarehouseName(stock.getWarehouse().getName());
-        responseDto.setQuantity(stock.getQuantity());
-        return responseDto;
-    }
+
 
 }
