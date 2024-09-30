@@ -2,6 +2,8 @@ package com.hii.finalProject.stock.dto;
 
 import lombok.Data;
 
+import java.time.Instant;
+
 @Data
 public class StockDtoResponse {
     private Long id;
@@ -12,4 +14,10 @@ public class StockDtoResponse {
     private Integer quantity;
     private Long categoryId;
     private String categoryName;
+    private String productImageUrl;
+    private Integer price;
+    private Integer weight;
+    private Instant createdAt;
+    private Instant updatedAt;
+    private Long loginWarehouseId;
 }

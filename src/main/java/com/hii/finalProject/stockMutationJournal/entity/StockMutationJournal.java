@@ -1,26 +1,29 @@
 package com.hii.finalProject.stockMutationJournal.entity;
 
 import com.hii.finalProject.stockMutation.entity.StockMutation;
+import com.hii.finalProject.warehouse.entity.Warehouse;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "stock_mutation_journals")
+@Table(name = "stock_mutation_journals", schema = "developmentfp")
 public class StockMutationJournal {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "stock_mutation_journal_id_gen")
-    @SequenceGenerator(name = "stock_mutation_journal_id_gen", sequenceName = "stock_mutation_journal_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
+
 
     @ManyToOne
     @JoinColumn(name = "stock_mutation_id", nullable = false)
     private StockMutation stockMutation;
 
-    @Column(name = "warehouse_id", nullable = false)
-    private Integer warehouseId;
+    @ManyToOne
+    @JoinColumn(name = "warehouse_id", nullable = false)
+    private Warehouse warehouse;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "mutation_type", nullable = false)
