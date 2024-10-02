@@ -15,4 +15,5 @@ public interface StockService {
     StockDtoResponse updateStock(Long id, StockDtoRequest stockDtoRequest);
 
     void reduceStock(Long productId, Long warehouseId, int quantity);
+    void returnStock(Long productId, Long warehouseId, int quantity);
 }

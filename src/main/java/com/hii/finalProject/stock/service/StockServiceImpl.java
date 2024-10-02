@@ -119,4 +119,20 @@ public class StockServiceImpl implements StockService{
         stock.setQuantity(stock.getQuantity() - quantity);
         stockRepository.save(stock);
     }
+
+    @Override
+    @Transactional
+    public void returnStock(Long productId, Long warehouseId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                .orElseThrow(() -> new RuntimeException("Warehouse not found"));
+
+        Stock stock = stockRepository.findByProductAndWarehouse(product, warehouse)
+                .orElseThrow(() -> new RuntimeException("Stock not found for this product in the specified warehouse"));
+
+        stock.setQuantity(stock.getQuantity() + quantity);
+        stockRepository.save(stock);
+    }
+
 }

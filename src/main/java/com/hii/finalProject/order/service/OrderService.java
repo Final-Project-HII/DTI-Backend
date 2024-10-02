@@ -13,6 +13,7 @@ public interface OrderService {
     OrderDTO getOrderById(Long orderId);
     Page<OrderDTO> getOrdersByUserId(Long userId, Pageable pageable);
     OrderDTO updateOrderStatus(Long orderId, OrderStatus status);
+    void cancelOrder(Long orderId);
     Page<OrderDTO> getFilteredOrders(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
 

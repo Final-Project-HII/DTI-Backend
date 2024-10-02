@@ -192,6 +192,32 @@ public class OrderServiceImpl implements OrderService {
         return convertToDTO(updatedOrder);
     }
 
+    @Override
+    @Transactional
+    public void cancelOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getStatus() == OrderStatus.cancelled) {
+            throw new IllegalStateException("Order is already cancelled");
+        }
+
+        // Check if the order status allows cancellation
+        if (order.getStatus() == OrderStatus.shipped || order.getStatus() == OrderStatus.delivered) {
+            throw new IllegalStateException("Cannot cancel an order that has been shipped or delivered");
+        }
+
+        // If the order was confirmed, we need to return the stock
+        if (order.getStatus() == OrderStatus.confirmation || order.getStatus() == OrderStatus.process) {
+            for (OrderItem item : order.getItems()) {
+                stockService.returnStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+            }
+        }
+
+        order.setStatus(OrderStatus.cancelled);
+        orderRepository.save(order);
+    }
+
     private void handleOrderConfirmation(Order order) {
         if (order.getWarehouse() == null) {
             Warehouse nearestWarehouse = warehouseService.findNearestWarehouse(order.getUser().getEmail());
