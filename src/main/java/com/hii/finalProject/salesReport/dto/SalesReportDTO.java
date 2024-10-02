@@ -1,6 +1,8 @@
 package com.hii.finalProject.salesReport.dto;
 
 import lombok.Data;
+import org.springframework.jdbc.core.JdbcTemplate;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -12,11 +14,10 @@ public class SalesReportDTO {
     private Long totalProductsSold;
     private BigDecimal averageOrderValue;
 
-    public SalesReportDTO(LocalDate date, Long totalOrders, BigDecimal totalRevenue, Long totalProductsSold, BigDecimal averageOrderValue) {
-        this.date = date;
+    private JdbcTemplate jdbcTemplate;
+
+    public SalesReportDTO(long totalOrders, BigDecimal totalRevenue) {
         this.totalOrders = totalOrders;
         this.totalRevenue = totalRevenue;
-        this.totalProductsSold = totalProductsSold;
-        this.averageOrderValue = averageOrderValue;
     }
 }

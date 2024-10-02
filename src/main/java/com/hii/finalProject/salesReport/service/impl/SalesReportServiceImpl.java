@@ -1,13 +1,16 @@
-package com.hii.finalProject.salesReport.service;
+package com.hii.finalProject.salesReport.service.impl;
 
 import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.order.repository.OrderRepository;
 import com.hii.finalProject.salesReport.dto.SalesReportDTO;
+import com.hii.finalProject.salesReport.service.SalesReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -18,15 +21,29 @@ public class SalesReportServiceImpl implements SalesReportService {
 
     @Autowired
     private OrderRepository orderRepository;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     public Page<SalesReportDTO> getDailySalesReport(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         List<OrderStatus> completedStatuses = Arrays.asList(OrderStatus.delivered, OrderStatus.shipped);
         return orderRepository.getDailySalesReport(startDate, endDate, completedStatuses, pageable);
     }
 
-    public SalesReportDTO getOverallSalesReport(LocalDateTime startDate, LocalDateTime endDate) {
-        List<OrderStatus> completedStatuses = Arrays.asList(OrderStatus.delivered, OrderStatus.shipped);
-        return orderRepository.getOverallSalesReport(startDate, endDate, completedStatuses);
+    public SalesReportDTO getOverallSalesReport(LocalDate startDate, LocalDate endDate) {
+        String sql = """
+            SELECT COUNT(*) as order_count, SUM(final_amount) as total_revenue
+            FROM orders
+            WHERE DATE(created_at) BETWEEN ? AND ?
+        """;
+
+        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+            long orderCount = rs.getLong("order_count");
+            BigDecimal totalRevenue = rs.getBigDecimal("total_revenue");
+            return new SalesReportDTO(
+                    orderCount,
+                    totalRevenue
+            );
+        }, startDate, endDate);
     }
 
     @Override
@@ -34,8 +51,4 @@ public class SalesReportServiceImpl implements SalesReportService {
         return null;
     }
 
-    @Override
-    public SalesReportDTO getOverallSalesReport(LocalDate startDate, LocalDate endDate) {
-        return null;
-    }
 }
