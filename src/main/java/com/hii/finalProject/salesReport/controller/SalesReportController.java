@@ -40,15 +40,15 @@ public class SalesReportController {
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
 
-        System.out.println("Fetching report from " + startDate + " to " + endDate); // Debug log
 
-        SalesReportDTO report = salesReportService.getOverallSalesReport(startDate, endDate);
 
-        System.out.println("Report data: " + report); // Debug log
+        try {
+            SalesReportDTO report = salesReportService.getOverallSalesReport(startDate, endDate);
 
-        if (report == null) {
-            return ResponseEntity.ok("No data found for the specified period");
+            return ResponseEntity.ok(report);
+        } catch (Exception e) {
+
+            return ResponseEntity.internalServerError().body("Error generating sales report: " + e.getMessage());
         }
-        return ResponseEntity.ok(report);
     }
 }

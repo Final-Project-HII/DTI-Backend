@@ -35,20 +35,20 @@ public class SalesReportServiceImpl implements SalesReportService {
     }
 
     public SalesReportDTO getOverallSalesReport(LocalDate startDate, LocalDate endDate) {
-        String sql = """
-            SELECT COUNT(*) as order_count, COALESCE(SUM(final_amount), 0) as total_revenue
-            FROM orders
-            WHERE created_at::date BETWEEN ?::date AND ?::date
-        """;
+        String sql = "SELECT COUNT(*) as order_count, COALESCE(SUM(final_amount), 0) as total_revenue " +
+                "FROM orders " +
+                "WHERE created_at >= ? AND created_at < ?";
 
         try {
             return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
                 long orderCount = rs.getLong("order_count");
                 BigDecimal totalRevenue = rs.getBigDecimal("total_revenue");
+
                 return new SalesReportDTO(orderCount, totalRevenue);
-            }, startDate, endDate);
+            }, startDate, endDate.plusDays(1)); // Add one day to endDate to include orders on the end date
         } catch (Exception e) {
-            throw e;
+
+            throw new RuntimeException("Error generating sales report: " + e.getMessage(), e);
         }
     }
 
