@@ -16,6 +16,5 @@ public interface OrderService {
     void cancelOrder(Long orderId);
     Page<OrderDTO> getFilteredOrders(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
-
-
+    OrderDTO shipOrder(Long orderId);
 }

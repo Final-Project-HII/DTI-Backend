@@ -276,6 +276,27 @@ public class OrderServiceImpl implements OrderService {
     }
 
 
+    @Override
+    @Transactional
+    public OrderDTO shipOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+        if (order.getStatus() != OrderStatus.process) {
+            throw new IllegalStateException("Order must be in 'process' status to be shipped");
+        }
+
+        order.setStatus(OrderStatus.shipped);
+
+        // Reduce stock when order is shipped
+        for (OrderItem item : order.getItems()) {
+            stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+        }
+
+        Order updatedOrder = orderRepository.save(order);
+        return convertToDTO(updatedOrder);
+    }
+
 
     private OrderDTO convertToDTO(Order order) {
         OrderDTO dto = new OrderDTO();

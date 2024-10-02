@@ -2,6 +2,7 @@ package com.hii.finalProject.order.repository;
 
 import com.hii.finalProject.order.entity.Order;
 import com.hii.finalProject.order.entity.OrderStatus;
+import com.hii.finalProject.salesReport.dto.SalesReportDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,4 +31,27 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Long getLastInsertId();
 
     boolean existsByUserIdAndStatus(Long userId, OrderStatus status);
+
+    //////
+
+    @Query("SELECT new com.hii.finalProject.salesReport.dto.SalesReportDTO(" +
+            "DATE(o.createdAt), COUNT(o), SUM(o.finalAmount), SUM(oi.quantity), AVG(o.finalAmount)) " +
+            "FROM Order o JOIN o.items oi " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+            "AND o.status IN (:statuses) " +
+            "GROUP BY DATE(o.createdAt)")
+    Page<SalesReportDTO> getDailySalesReport(@Param("startDate") LocalDateTime startDate,
+                                             @Param("endDate") LocalDateTime endDate,
+                                             @Param("statuses") List<OrderStatus> statuses,
+                                             Pageable pageable);
+
+    @Query("SELECT new com.hii.finalProject.salesReport.dto.SalesReportDTO(" +
+            "null, COUNT(o), SUM(o.finalAmount), SUM(oi.quantity), AVG(o.finalAmount)) " +
+            "FROM Order o JOIN o.items oi " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+            "AND o.status IN (:statuses)")
+    SalesReportDTO getOverallSalesReport(@Param("startDate") LocalDateTime startDate,
+                                         @Param("endDate") LocalDateTime endDate,
+                                         @Param("statuses") List<OrderStatus> statuses);
+
 }
