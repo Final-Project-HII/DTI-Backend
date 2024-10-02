@@ -37,11 +37,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     //////
 
     @Query("SELECT new com.hii.finalProject.salesReport.dto.SalesReportDTO(" +
-            "DATE(o.createdAt), COUNT(o), SUM(o.finalAmount), SUM(oi.quantity), AVG(o.finalAmount)) " +
+            "FUNCTION('DATE', o.createdAt), COUNT(o), SUM(o.finalAmount), SUM(oi.quantity), AVG(o.finalAmount)) " +
             "FROM Order o JOIN o.items oi " +
             "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
             "AND o.status IN (:statuses) " +
-            "GROUP BY DATE(o.createdAt)")
+            "GROUP BY FUNCTION('DATE', o.createdAt)")
     Page<SalesReportDTO> getDailySalesReport(@Param("startDate") LocalDateTime startDate,
                                              @Param("endDate") LocalDateTime endDate,
                                              @Param("statuses") List<OrderStatus> statuses,

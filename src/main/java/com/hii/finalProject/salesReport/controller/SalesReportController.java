@@ -29,39 +29,34 @@ public class SalesReportController {
 
     @GetMapping("/daily")
     public ResponseEntity<Page<SalesReportDTO>> getDailySalesReport(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "7") int size) {
-        Page<SalesReportDTO> report = salesReportService.getDailySalesReport(startDate, LocalDate.from(endDate), PageRequest.of(page, size));
+        Page<SalesReportDTO> report = salesReportService.getDailySalesReport(startDate, endDate, PageRequest.of(page, size));
         return ResponseEntity.ok(report);
     }
 
     @GetMapping("/overall")
-    public ResponseEntity<?> getOverallSalesReport(
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-
+    public ResponseEntity<Map<String, Object>> getOverallSalesReport(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
         try {
             SalesReportDTO report = salesReportService.getOverallSalesReport(startDate, endDate);
 
-
             Map<String, Object> response = new HashMap<>();
-            response.put("statusCode", 200);
+            response.put("statusCode", HttpStatus.OK.value());
             response.put("message", "Sales report generated successfully");
             response.put("success", true);
             response.put("data", report);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-
-
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
-            errorResponse.put("message", "Error generating sales report");
+            errorResponse.put("message", "Error generating sales report: " + e.getMessage());
             errorResponse.put("success", false);
-            errorResponse.put("data", e.getMessage());
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
