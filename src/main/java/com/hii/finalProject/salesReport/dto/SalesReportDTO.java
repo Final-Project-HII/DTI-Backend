@@ -11,4 +11,12 @@ public class SalesReportDTO {
     private BigDecimal totalRevenue;
     private Long totalProductsSold;
     private BigDecimal averageOrderValue;
+
+    public SalesReportDTO(LocalDate date, Long totalOrders, BigDecimal totalRevenue, Long totalProductsSold, BigDecimal averageOrderValue) {
+        this.date = date;
+        this.totalOrders = totalOrders;
+        this.totalRevenue = totalRevenue;
+        this.totalProductsSold = totalProductsSold;
+        this.averageOrderValue = averageOrderValue;
+    }
 }

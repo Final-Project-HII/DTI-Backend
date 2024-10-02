@@ -1,9 +1,8 @@
-package com.hii.finalProject.salesReport.service.impl;
+package com.hii.finalProject.salesReport.service;
 
 import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.order.repository.OrderRepository;
 import com.hii.finalProject.salesReport.dto.SalesReportDTO;
-import com.hii.finalProject.salesReport.service.SalesReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,31 +10,32 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 
 @Service
 public class SalesReportServiceImpl implements SalesReportService {
 
-    private final OrderRepository orderRepository;
-    private final List<OrderStatus> SOLD_STATUSES = Arrays.asList(OrderStatus.shipped, OrderStatus.delivered);
+    @Autowired
+    private OrderRepository orderRepository;
 
-    public SalesReportServiceImpl(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
+    public Page<SalesReportDTO> getDailySalesReport(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        List<OrderStatus> completedStatuses = Arrays.asList(OrderStatus.delivered, OrderStatus.shipped);
+        return orderRepository.getDailySalesReport(startDate, endDate, completedStatuses, pageable);
+    }
+
+    public SalesReportDTO getOverallSalesReport(LocalDateTime startDate, LocalDateTime endDate) {
+        List<OrderStatus> completedStatuses = Arrays.asList(OrderStatus.delivered, OrderStatus.shipped);
+        return orderRepository.getOverallSalesReport(startDate, endDate, completedStatuses);
     }
 
     @Override
     public Page<SalesReportDTO> getDailySalesReport(LocalDate startDate, LocalDate endDate, Pageable pageable) {
-        LocalDateTime startDateTime = startDate.atStartOfDay();
-        LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
-        return orderRepository.getDailySalesReport(startDateTime, endDateTime, SOLD_STATUSES, pageable);
+        return null;
     }
 
     @Override
     public SalesReportDTO getOverallSalesReport(LocalDate startDate, LocalDate endDate) {
-        LocalDateTime startDateTime = startDate.atStartOfDay();
-        LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
-        return orderRepository.getOverallSalesReport(startDateTime, endDateTime, SOLD_STATUSES);
+        return null;
     }
 }

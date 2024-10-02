@@ -4,36 +4,38 @@ import com.hii.finalProject.salesReport.dto.SalesReportDTO;
 import com.hii.finalProject.salesReport.service.SalesReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/api/sales-report")
+@RequestMapping("/api/admin/sales-report")
+//@PreAuthorize("hasRole('ADMIN')")
 public class SalesReportController {
 
-    private final SalesReportService salesReportService;
-
     @Autowired
-    public SalesReportController(SalesReportService salesReportService) {
-        this.salesReportService = salesReportService;
-    }
+    private SalesReportService salesReportService;
 
     @GetMapping("/daily")
     public ResponseEntity<Page<SalesReportDTO>> getDailySalesReport(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            Pageable pageable) {
-        return ResponseEntity.ok(salesReportService.getDailySalesReport(startDate, endDate, pageable));
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "7") int size) {
+        Page<SalesReportDTO> report = salesReportService.getDailySalesReport(startDate, LocalDate.from(endDate), PageRequest.of(page, size));
+        return ResponseEntity.ok(report);
     }
 
     @GetMapping("/overall")
     public ResponseEntity<SalesReportDTO> getOverallSalesReport(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        return ResponseEntity.ok(salesReportService.getOverallSalesReport(startDate, endDate));
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+        SalesReportDTO report = salesReportService.getOverallSalesReport(startDate, LocalDate.from(endDate));
+        return ResponseEntity.ok(report);
     }
 }
