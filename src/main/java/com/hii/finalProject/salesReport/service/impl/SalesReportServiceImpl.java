@@ -29,26 +29,27 @@ public class SalesReportServiceImpl implements SalesReportService {
         return orderRepository.getDailySalesReport(startDate, endDate, completedStatuses, pageable);
     }
 
-    public SalesReportDTO getOverallSalesReport(LocalDate startDate, LocalDate endDate) {
-        String sql = """
-            SELECT COUNT(*) as order_count, SUM(final_amount) as total_revenue
-            FROM orders
-            WHERE DATE(created_at) BETWEEN ? AND ?
-        """;
-
-        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
-            long orderCount = rs.getLong("order_count");
-            BigDecimal totalRevenue = rs.getBigDecimal("total_revenue");
-            return new SalesReportDTO(
-                    orderCount,
-                    totalRevenue
-            );
-        }, startDate, endDate);
-    }
-
     @Override
     public Page<SalesReportDTO> getDailySalesReport(LocalDate startDate, LocalDate endDate, Pageable pageable) {
         return null;
+    }
+
+    public SalesReportDTO getOverallSalesReport(LocalDate startDate, LocalDate endDate) {
+        String sql = """
+            SELECT COUNT(*) as order_count, COALESCE(SUM(final_amount), 0) as total_revenue
+            FROM orders
+            WHERE created_at::date BETWEEN ?::date AND ?::date
+        """;
+
+        try {
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+                long orderCount = rs.getLong("order_count");
+                BigDecimal totalRevenue = rs.getBigDecimal("total_revenue");
+                return new SalesReportDTO(orderCount, totalRevenue);
+            }, startDate, endDate);
+        } catch (Exception e) {
+            throw e;
+        }
     }
 
 }
