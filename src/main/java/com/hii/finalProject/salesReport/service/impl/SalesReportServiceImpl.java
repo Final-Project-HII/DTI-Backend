@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 
 @Service
@@ -27,18 +29,30 @@ public class SalesReportServiceImpl implements SalesReportService {
 
     @Override
     public SalesReportDTO generateDailySalesReport(LocalDate date, OrderStatus saleStatus) {
-        logger.info("Generating sales report for date: {} and status: {}", date, saleStatus);
+        logger.info("Generating daily sales report for date: {} and status: {}", date, saleStatus);
+        return generateSalesReport(date.atStartOfDay(), date.plusDays(1).atStartOfDay(), saleStatus);
+    }
 
+    @Override
+    public SalesReportDTO generateMonthlySalesReport(YearMonth yearMonth, OrderStatus saleStatus) {
+        logger.info("Generating monthly sales report for month: {} and status: {}", yearMonth, saleStatus);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth().plusDays(1);
+        return generateSalesReport(startDate.atStartOfDay(), endDate.atStartOfDay(), saleStatus);
+    }
+
+    private SalesReportDTO generateSalesReport(LocalDateTime startDateTime, LocalDateTime endDateTime, OrderStatus saleStatus) {
         List<Order> orders = orderRepository.findByCreatedAtBetweenAndStatusIn(
-                date.atStartOfDay(),
-                date.plusDays(1).atStartOfDay(),
+                startDateTime,
+                endDateTime,
                 List.of(saleStatus, OrderStatus.delivered)
         );
 
         logger.info("Found {} orders for the given criteria", orders.size());
 
         SalesReportDTO report = new SalesReportDTO();
-        report.setDate(date);
+        report.setStartDate(startDateTime.toLocalDate());
+        report.setEndDate(endDateTime.toLocalDate().minusDays(1));
         report.setTotalOrders((long) orders.size());
         report.setTotalRevenue(calculateTotalRevenue(orders));
         report.setAverageOrderValue(calculateAverageOrderValue(orders));

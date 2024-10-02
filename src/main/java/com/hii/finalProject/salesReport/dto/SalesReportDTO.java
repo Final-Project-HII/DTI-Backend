@@ -6,7 +6,8 @@ import java.time.LocalDate;
 
 @Data
 public class SalesReportDTO {
-    private LocalDate date;
+    private LocalDate startDate;
+    private LocalDate endDate;
     private Long totalOrders;
     private BigDecimal totalRevenue;
     private BigDecimal averageOrderValue;
