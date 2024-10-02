@@ -181,15 +181,30 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
         OrderStatus oldStatus = order.getStatus();
-        order.setStatus(newStatus);
-        order.setUpdatedAt(LocalDateTime.now());
 
-        if (newStatus == OrderStatus.confirmation && oldStatus != OrderStatus.confirmation) {
+        if (newStatus == OrderStatus.cancelled) {
+            handleOrderCancellation(order, oldStatus);
+        } else if (newStatus == OrderStatus.confirmation && oldStatus != OrderStatus.confirmation) {
             handleOrderConfirmation(order);
         }
 
+        order.setStatus(newStatus);
+        order.setUpdatedAt(LocalDateTime.now());
+
         Order updatedOrder = orderRepository.save(order);
         return convertToDTO(updatedOrder);
+    }
+
+    private void handleOrderCancellation(Order order, OrderStatus oldStatus) {
+        if (oldStatus == OrderStatus.shipped || oldStatus == OrderStatus.delivered) {
+            throw new IllegalStateException("Cannot cancel an order that has been shipped or delivered");
+        }
+
+        if (oldStatus == OrderStatus.confirmation || oldStatus == OrderStatus.process) {
+            for (OrderItem item : order.getItems()) {
+                stockService.returnStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+            }
+        }
     }
 
     @Override
