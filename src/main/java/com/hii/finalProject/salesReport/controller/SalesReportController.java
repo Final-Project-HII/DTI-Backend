@@ -16,6 +16,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/sales-report")
@@ -41,14 +43,27 @@ public class SalesReportController {
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
 
 
-
         try {
             SalesReportDTO report = salesReportService.getOverallSalesReport(startDate, endDate);
 
-            return ResponseEntity.ok(report);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("statusCode", 200);
+            response.put("message", "Sales report generated successfully");
+            response.put("success", true);
+            response.put("data", report);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
 
-            return ResponseEntity.internalServerError().body("Error generating sales report: " + e.getMessage());
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            errorResponse.put("message", "Error generating sales report");
+            errorResponse.put("success", false);
+            errorResponse.put("data", e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 }
