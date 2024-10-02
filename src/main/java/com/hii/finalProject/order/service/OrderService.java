@@ -17,4 +17,8 @@ public interface OrderService {
     Page<OrderDTO> getFilteredOrders(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
     OrderDTO shipOrder(Long orderId);
+
+    Page<OrderDTO> getAllOrders(Pageable pageable);
+
+    Page<OrderDTO> getFilteredOrdersForAdmin(String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 }
