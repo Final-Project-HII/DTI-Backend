@@ -1,58 +1,94 @@
 package com.hii.finalProject.salesReport.service.impl;
 
+import com.hii.finalProject.order.entity.Order;
 import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.order.repository.OrderRepository;
 import com.hii.finalProject.salesReport.dto.SalesReportDTO;
 import com.hii.finalProject.salesReport.service.SalesReportService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class SalesReportServiceImpl implements SalesReportService {
 
-    private OrderRepository orderRepository;
-    private JdbcTemplate jdbcTemplate;
+    private final OrderRepository orderRepository;
 
-    // Daily sales report using JPQL query from the repository
-    @Override
-    public Page<SalesReportDTO> getDailySalesReport(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        List<OrderStatus> completedStatuses = Arrays.asList(OrderStatus.delivered, OrderStatus.shipped);
-        return orderRepository.getDailySalesReport(startDate, endDate, completedStatuses, pageable);
+    @Autowired
+    public SalesReportServiceImpl(OrderRepository orderRepository) {
+        this.orderRepository = orderRepository;
     }
 
-    // Implementing the daily sales report for LocalDate (if needed)
     @Override
-    public Page<SalesReportDTO> getDailySalesReport(LocalDate startDate, LocalDate endDate, Pageable pageable) {
-        LocalDateTime startDateTime = startDate.atStartOfDay();
-        LocalDateTime endDateTime = endDate.plusDays(1).atStartOfDay();  // Include the entire end date
-        return getDailySalesReport(startDateTime, endDateTime, pageable);
+    public SalesReportDTO generateDailySalesReport(LocalDate date, OrderStatus saleStatus) {
+        List<Order> orders = orderRepository.findByCreatedAtBetweenAndStatusIn(
+                date.atStartOfDay(),
+                date.plusDays(1).atStartOfDay(),
+                List.of(saleStatus, OrderStatus.delivered)
+        );
+
+        SalesReportDTO report = new SalesReportDTO();
+        report.setDate(date);
+        report.setTotalOrders((long) orders.size());
+        report.setTotalRevenue(calculateTotalRevenue(orders));
+        report.setAverageOrderValue(calculateAverageOrderValue(orders));
+        report.setTotalProductsSold(calculateTotalProductsSold(orders));
+        report.setTopSellingProduct(findTopSellingProduct(orders));
+        report.setTopPerformingWarehouse(findTopPerformingWarehouse(orders));
+
+        return report;
     }
 
-    // Overall sales report using JdbcTemplate
-    @Override
-    public SalesReportDTO getOverallSalesReport(LocalDate startDate, LocalDate endDate) {
-        String sql = "SELECT COUNT(*) as order_count, COALESCE(SUM(final_amount), 0) as total_revenue " +
-                "FROM developmentfp.orders " + // Adding schema reference here
-                "WHERE created_at >= ? AND created_at < ?";
+    private BigDecimal calculateTotalRevenue(List<Order> orders) {
+        return orders.stream()
+                .map(Order::getFinalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 
-        try {
-            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
-                long orderCount = rs.getLong("order_count");
-                BigDecimal totalRevenue = rs.getBigDecimal("total_revenue");
-
-                return new SalesReportDTO(orderCount, totalRevenue);
-            }, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());  // Include orders until the end date
-        } catch (Exception e) {
-            throw new RuntimeException("Error generating sales report: " + e.getMessage(), e);
+    private BigDecimal calculateAverageOrderValue(List<Order> orders) {
+        if (orders.isEmpty()) {
+            return BigDecimal.ZERO;
         }
+        BigDecimal totalRevenue = calculateTotalRevenue(orders);
+        return totalRevenue.divide(BigDecimal.valueOf(orders.size()), 2, RoundingMode.HALF_UP);
     }
 
+    private Long calculateTotalProductsSold(List<Order> orders) {
+        return orders.stream()
+                .mapToLong(Order::getTotalQuantity)
+                .sum();
+    }
+
+    private String findTopSellingProduct(List<Order> orders) {
+        Map<String, Long> productSales = orders.stream()
+                .flatMap(order -> order.getItems().stream())
+                .collect(Collectors.groupingBy(
+                        item -> item.getProduct().getName(),
+                        Collectors.summingLong(item -> item.getQuantity())
+                ));
+
+        return productSales.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("N/A");
+    }
+
+    private String findTopPerformingWarehouse(List<Order> orders) {
+        Map<String, Long> warehouseSales = orders.stream()
+                .collect(Collectors.groupingBy(
+                        order -> order.getWarehouse().getName(),
+                        Collectors.counting()
+                ));
+
+        return warehouseSales.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("N/A");
+    }
 }
