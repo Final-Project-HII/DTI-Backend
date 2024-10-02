@@ -70,6 +70,13 @@ public class PaymentController {
                 }
             } else if (payment.getPaymentMethod() == PaymentMethod.PAYMENT_GATEWAY) {
                 response.put("transactionId", payment.getName());
+
+                if (payment.getVirtualAccountBank() != null && payment.getVirtualAccountNumber() != null) {
+                    Map<String, String> vaInfo = new HashMap<>();
+                    vaInfo.put("bank", payment.getVirtualAccountBank());
+                    vaInfo.put("va_number", payment.getVirtualAccountNumber());
+                    response.put("va_numbers", new Map[]{vaInfo});
+                }
             }
 
             return ResponseEntity.ok(response);

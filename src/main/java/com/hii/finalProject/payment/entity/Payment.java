@@ -38,4 +38,10 @@ public class Payment {
 
     @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private PaymentProof paymentProof;
+
+    @Column(name = "virtual_account_bank")
+    private String virtualAccountBank;
+
+    @Column(name = "virtual_account_number")
+    private String virtualAccountNumber;
 }

@@ -38,19 +38,21 @@ public class PaymentServiceImpl implements PaymentService {
     private final RestTemplate restTemplate;
     private final PaymentRepository paymentRepository;
     private final PaymentProofRepository paymentProofRepository;
+    private final ObjectMapper jacksonObjectMapper;
 
     private String serverKey = "SB-Mid-server-1YIRKrKNSAv83Cq4AdIKPKlB";
     private String apiUrl  = "https://api.sandbox.midtrans.com/v2/charge";
 
     public PaymentServiceImpl(OrderService orderService, UserService userService, CartService cartService,
                               RestTemplateBuilder restTemplateBuilder, PaymentRepository paymentRepository,
-                              PaymentProofRepository paymentProofRepository) {
+                              PaymentProofRepository paymentProofRepository, ObjectMapper jacksonObjectMapper) {
         this.orderService = orderService;
         this.userService = userService;
         this.cartService = cartService;
         this.restTemplate = restTemplateBuilder.build();
         this.paymentRepository = paymentRepository;
         this.paymentProofRepository = paymentProofRepository;
+        this.jacksonObjectMapper = jacksonObjectMapper;
     }
 
     @Override
@@ -88,6 +90,22 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setStatus(PaymentStatus.PENDING);
             payment.setName("Midtrans Payment for Order " + orderId);
             payment.setCreatedAt(LocalDateTime.now());
+
+            try {
+                JsonNode responseJson = jacksonObjectMapper.readTree(transactionResponse);
+                if (responseJson.has("va_numbers") && responseJson.get("va_numbers").isArray()) {
+                    JsonNode vaNumbers = responseJson.get("va_numbers").get(0);
+                    String vaBank = vaNumbers.get("bank").asText();
+                    String vaNumber = vaNumbers.get("va_number").asText();
+
+                    payment.setVirtualAccountBank(vaBank);
+                    payment.setVirtualAccountNumber(vaNumber);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Error parsing Midtrans response: " + e.getMessage());
+            }
+
+
             paymentRepository.save(payment);
 
             result = transactionResponse;
