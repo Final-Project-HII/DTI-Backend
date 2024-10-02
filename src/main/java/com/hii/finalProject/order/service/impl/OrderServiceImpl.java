@@ -245,7 +245,7 @@ public class OrderServiceImpl implements OrderService {
         dto.setWarehouseName(order.getWarehouse().getName());
         dto.setAddressId(order.getAddress().getId());
         dto.setItems(order.getItems().stream().map(this::convertToOrderItemDTO).collect(Collectors.toList()));
-        dto.setOrderDate(order.getCreatedAt());
+        dto.setOrderDate(order.getCreatedAt().toLocalDate());
         dto.setStatus(order.getStatus().name());
         dto.setOriginalAmount(order.getOriginalAmount());
         dto.setShippingCost(order.getShippingCost());
