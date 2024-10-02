@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.hii.finalProject.city.entity.City;
 import com.hii.finalProject.stock.entity.Stock;
 import com.hii.finalProject.stockMutation.entity.StockMutation;
+import com.hii.finalProject.stockMutationJournal.entity.StockMutationJournal;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.ColumnDefault;
@@ -65,6 +66,9 @@ public class Warehouse {
     @JsonIgnore
     private List<StockMutation> incomingMutations = new ArrayList<>();
 
+    @OneToMany(mappedBy = "warehouse")
+    @JsonIgnore
+    private List<StockMutationJournal> stockMutationJournals = new ArrayList<>();
     @PrePersist
     protected void onCreate(){
         createdAt = Instant.now();
