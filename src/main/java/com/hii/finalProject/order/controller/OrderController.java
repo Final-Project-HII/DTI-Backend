@@ -1,6 +1,7 @@
 package com.hii.finalProject.order.controller;
 
 import com.hii.finalProject.auth.helpers.Claims;
+import com.hii.finalProject.exceptions.OrderProcessingException;
 import com.hii.finalProject.order.dto.OrderDTO;
 import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.order.service.OrderService;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,15 +31,23 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<OrderDTO> createOrder(
+    public ResponseEntity<Response<OrderDTO>> createOrder(
             @RequestParam Long addressId,
             @RequestParam Long courierId) {
-        String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
-        Long userId = userService.getUserByEmail(userEmail);
-        Long placeholderWarehouseId = null; // or use any valid placeholder value
-        OrderDTO orderDTO = orderService.createOrder(userId, placeholderWarehouseId, addressId, courierId);
-        return ResponseEntity.ok(orderDTO);
+        try {
+            String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
+            Long userId = userService.getUserByEmail(userEmail);
+            Long placeholderWarehouseId = null;
+            OrderDTO orderDTO = orderService.createOrder(userId, placeholderWarehouseId, addressId, courierId);
+            return Response.successfulResponse("Order created successfully", orderDTO);
+        } catch (OrderProcessingException e) {
+            return Response.failedResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+        } catch (Exception e) {
+            return Response.failedResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "We are unable to process your request at this time, please try again later.");
+        }
     }
+
 
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderDTO> getOrder(@PathVariable Long orderId) {
