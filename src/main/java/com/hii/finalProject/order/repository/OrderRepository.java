@@ -27,4 +27,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query(value = "SELECT LASTVAL()", nativeQuery = true)
     Long getLastInsertId();
+
+    boolean existsByUserIdAndStatus(Long userId, OrderStatus status);
 }

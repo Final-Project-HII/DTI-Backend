@@ -73,19 +73,17 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderDTO createOrder(Long userId, Long warehouseId, Long addressId, Long courierId) {
+
+        if (hasPendingOrder(userId)) {
+            throw new OrderProcessingException("You have a pending order. Please complete your previous transaction first.");
+        }
+        
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new RuntimeException("Address not found with id: " + addressId));
         Courier courier = courierRepository.findById(courierId)
                 .orElseThrow(() -> new RuntimeException("Courier not found with id: " + courierId));
-
-//        Warehouse nearestWarehouse = warehouseRepository.findAll().get(0);
-//        if (nearestWarehouse == null) {
-//            throw new RuntimeException("No warehouse found");
-//        }
-
-
 
         Warehouse nearestWarehouse = warehouseRepository.findNearestWarehouse(address.getLon(), address.getLat());
         if (nearestWarehouse == null) {
@@ -142,6 +140,10 @@ public class OrderServiceImpl implements OrderService {
         Order savedOrder = orderRepository.save(order);
 
         return convertToDTO(savedOrder);
+    }
+
+    private boolean hasPendingOrder(Long userId) {
+        return orderRepository.existsByUserIdAndStatus(userId, OrderStatus.pending_payment);
     }
 
 
