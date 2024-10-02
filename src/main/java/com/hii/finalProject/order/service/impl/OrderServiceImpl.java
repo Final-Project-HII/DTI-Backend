@@ -145,6 +145,7 @@ public class OrderServiceImpl implements OrderService {
     private boolean hasPendingOrder(Long userId) {
         return orderRepository.existsByUserIdAndStatus(userId, OrderStatus.pending_payment);
     }
+    //
 
 
     private String generateInvoiceId() {
