@@ -73,9 +73,10 @@ public class SalesReportServiceImpl implements SalesReportService {
         LocalDate startDate = LocalDate.of(year, 1, 1);
         LocalDate endDate = LocalDate.of(year, 12, 31);
 
-        List<Order> orders = orderRepository.findByCreatedAtBetween(
+        List<Order> orders = orderRepository.findByCreatedAtBetweenAndStatus(
                 startDate.atStartOfDay(),
-                endDate.atTime(LocalTime.MAX)
+                endDate.atTime(LocalTime.MAX),
+                OrderStatus.delivered
         );
 
         Map<Month, MonthlySales> monthlySalesMap = initializeMonthlyMap(year);
