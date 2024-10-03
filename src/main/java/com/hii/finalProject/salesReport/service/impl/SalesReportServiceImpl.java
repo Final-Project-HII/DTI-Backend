@@ -78,12 +78,11 @@ public class SalesReportServiceImpl implements SalesReportService {
                 endDate.atTime(LocalTime.MAX)
         );
 
-        Map<Month, MonthlySales> monthlySalesMap = new EnumMap<>(Month.class);
+        Map<Month, MonthlySales> monthlySalesMap = initializeMonthlyMap(year);
 
         for (Order order : orders) {
             Month month = order.getCreatedAt().getMonth();
-            MonthlySales monthlySales = monthlySalesMap.computeIfAbsent(month,
-                    k -> new MonthlySales(month.name(), 0, 0));
+            MonthlySales monthlySales = monthlySalesMap.get(month);
             monthlySales.setTotalRevenue(monthlySales.getTotalRevenue() + order.getFinalAmount().doubleValue());
             monthlySales.setTotalOrders(monthlySales.getTotalOrders() + 1);
         }
@@ -94,6 +93,15 @@ public class SalesReportServiceImpl implements SalesReportService {
         logger.info("Generated yearly report with {} months of data", result.size());
 
         return result;
+    }
+
+    private Map<Month, MonthlySales> initializeMonthlyMap(int year) {
+        Map<Month, MonthlySales> map = new EnumMap<>(Month.class);
+        for (Month month : Month.values()) {
+            String monthName = month.name();
+            map.put(month, new MonthlySales(monthName, 0, 0));
+        }
+        return map;
     }
 
     private BigDecimal calculateTotalRevenue(List<Order> orders) {
