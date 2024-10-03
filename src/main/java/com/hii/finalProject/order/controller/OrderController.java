@@ -132,4 +132,30 @@ public class OrderController {
         Page<OrderDTO> orders = orderService.getFilteredOrdersForAdmin(status, startDate, endDate, pageRequest);
         return Response.successfulResponse("Filtered orders successfully fetched", orders);
     }
+
+    @PutMapping("/{orderId}/cancel")
+    public ResponseEntity<Response<OrderDTO>> cancelOrder(@PathVariable Long orderId) {
+        try {
+            OrderDTO canceledOrder = orderService.cancelOrder(orderId);
+            return Response.successfulResponse("Order canceled successfully", canceledOrder);
+        } catch (IllegalStateException e) {
+            return Response.failedResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+        } catch (Exception e) {
+            return Response.failedResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "We are unable to process your request at this time, please try again later.");
+        }
+    }
+
+    @PutMapping("/{orderId}/deliver")
+    public ResponseEntity<Response<OrderDTO>> markOrderAsDelivered(@PathVariable Long orderId) {
+        try {
+            OrderDTO deliveredOrder = orderService.markOrderAsDelivered(orderId);
+            return Response.successfulResponse("Order marked as delivered successfully", deliveredOrder);
+        } catch (IllegalStateException e) {
+            return Response.failedResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+        } catch (Exception e) {
+            return Response.failedResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "We are unable to process your request at this time, please try again later.");
+        }
+    }
 }

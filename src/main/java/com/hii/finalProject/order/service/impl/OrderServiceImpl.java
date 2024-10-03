@@ -209,28 +209,36 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public void cancelOrder(Long orderId) {
+    public OrderDTO cancelOrder(Long orderId) throws IllegalStateException {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
-        if (order.getStatus() == OrderStatus.cancelled) {
-            throw new IllegalStateException("Order is already cancelled");
-        }
-
-        // Check if the order status allows cancellation
         if (order.getStatus() == OrderStatus.shipped || order.getStatus() == OrderStatus.delivered) {
             throw new IllegalStateException("Cannot cancel an order that has been shipped or delivered");
         }
 
-        // If the order was confirmed, we need to return the stock
-        if (order.getStatus() == OrderStatus.confirmation || order.getStatus() == OrderStatus.process) {
-            for (OrderItem item : order.getItems()) {
-                stockService.returnStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
-            }
+        order.setStatus(OrderStatus.cancelled);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        Order updatedOrder = orderRepository.save(order);
+        return convertToDTO(updatedOrder);
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO markOrderAsDelivered(Long orderId) throws IllegalStateException {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+        if (order.getStatus() != OrderStatus.shipped) {
+            throw new IllegalStateException("Only shipped orders can be marked as delivered");
         }
 
-        order.setStatus(OrderStatus.cancelled);
-        orderRepository.save(order);
+        order.setStatus(OrderStatus.delivered);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        Order updatedOrder = orderRepository.save(order);
+        return convertToDTO(updatedOrder);
     }
 
     private void handleOrderConfirmation(Order order) {
