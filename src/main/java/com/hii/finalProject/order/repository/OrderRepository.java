@@ -42,6 +42,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             List<OrderStatus> statuses
     );
 
+    List<Order> findByCreatedAtBetween(
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    );
+
 //    @Query("SELECT new com.hii.finalProject.salesReport.dto.SalesReportDTO(" +
 //            "FUNCTION('DATE', o.createdAt), COUNT(o), SUM(o.finalAmount), SUM(oi.quantity), AVG(o.finalAmount)) " +
 //            "FROM Order o JOIN o.items oi " +

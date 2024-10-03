@@ -15,3 +15,4 @@ public class SalesReportDTO {
     private String topSellingProduct;
     private String topPerformingWarehouse;
 }
+
