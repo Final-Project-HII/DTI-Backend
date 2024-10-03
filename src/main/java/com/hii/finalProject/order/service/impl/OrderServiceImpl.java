@@ -207,6 +207,7 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+
     @Override
     @Transactional
     public OrderDTO cancelOrder(Long orderId) throws IllegalStateException {
@@ -217,11 +218,25 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("Cannot cancel an order that has been shipped or delivered");
         }
 
+        if (order.getStatus() == OrderStatus.confirmation || order.getStatus() == OrderStatus.process) {
+            returnStockForOrder(order);
+        }
+
         order.setStatus(OrderStatus.cancelled);
         order.setUpdatedAt(LocalDateTime.now());
 
         Order updatedOrder = orderRepository.save(order);
         return convertToDTO(updatedOrder);
+    }
+
+    private void returnStockForOrder(Order order) {
+        for (OrderItem item : order.getItems()) {
+            stockService.returnStock(
+                    item.getProduct().getId(),
+                    order.getWarehouse().getId(),
+                    item.getQuantity()
+            );
+        }
     }
 
     @Override
