@@ -39,7 +39,7 @@ public class SalesReportController {
         return ResponseEntity.ok(report);
     }
 
-    @GetMapping("/api/reports/sales/yearly")
+    @GetMapping("/sales/yearly")
     public ResponseEntity<List<MonthlySales>> getYearlySalesReport(@RequestParam int year) {
         List<MonthlySales> yearlySales = salesReportService.generateYearlySalesReport(year);
         return ResponseEntity.ok(yearlySales);
