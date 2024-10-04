@@ -16,6 +16,9 @@ import com.hii.finalProject.order.repository.OrderRepository;
 import com.hii.finalProject.order.service.OrderService;
 import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import com.hii.finalProject.orderItem.entity.OrderItem;
+import com.hii.finalProject.payment.entity.Payment;
+import com.hii.finalProject.payment.entity.PaymentMethod;
+import com.hii.finalProject.payment.service.PaymentService;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.stock.service.StockService;
@@ -50,6 +53,7 @@ public class OrderServiceImpl implements OrderService {
     private final AddressRepository addressRepository;
     private final WarehouseRepository warehouseRepository;
     private final CourierRepository courierRepository;
+    private final PaymentService paymentService;
     private static final String INVOICE_PREFIX = "INV";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
     private final AtomicInteger sequence = new AtomicInteger(1);
@@ -57,7 +61,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
                             CartService cartService, ProductRepository productRepository,
                             AddressRepository addressRepository, WarehouseRepository warehouseRepository,
-                            CourierRepository courierRepository, CourierService courierService, StockService stockService, WarehouseService warehouseService) {
+                            CourierRepository courierRepository, CourierService courierService, StockService stockService, WarehouseService warehouseService, PaymentService paymentService) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
@@ -68,6 +72,7 @@ public class OrderServiceImpl implements OrderService {
         this.courierService = courierService;
         this.stockService = stockService;
         this.warehouseService = warehouseService;
+        this.paymentService = paymentService;
     }
 
     @Override
@@ -162,11 +167,24 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
+    public PaymentMethod getPaymentMethodForOrder(Long orderId) {
+        Payment payment = paymentService.getPaymentByOrderId(orderId);
+        return payment.getPaymentMethod();
+    }
+
+    @Override
     public OrderDTO getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-        return convertToDTO(order);
+        OrderDTO orderDTO = convertToDTO(order);
+
+        // Fetch and set the payment method
+        PaymentMethod paymentMethod = getPaymentMethodForOrder(orderId);
+        orderDTO.setPaymentMethod(paymentMethod);
+
+        return orderDTO;
     }
+
 
     @Override
     public Page<OrderDTO> getOrdersByUserId(Long userId, Pageable pageable) {
