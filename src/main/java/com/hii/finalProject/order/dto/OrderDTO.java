@@ -1,9 +1,11 @@
 package com.hii.finalProject.order.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,13 +17,15 @@ public class OrderDTO {
     private Long warehouseId;
     private Long addressId;
     private List<OrderItemDTO> items;
-    private LocalDateTime orderDate;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate orderDate;
     private String status;
     private BigDecimal originalAmount;
     private BigDecimal finalAmount;
     private Integer totalWeight;
     private Integer totalQuantity;
     private Long courierId;
+    private BigDecimal shippingCost;
     private String warehouseName;
     private String courierName;
     private String originCity;

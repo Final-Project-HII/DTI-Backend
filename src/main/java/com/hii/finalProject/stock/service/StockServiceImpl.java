@@ -1,6 +1,7 @@
 package com.hii.finalProject.stock.service;
 
 import com.hii.finalProject.exceptions.DataNotFoundException;
+import com.hii.finalProject.exceptions.InsufficientStockException;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.products.service.ProductServiceImpl;
@@ -24,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -247,4 +249,40 @@ public class StockServiceImpl implements StockService{
         return journal;
     }
     //stockreport
+    @Override
+    @Transactional
+    public void reduceStock(Long productId, Long warehouseId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                .orElseThrow(() -> new RuntimeException("Warehouse not found"));
+
+        Stock stock = stockRepository.findByProductAndWarehouse(product, warehouse)
+                .orElseThrow(() -> new RuntimeException("Stock not found for this product in the specified warehouse"));
+
+        if (stock.getQuantity() < quantity) {
+            throw new InsufficientStockException("Not enough stock for product: " + product.getName()
+                    + " in warehouse: " + warehouse.getName()
+                    + ". Required: " + quantity + ", Available: " + stock.getQuantity());
+        }
+
+        stock.setQuantity(stock.getQuantity() - quantity);
+        stockRepository.save(stock);
+    }
+
+    @Override
+    @Transactional
+    public void returnStock(Long productId, Long warehouseId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                .orElseThrow(() -> new RuntimeException("Warehouse not found"));
+
+        Stock stock = stockRepository.findByProductAndWarehouse(product, warehouse)
+                .orElseThrow(() -> new RuntimeException("Stock not found for this product in the specified warehouse"));
+
+        stock.setQuantity(stock.getQuantity() + quantity);
+        stockRepository.save(stock);
+    }
+
 }

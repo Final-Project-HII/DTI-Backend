@@ -5,6 +5,7 @@ import com.hii.finalProject.stock.dto.StockDtoResponse;
 import com.hii.finalProject.stock.entity.Stock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -27,4 +28,7 @@ Page<StockDtoResponse> getAllStock(
 );
     void deleteStock(Long id);
     StockDtoResponse updateStock(Long id, StockDtoRequest stockDtoRequest, String email);
+
+    void reduceStock(Long productId, Long warehouseId, int quantity);
+    void returnStock(Long productId, Long warehouseId, int quantity);
 }

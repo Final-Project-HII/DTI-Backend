@@ -19,7 +19,7 @@ public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "order_id_gen")
-    @SequenceGenerator(name = "order_id_gen", sequenceName = "order_id_seq", allocationSize = 1)
+    @SequenceGenerator(name = "order_id_gen", sequenceName = "developmentfp.order_id_seq", allocationSize = 1, schema = "developmentfp")
     @Column(name = "id", nullable = false)
     private Long id;
 
@@ -58,6 +58,9 @@ public class Order {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "courier_id", nullable = false)
     private Courier courier;
+
+    @Column(name = "shipping_cost", nullable = false)
+    private BigDecimal shippingCost;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
