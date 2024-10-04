@@ -2,6 +2,7 @@ package com.hii.finalProject.order.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hii.finalProject.orderItem.dto.OrderItemDTO;
+import com.hii.finalProject.payment.entity.PaymentMethod;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -30,5 +31,6 @@ public class OrderDTO {
     private String courierName;
     private String originCity;
     private String destinationCity;
+    private PaymentMethod paymentMethod;
 
 }

@@ -51,9 +51,14 @@ public class OrderController {
 
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<OrderDTO> getOrder(@PathVariable Long orderId) {
-        OrderDTO orderDTO = orderService.getOrderById(orderId);
-        return ResponseEntity.ok(orderDTO);
+    public ResponseEntity<Response<OrderDTO>> getOrder(@PathVariable Long orderId) {
+        try {
+            OrderDTO orderDTO = orderService.getOrderById(orderId);
+            return Response.successfulResponse("Order fetched successfully", orderDTO);
+        } catch (Exception e) {
+            return Response.failedResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "We are unable to process your request at this time, please try again later.");
+        }
     }
 
     @GetMapping
