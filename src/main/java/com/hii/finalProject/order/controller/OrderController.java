@@ -5,6 +5,8 @@ import com.hii.finalProject.exceptions.OrderProcessingException;
 import com.hii.finalProject.order.dto.OrderDTO;
 import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.order.service.OrderService;
+import com.hii.finalProject.payment.entity.Payment;
+import com.hii.finalProject.payment.service.PaymentService;
 import com.hii.finalProject.response.Response;
 import com.hii.finalProject.users.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +27,12 @@ public class OrderController {
 
     private final OrderService orderService;
     private final UserService userService;
+    private final PaymentService paymentService;
 
-    public OrderController(OrderService orderService, UserService userService) {
+    public OrderController(OrderService orderService, UserService userService, PaymentService paymentService) {
         this.orderService = orderService;
         this.userService = userService;
+        this.paymentService = paymentService;
     }
 
     @PostMapping
@@ -54,12 +58,18 @@ public class OrderController {
     public ResponseEntity<Response<OrderDTO>> getOrder(@PathVariable Long orderId) {
         try {
             OrderDTO orderDTO = orderService.getOrderById(orderId);
+            Payment payment = paymentService.getPaymentByOrderId(orderId);
+
+            // Set payment method in OrderDTO
+            orderDTO.setPaymentMethod(payment.getPaymentMethod());
+
             return Response.successfulResponse("Order fetched successfully", orderDTO);
         } catch (Exception e) {
             return Response.failedResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     "We are unable to process your request at this time, please try again later.");
         }
     }
+
 
     @GetMapping
     public ResponseEntity<Response<Page<OrderDTO>>> getUserOrders(

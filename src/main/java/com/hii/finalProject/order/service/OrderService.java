@@ -12,8 +12,6 @@ import java.time.LocalDateTime;
 public interface OrderService {
     OrderDTO createOrder(Long userId, Long warehouseId, Long addressId, Long courierId);
 
-    PaymentMethod getPaymentMethodForOrder(Long orderId);
-
     OrderDTO getOrderById(Long orderId);
     Page<OrderDTO> getOrdersByUserId(Long userId, Pageable pageable);
     OrderDTO updateOrderStatus(Long orderId, OrderStatus status);
