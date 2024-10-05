@@ -134,6 +134,7 @@ public class OrderController {
 //    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Response<Page<OrderDTO>>> getFilteredOrdersForAdmin(
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long warehouseId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(defaultValue = "0") int page,
@@ -144,7 +145,7 @@ public class OrderController {
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-        Page<OrderDTO> orders = orderService.getFilteredOrdersForAdmin(status, startDate, endDate, pageRequest);
+        Page<OrderDTO> orders = orderService.getFilteredOrdersForAdmin(status, warehouseId, startDate, endDate, pageRequest);
         return Response.successfulResponse("Filtered orders successfully fetched", orders);
     }
 
