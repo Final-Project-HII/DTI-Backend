@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -371,4 +372,77 @@ public StockMutationResponseDto processMutation(StockMutationProcessDto processD
             long newId = StockMutationJurnalIdGenerator.generateId();
         }
     }
+
+    //report
+    @Override
+    public StockReportDto getStockReport(Long warehouseId, YearMonth month, Pageable pageable) {
+        StockReportDto reportDto = new StockReportDto();
+        reportDto.setSummary(getStockSummary(warehouseId, month, pageable));
+        reportDto.setDetails(getStockDetails(warehouseId, month));
+        return reportDto;
+    }
+
+    private StockSummaryReportDto getStockSummary(Long warehouseId, YearMonth month, Pageable pageable) {
+        StockSummaryReportDto summaryDto = new StockSummaryReportDto();
+        summaryDto.setMonth(month);
+        summaryDto.setWarehouseId(warehouseId);
+        summaryDto.setWarehouseName(warehouseRepository.findById(warehouseId)
+                .orElseThrow(() -> new DataNotFoundException("Warehouse not found")).getName());
+
+        Page<ProductSummaryDto> productSummaries = getProductSummaries(warehouseId, month, pageable);
+
+        long totalAddition = productSummaries.stream().mapToLong(ProductSummaryDto::getTotalAddition).sum();
+        long totalReduction = productSummaries.stream().mapToLong(ProductSummaryDto::getTotalReduction).sum();
+        long endingStock = productSummaries.stream().mapToLong(ProductSummaryDto::getEndingStock).sum();
+
+        summaryDto.setProductSummaries(productSummaries);
+        summaryDto.setTotalAddition(totalAddition);
+        summaryDto.setTotalReduction(totalReduction);
+        summaryDto.setEndingStock(endingStock);
+
+        return summaryDto;
+    }
+
+    //pajination
+    private Page<ProductSummaryDto> getProductSummaries(Long warehouseId, YearMonth month, Pageable pageable) {
+        LocalDateTime startDate = month.atDay(1).atStartOfDay();
+        LocalDateTime endDate = month.atEndOfMonth().atTime(23, 59, 59);
+
+        Page<Stock> stocksPage = stockRepository.findByWarehouseId(warehouseId, pageable);
+
+        return stocksPage.map(stock -> {
+            ProductSummaryDto summary = new ProductSummaryDto();
+            summary.setProductId(stock.getProduct().getId());
+            summary.setProductName(stock.getProduct().getName());
+            List<StockMutationJournal> journals = stockMutationJournalRepository
+                    .findByWarehouseIdAndStockMutation_Product_IdAndCreatedAtBetween(
+                            warehouseId, stock.getProduct().getId(), startDate, endDate);
+            long addition = journals.stream()
+                    .filter(j -> j.getMutationType() == StockMutationJournal.MutationType.IN)
+                    .mapToLong(j -> j.getStockMutation().getQuantity())
+                    .sum();
+            long reduction = journals.stream()
+                    .filter(j -> j.getMutationType() == StockMutationJournal.MutationType.OUT)
+                    .mapToLong(j -> j.getStockMutation().getQuantity())
+                    .sum();
+            summary.setTotalAddition(addition);
+            summary.setTotalReduction(reduction);
+            summary.setEndingStock(stock.getQuantity().longValue());
+            return summary;
+        });
+    }
+
+    private List<StockMutationJournalDto> getStockDetails(Long warehouseId, YearMonth month) {
+        LocalDateTime startDate = month.atDay(1).atStartOfDay();
+        LocalDateTime endDate = month.atEndOfMonth().atTime(23, 59, 59);
+
+        List<StockMutationJournal> journals = stockMutationJournalRepository
+                .findByWarehouseIdAndCreatedAtBetween(warehouseId, startDate, endDate);
+
+        return journals.stream()
+                .map(journal -> fromEntity(journal, null))
+                .collect(Collectors.toList());
+    }
+
+
 }

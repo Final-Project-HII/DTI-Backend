@@ -47,8 +47,5 @@ Page<StockMutationJournalDto> getStockMutationJournals(
             String email,
             Pageable pageable
     );
-//    Page<StockDetailReportDto> getStockDetailReport(Long warehouseId, Long productId, YearMonth month, Pageable pageable);
-//    Page<StockSummaryReportDto> getStockSummaryReport(Long warehouseId, YearMonth month, Pageable pageable);
-//    Page<StockSummaryReportDto> getStockSummaryReport(Long warehouseId, YearMonth month, Pageable pageable);
-//    Page<StockMutationJournalDto> getStockDetailReport(Long warehouseId, Long productId, YearMonth month, Pageable pageable);
+StockReportDto getStockReport(Long warehouseId, YearMonth month, Pageable pageable);
 }
