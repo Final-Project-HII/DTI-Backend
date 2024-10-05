@@ -53,7 +53,6 @@ public class OrderServiceImpl implements OrderService {
     private final AddressRepository addressRepository;
     private final WarehouseRepository warehouseRepository;
     private final CourierRepository courierRepository;
-    private final PaymentService paymentService;
     private static final String INVOICE_PREFIX = "INV";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
     private final AtomicInteger sequence = new AtomicInteger(1);
@@ -61,7 +60,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
                             CartService cartService, ProductRepository productRepository,
                             AddressRepository addressRepository, WarehouseRepository warehouseRepository,
-                            CourierRepository courierRepository, CourierService courierService, StockService stockService, WarehouseService warehouseService, PaymentService paymentService) {
+                            CourierRepository courierRepository, CourierService courierService, StockService stockService, WarehouseService warehouseService) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
@@ -72,7 +71,6 @@ public class OrderServiceImpl implements OrderService {
         this.courierService = courierService;
         this.stockService = stockService;
         this.warehouseService = warehouseService;
-        this.paymentService = paymentService;
     }
 
     @Override
@@ -167,23 +165,12 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
-    public PaymentMethod getPaymentMethodForOrder(Long orderId) {
-        Payment payment = paymentService.getPaymentByOrderId(orderId);
-        return payment.getPaymentMethod();
-    }
-
-    @Override
     public OrderDTO getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-        OrderDTO orderDTO = convertToDTO(order);
-
-        // Fetch and set the payment method
-        PaymentMethod paymentMethod = getPaymentMethodForOrder(orderId);
-        orderDTO.setPaymentMethod(paymentMethod);
-
-        return orderDTO;
+        return convertToDTO(order);
     }
+
 
 
     @Override
