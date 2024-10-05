@@ -333,7 +333,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Page<OrderDTO> getFilteredOrdersForAdmin(String status, Long warehouseId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        OrderStatus orderStatus = status != null && !status.isEmpty() ? OrderStatus.valueOf(status.toUpperCase()) : null;
+        OrderStatus orderStatus = status != null && !status.isEmpty() ? OrderStatus.valueOf(status) : null;
         Page<Order> orders = orderRepository.findFilteredOrders(orderStatus, warehouseId, startDate, endDate, pageable);
         return orders.map(this::convertToDTO);
     }
