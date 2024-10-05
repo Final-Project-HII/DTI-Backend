@@ -373,6 +373,7 @@ public class OrderServiceImpl implements OrderService {
         dto.setCourierName(order.getCourier().getCourier());
         dto.setOriginCity(order.getWarehouse().getCity().getName());
         dto.setDestinationCity(order.getAddress().getCity().getName());
+        dto.setPaymentMethod(order.getPaymentMethod());
         return dto;
     }
 
