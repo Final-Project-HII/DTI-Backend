@@ -2,6 +2,7 @@ package com.hii.finalProject.order.entity;
 
 import com.hii.finalProject.address.entity.Address;
 import com.hii.finalProject.courier.entity.Courier;
+import com.hii.finalProject.payment.entity.PaymentMethod;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.orderItem.entity.OrderItem;
@@ -43,6 +44,10 @@ public class Order {
     @Column(name = "status", nullable = false)
     private OrderStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method")
+    private PaymentMethod paymentMethod;
+
     @Column(name = "original_amount", nullable = false)
     private BigDecimal originalAmount;
 
@@ -70,6 +75,7 @@ public class Order {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
+
 
     @PreUpdate
     protected void onUpdate() {
