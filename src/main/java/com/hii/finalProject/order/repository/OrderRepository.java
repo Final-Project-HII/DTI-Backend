@@ -3,9 +3,11 @@ package com.hii.finalProject.order.repository;
 import com.hii.finalProject.order.entity.Order;
 import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.salesReport.dto.SalesReportDTO;
+import jakarta.annotation.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,7 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
     Page<Order> findByUserIdAndStatus(Long userId, OrderStatus status, Pageable pageable);
     Page<Order> findByUserIdAndCreatedAtBetween(Long userId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     Page<Order> findByUserId(Long userId, Pageable pageable);
@@ -48,17 +50,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             OrderStatus status
     );
 
-    @Query("SELECT o FROM Order o WHERE " +
-            "(:status IS NULL OR o.status = :status) AND " +
-            "(:warehouseId IS NULL OR o.warehouse.id = :warehouseId) AND " +
-            "(:startDate IS NULL OR o.createdAt >= :startDate) AND " +
-            "(:endDate IS NULL OR o.createdAt <= :endDate)")
-    Page<Order> findFilteredOrders(
-            @Param("status") OrderStatus status,
-            @Param("warehouseId") Long warehouseId,
-            @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate,
-            Pageable pageable
-    );
+    @Query("SELECT o FROM Order o WHERE (:warehouseId IS NULL OR o.warehouse.id = :warehouseId)")
+    Page<Order> findByWarehouse(@Param("warehouseId") Long warehouseId, Pageable pageable);
 
 }

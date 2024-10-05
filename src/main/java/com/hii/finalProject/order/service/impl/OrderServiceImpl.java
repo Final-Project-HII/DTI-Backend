@@ -16,9 +16,6 @@ import com.hii.finalProject.order.repository.OrderRepository;
 import com.hii.finalProject.order.service.OrderService;
 import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import com.hii.finalProject.orderItem.entity.OrderItem;
-import com.hii.finalProject.payment.entity.Payment;
-import com.hii.finalProject.payment.entity.PaymentMethod;
-import com.hii.finalProject.payment.service.PaymentService;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.stock.service.StockService;
@@ -39,8 +36,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
@@ -332,11 +331,13 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Page<OrderDTO> getFilteredOrdersForAdmin(String status, Long warehouseId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        OrderStatus orderStatus = status != null && !status.isEmpty() ? OrderStatus.valueOf(status) : null;
-        Page<Order> orders = orderRepository.findFilteredOrders(orderStatus, warehouseId, startDate, endDate, pageable);
+    public Page<OrderDTO> getFilteredOrdersForAdmin(Long warehouseId, Pageable pageable) {
+        log.debug("Filtering orders with warehouseId: {}", warehouseId);
+
+        Page<Order> orders = orderRepository.findByWarehouse(warehouseId, pageable);
         return orders.map(this::convertToDTO);
     }
+
 
 
 
