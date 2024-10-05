@@ -332,22 +332,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Page<OrderDTO> getFilteredOrdersForAdmin(String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        Page<Order> orders;
-
-        if (status != null && !status.isEmpty()) {
-            try {
-                OrderStatus orderStatus = OrderStatus.valueOf(status.toUpperCase());
-                orders = orderRepository.findByStatus(orderStatus, pageable);
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid order status: " + status);
-            }
-        } else if (startDate != null && endDate != null) {
-            orders = orderRepository.findByCreatedAtBetween(startDate, endDate, pageable);
-        } else {
-            orders = orderRepository.findAll(pageable);
-        }
-
+    public Page<OrderDTO> getFilteredOrdersForAdmin(String status, Long warehouseId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        OrderStatus orderStatus = status != null && !status.isEmpty() ? OrderStatus.valueOf(status.toUpperCase()) : null;
+        Page<Order> orders = orderRepository.findFilteredOrders(orderStatus, warehouseId, startDate, endDate, pageable);
         return orders.map(this::convertToDTO);
     }
 

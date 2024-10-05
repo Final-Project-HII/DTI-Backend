@@ -48,24 +48,17 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             OrderStatus status
     );
 
-//    @Query("SELECT new com.hii.finalProject.salesReport.dto.SalesReportDTO(" +
-//            "FUNCTION('DATE', o.createdAt), COUNT(o), SUM(o.finalAmount), SUM(oi.quantity), AVG(o.finalAmount)) " +
-//            "FROM Order o JOIN o.items oi " +
-//            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-//            "AND o.status IN (:statuses) " +
-//            "GROUP BY FUNCTION('DATE', o.createdAt)")
-//    Page<SalesReportDTO> getDailySalesReport(@Param("startDate") LocalDateTime startDate,
-//                                             @Param("endDate") LocalDateTime endDate,
-//                                             @Param("statuses") List<OrderStatus> statuses,
-//                                             Pageable pageable);
-//
-//    @Query("SELECT new com.hii.finalProject.salesReport.dto.SalesReportDTO(" +
-//            "null, COUNT(o), SUM(o.finalAmount), SUM(oi.quantity), AVG(o.finalAmount)) " +
-//            "FROM Order o JOIN o.items oi " +
-//            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-//            "AND o.status IN (:statuses)")
-//    SalesReportDTO getOverallSalesReport(@Param("startDate") LocalDateTime startDate,
-//                                         @Param("endDate") LocalDateTime endDate,
-//                                         @Param("statuses") List<OrderStatus> statuses);
+    @Query("SELECT o FROM Order o WHERE " +
+            "(:status IS NULL OR o.status = :status) AND " +
+            "(:warehouseId IS NULL OR o.warehouse.id = :warehouseId) AND " +
+            "(:startDate IS NULL OR o.createdAt >= :startDate) AND " +
+            "(:endDate IS NULL OR o.createdAt <= :endDate)")
+    Page<Order> findFilteredOrders(
+            @Param("status") OrderStatus status,
+            @Param("warehouseId") Long warehouseId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable
+    );
 
 }
