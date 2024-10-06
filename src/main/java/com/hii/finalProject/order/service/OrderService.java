@@ -19,7 +19,9 @@ public interface OrderService {
 
 
     OrderDTO markOrderAsDelivered(Long orderId) throws IllegalStateException;
-    Page<OrderDTO> getAdminOrders(Long warehouseId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+
+    Page<OrderDTO> getAdminOrders(String status, Long warehouseId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+
     OrderDTO updateOrder(OrderDTO orderDTO);
 
 //    Page<OrderDTO> getFilteredOrders(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);

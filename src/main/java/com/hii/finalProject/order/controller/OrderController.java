@@ -93,7 +93,7 @@ public class OrderController {
 
     @GetMapping("/admin")
 //    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Response<Page<OrderDTO>>> getFilteredOrdersForAdmin(
+    public ResponseEntity<Response<Page<OrderDTO>>> getAdminOrders(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long warehouse,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -103,14 +103,11 @@ public class OrderController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection) {
 
-
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-
-        Page<OrderDTO> orders = orderService.getAdminOrders(warehouse, status, startDate, endDate, pageRequest);
+        Page<OrderDTO> orders = orderService.getAdminOrders(status, warehouse, startDate, endDate, pageRequest);
         return Response.successfulResponse("Orders successfully fetched", orders);
-
     }
 
 //////
