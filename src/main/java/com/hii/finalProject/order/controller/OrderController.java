@@ -91,25 +91,6 @@ public class OrderController {
         return Response.successfulResponse("orders succesfull fetched", orders);
     }
 
-    @GetMapping("/filtered")
-    public ResponseEntity<Page<OrderDTO>> getFilteredOrders(
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDirection) {
-
-        String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
-        Long userId = userService.getUserByEmail(userEmail);
-
-        Sort.Direction direction = Sort.Direction.fromString(sortDirection);
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sortBy));
-
-        Page<OrderDTO> orders = orderService.getFilteredOrders(userId, status, startDate, endDate, pageRequest);
-        return ResponseEntity.ok(orders);
-    }
 
     @PutMapping("/{orderId}/status")
     public ResponseEntity<OrderDTO> updateOrderStatus(
