@@ -25,7 +25,10 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -343,6 +346,10 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRequest.setItem_details(itemDetailsList);
 
         PaymentRequest.CustomExpiryOptions customExpiry = new PaymentRequest.CustomExpiryOptions();
+
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Jakarta"));
+        String formattedOrderTime = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z"));
+
         customExpiry.setOrder_time(LocalDateTime.now().toString());
         customExpiry.setExpiry_duration("1");
         customExpiry.setUnit("hour");
