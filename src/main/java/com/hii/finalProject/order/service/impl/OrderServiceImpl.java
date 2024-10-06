@@ -26,6 +26,7 @@ import com.hii.finalProject.warehouse.repository.WarehouseRepository;
 import com.hii.finalProject.warehouse.service.WarehouseService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -331,13 +332,29 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Page<OrderDTO> getFilteredOrdersForAdmin(Long warehouseId, Pageable pageable) {
-        log.debug("Filtering orders with warehouseId: {}", warehouseId);
+    public Page<OrderDTO> getAdminOrders(Long warehouseId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        Specification<Order> spec = Specification.where(null);
 
-        Page<Order> orders = orderRepository.findByWarehouse(warehouseId, pageable);
+        if (warehouseId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("warehouse").get("id"), warehouseId));
+        }
+
+        if (status != null && !status.isEmpty()) {
+            try {
+                OrderStatus orderStatus = OrderStatus.valueOf(status.toUpperCase());
+                spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), orderStatus));
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid order status: " + status);
+            }
+        }
+
+        if (startDate != null && endDate != null) {
+            spec = spec.and((root, query, cb) -> cb.between(root.get("createdAt"), startDate, endDate));
+        }
+
+        Page<Order> orders = orderRepository.findAll(spec, pageable);
         return orders.map(this::convertToDTO);
     }
-
 
 
 
