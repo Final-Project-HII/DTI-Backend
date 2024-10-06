@@ -55,6 +55,8 @@ public class PaymentServiceImpl implements PaymentService {
         this.jacksonObjectMapper = jacksonObjectMapper;
     }
 
+    //
+
     @Override
     public String createTransaction(PaymentRequest paymentRequest) {
         HttpHeaders headers = new HttpHeaders();
@@ -142,7 +144,7 @@ public class PaymentServiceImpl implements PaymentService {
             Cart cart = cartService.getCartEntity(order.getUserId());
             cart.getItems().clear();
             cartService.updateCart(order.getUserId(), cart);
-            log.info("Cart cleared for user: " + order.getUserId() + " after payment initiation for order: " + orderId);
+            log.info("Cart cleared for users: " + order.getUserId() + " after payment initiation for order: " + orderId);
         } catch (Exception e) {
             log.warning("Failed to clear cart for user: " + order.getUserId() + " after payment initiation. Error: " + e.getMessage());
         }
