@@ -50,7 +50,17 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
             OrderStatus status
     );
 
-    @Query("SELECT o FROM Order o WHERE (:warehouseId IS NULL OR o.warehouse.id = :warehouseId)")
-    Page<Order> findByWarehouse(@Param("warehouseId") Long warehouseId, Pageable pageable);
+    @Query("SELECT o FROM Order o WHERE " +
+            "(:status IS NULL OR o.status = :#{T(com.hii.finalProject.order.entity.OrderStatus).valueOf(#status)}) AND " +
+            "(:warehouseId IS NULL OR o.warehouse.id = :warehouseId) AND " +
+            "(:startDate IS NULL OR o.createdAt >= :startDate) AND " +
+            "(:endDate IS NULL OR o.createdAt <= :endDate)")
+    Page<Order> findFilteredOrders(
+            @Param("status") String status,
+            @Param("warehouseId") Long warehouseId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable
+    );
 
 }
