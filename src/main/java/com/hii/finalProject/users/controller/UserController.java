@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.List;
@@ -90,6 +91,14 @@ public class UserController {
         return Response.successfulResponse("User profile update successfully", userService.updateProfile(email,profileRequestDTO));
     }
 
+    @PutMapping("/avatar")
+    public ResponseEntity<Response<ProfileResponseDTO>> updateAvatar(@ModelAttribute MultipartFile avatar) {
+        var claims = Claims.getClaimsFromJwt();
+        var email = (String) claims.get("sub");
+        return Response.successfulResponse("User avatar update successfully", userService.updateAvatar(email,avatar));
+    }
+
+
 
     @GetMapping("/profile")
     public ResponseEntity<Response<ProfileResponseDTO>> getProfileData(){
@@ -103,5 +112,14 @@ public class UserController {
     public ResponseEntity<Response<Object>> toggleActiveUser(@PathVariable Long id) {
         userService.toggleActiveUser(id);
         return Response.successfulResponse("User active status has been changed");
+    }
+
+
+    @PutMapping("/change-email")
+    public ResponseEntity<Response<Object>> changeEmail(@RequestBody  ChangeEmailRequestDTO changeEmailRequestDTO) {
+        var claims = Claims.getClaimsFromJwt();
+        var email = (String) claims.get("sub");
+        userService.changeEmail(email,changeEmailRequestDTO);
+        return Response.successfulResponse("User email has been changed");
     }
 }

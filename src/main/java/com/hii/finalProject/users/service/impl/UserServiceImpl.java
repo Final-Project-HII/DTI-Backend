@@ -27,6 +27,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -363,6 +365,48 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void changeEmail(String email,ChangeEmailRequestDTO changeEmailRequestDTO) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new DataNotFoundException("Email not found"));
+        System.out.println(changeEmailRequestDTO.getNewEmail());
+        Optional<User> userData = userRepository.findByEmail(changeEmailRequestDTO.getNewEmail());
+        if(userData.isPresent() && userData.get().getDeletedAt() == null){
+            throw new DataNotFoundException("Email has already exist");
+        }else{
+            user.setEmail(changeEmailRequestDTO.getNewEmail());
+            user.setIsVerified(false);
+            userRepository.save(user);
+            String tokenValue = UUID.randomUUID().toString();
+            authRedisRepository.saveVerificationLink(changeEmailRequestDTO.getNewEmail(),tokenValue);
+            String htmlBody = "<html>" +
+                    "<body style='margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;'>" +
+                    "<div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px;'>" +
+
+                    "<div style='text-align: center; background-color: #FABC3F; padding: 20px;'>" +
+                    "<img src='https://res.cloudinary.com/dv9bbdl6i/image/upload/v1724211850/HiiMart/hiimartV1_rgwy5e.png' alt='Your Site' style='width: 50px;'>" +
+                    "</div>" +
+
+                    "<div style='text-align: center; padding: 40px 20px;'>" +
+                    "<h1 style='color: #E85C0D;'>Thanks for Signing Up!</h1>" +
+                    "<h2 style='color: #E85C0D;'>Verify Your E-mail Address</h2>" +
+                    "<p style='color: #333;'>Hi,<br>You're almost ready to get started. Please click on the button below to verify your email address</p>" +
+                    "<a href='http://localhost:3000/manage-password?token=" + tokenValue +"&email=" + changeEmailRequestDTO.getNewEmail()+ "' style='text-decoration: none;'>" +
+                    "<button style='background-color: #C7253E; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;'>VERIFY YOUR EMAIL</button>" +
+                    "</a>" +
+                    "</div>" +
+
+                    "<div style='background-color: #e0e0e0; padding: 20px; text-align: center;'>" +
+                    "<p style='color: #333;'>Get in touch:<br>+62 815 8608 1551<br>HiiMart@gmail.com</p>" +
+                    "<p style='color: #999;'>Copyrights © Company All Rights Reserved</p>" +
+                    "</div>" +
+                    "</div>" +
+                    "</body>" +
+                    "</html>";
+            emailService.sendEmail(changeEmailRequestDTO.getNewEmail(), "Complete Registration for Hii Mart!", htmlBody);
+        }
+
+    }
+
+    @Override
     public Boolean checkResetPasswordLinkIsValid(CheckResetPasswordLinkDTO data) {
         Optional<User> user = userRepository.findByEmail(data.getEmail());
         var existingToken = authRedisRepository.getResetPasswordLink(data.getEmail());
@@ -374,7 +418,6 @@ public class UserServiceImpl implements UserService {
     @CachePut(value = "getProfileData",key = "#email")
     public ProfileResponseDTO updateProfile(String email, ProfileRequestDTO profileRequestDTO) {
         User userData = userRepository.findByEmail(email).orElseThrow(() -> new DataNotFoundException("User not found"));
-        userData.setProfilePicture(cloudinaryService.uploadFile(profileRequestDTO.getAvatar(),"folder_luxtix"));
         userData.setName(profileRequestDTO.getDisplayName());
         userData.setPhoneNumber(profileRequestDTO.getPhoneNumber());
         userRepository.save(userData);
@@ -384,6 +427,37 @@ public class UserServiceImpl implements UserService {
         data.setAvatar(cloudinaryService.generateUrl(userData.getProfilePicture()));
         data.setPhoneNumber(userData.getPhoneNumber());
         data.setDisplayName(userData.getName());
+        data.setPassword(userData.getPassword());
+        return data;
+    }
+
+    @Override
+    @CachePut(value = "getProfileData",key = "#email")
+    public ProfileResponseDTO updateAvatar(String email, MultipartFile avatar) {
+        String originalFilename = avatar.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new IllegalArgumentException("Invalid file name.");
+        }
+
+        String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+        boolean isValidExtension = Arrays.asList("jpg", "jpeg", "png", "gif").contains(fileExtension);
+        boolean isValidSize = avatar.getSize() <= 1048576;
+
+        if (!isValidExtension || !isValidSize) {
+            throw new IllegalArgumentException("Invalid file. Please ensure the file is .jpg, .jpeg, .png, or .gif and does not exceed 1MB in size.");
+        }
+
+        User userData = userRepository.findByEmail(email).orElseThrow(() -> new DataNotFoundException("User not found"));
+        userData.setProfilePicture(cloudinaryService.uploadFile(avatar, "folder_hii-mart"));
+        userRepository.save(userData);
+
+        ProfileResponseDTO data = new ProfileResponseDTO();
+        data.setEmail(userData.getEmail());
+        data.setDisplayName(userData.getName());
+        data.setAvatar(cloudinaryService.generateUrl(userData.getProfilePicture()));
+        data.setPhoneNumber(userData.getPhoneNumber());
+        data.setDisplayName(userData.getName());
+        data.setPassword(userData.getPassword());
         return data;
     }
 
