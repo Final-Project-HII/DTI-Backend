@@ -290,29 +290,28 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
-    public Page<OrderDTO> getAdminOrders(Long warehouseId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+    public Page<OrderDTO> getAdminOrders(String status, Long warehouseId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         Specification<Order> spec = Specification.where(null);
-
-        if (warehouseId != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("warehouse").get("id"), warehouseId));
-        }
 
         if (status != null && !status.isEmpty()) {
             try {
-                OrderStatus orderStatus = OrderStatus.valueOf(status.toUpperCase());
+                OrderStatus orderStatus = OrderStatus.fromString(status);
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), orderStatus));
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid order status: " + status);
+                // Log the error and ignore the invalid status
+                log.warn("Invalid order status: " + status);
             }
         }
-
+        if (warehouseId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("warehouse").get("id"), warehouseId));
+        }
         if (startDate != null && endDate != null) {
             spec = spec.and((root, query, cb) -> cb.between(root.get("createdAt"), startDate, endDate));
         }
-
         Page<Order> orders = orderRepository.findAll(spec, pageable);
         return orders.map(this::convertToDTO);
     }
+
 
     private OrderStatus convertToOrderStatus(String status) {
         if (status == null || status.isEmpty()) {

@@ -12,4 +12,13 @@ public enum OrderStatus {
     public String toString() {
         return name().toLowerCase();
     }
+
+    public static OrderStatus fromString(String status) {
+        for (OrderStatus orderStatus : OrderStatus.values()) {
+            if (orderStatus.name().equalsIgnoreCase(status)) {
+                return orderStatus;
+            }
+        }
+        throw new IllegalArgumentException("No enum constant " + OrderStatus.class.getCanonicalName() + "." + status);
+    }
 }
