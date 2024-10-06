@@ -5,7 +5,6 @@ import com.hii.finalProject.exceptions.OrderProcessingException;
 import com.hii.finalProject.order.dto.OrderDTO;
 import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.order.service.OrderService;
-import com.hii.finalProject.orderPayment.service.OrderPaymentService;
 import com.hii.finalProject.payment.entity.Payment;
 import com.hii.finalProject.payment.service.PaymentService;
 import com.hii.finalProject.response.Response;
@@ -32,13 +31,10 @@ public class OrderController {
 
     private final OrderService orderService;
     private final UserService userService;
-    private final OrderPaymentService orderPaymentService;
 
-
-    public OrderController(OrderService orderService, UserService userService, OrderPaymentService orderPaymentService) {
+    public OrderController(OrderService orderService, UserService userService) {
         this.orderService = orderService;
         this.userService = userService;
-        this.orderPaymentService = orderPaymentService;
     }
 
     @PostMapping
@@ -61,14 +57,9 @@ public class OrderController {
 
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<Response<OrderDTO>> getOrder(@PathVariable Long orderId) {
-        try {
-            OrderDTO orderDTO = orderPaymentService.getOrderWithPaymentMethod(orderId);
-            return Response.successfulResponse("Order fetched successfully", orderDTO);
-        } catch (Exception e) {
-            return Response.failedResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    "We are unable to process your request at this time, please try again later.");
-        }
+    public ResponseEntity<OrderDTO> getOrder(@PathVariable Long orderId) {
+        OrderDTO orderDTO = orderService.getOrderById(orderId);
+        return ResponseEntity.ok(orderDTO);
     }
 
 
@@ -85,7 +76,7 @@ public class OrderController {
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-        Page<OrderDTO> orders = orderPaymentService.getOrdersWithPaymentMethod(userId, pageRequest);
+        Page<OrderDTO> orders = orderService.getOrdersByUserId(userId, pageRequest);
         return Response.successfulResponse("Orders successfully fetched", orders);
     }
 
