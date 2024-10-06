@@ -10,6 +10,8 @@ import com.hii.finalProject.payment.entity.Payment;
 import com.hii.finalProject.payment.service.PaymentService;
 import com.hii.finalProject.response.Response;
 import com.hii.finalProject.users.service.UserService;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,9 +23,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/api/orders")
+@Slf4j
 public class OrderController {
 
     private final OrderService orderService;
@@ -85,25 +89,6 @@ public class OrderController {
         return Response.successfulResponse("Orders successfully fetched", orders);
     }
 
-    @GetMapping("/filtered")
-    public ResponseEntity<Page<OrderDTO>> getFilteredOrders(
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDirection) {
-
-        String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
-        Long userId = userService.getUserByEmail(userEmail);
-
-        Sort.Direction direction = Sort.Direction.fromString(sortDirection);
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sortBy));
-
-        Page<OrderDTO> orders = orderService.getFilteredOrders(userId, status, startDate, endDate, pageRequest);
-        return ResponseEntity.ok(orders);
-    }
 
     @PutMapping("/{orderId}/status")
     public ResponseEntity<OrderDTO> updateOrderStatus(
@@ -113,20 +98,7 @@ public class OrderController {
         return ResponseEntity.ok(updatedOrder);
     }
 
-    @GetMapping("/admin/all")
-//    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Response<Page<OrderDTO>>> getAllOrders(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDirection) {
-
-        Sort.Direction direction = Sort.Direction.fromString(sortDirection);
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sortBy));
-
-        Page<OrderDTO> orders = orderPaymentService.getAllOrdersWithPaymentMethod(pageRequest);
-        return Response.successfulResponse("All orders successfully fetched", orders);
-    }
+    
 
     @GetMapping("/admin")
 //    @PreAuthorize("hasRole('ADMIN')")
@@ -140,14 +112,17 @@ public class OrderController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection) {
 
+
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-        Page<OrderDTO> orders = orderPaymentService.getFilteredOrdersForAdminWithPaymentMethod(status, warehouse, startDate, endDate, pageRequest);
-        return Response.successfulResponse("Filtered orders successfully fetched", orders);
-    }
-    //
 
+        Page<OrderDTO> orders = orderService.getAdminOrders(warehouse, status, startDate, endDate, pageRequest);
+        return Response.successfulResponse("Orders successfully fetched", orders);
+
+    }
+
+//////
     @PutMapping("/{orderId}/cancel")
     public ResponseEntity<Response<OrderDTO>> cancelOrder(@PathVariable Long orderId) {
         try {
