@@ -77,6 +77,9 @@ public class PaymentServiceImpl implements PaymentService {
             throw new RuntimeException("User not found for order: " + orderId);
         }
 
+        order.setPaymentMethod(paymentMethod);
+        orderService.updateOrder(order);
+
         String result;
 
         if (paymentMethod == PaymentMethod.PAYMENT_GATEWAY) {
