@@ -17,16 +17,15 @@ public interface OrderService {
     OrderDTO updateOrderStatus(Long orderId, OrderStatus status);
     OrderDTO cancelOrder(Long orderId) throws IllegalStateException;
 
-    @Transactional
+
     OrderDTO markOrderAsDelivered(Long orderId) throws IllegalStateException;
-
-    Page<OrderDTO> getFilteredOrders(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
-
-    OrderDTO shipOrder(Long orderId);
-
-    Page<OrderDTO> getAllOrders(Pageable pageable);
-
     Page<OrderDTO> getAdminOrders(Long warehouseId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+    OrderDTO updateOrder(OrderDTO orderDTO);
+
+//    Page<OrderDTO> getFilteredOrders(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+//
+//    OrderDTO shipOrder(Long orderId);
+//    Page<OrderDTO> getAllOrders(Pageable pageable);
 
 
 }

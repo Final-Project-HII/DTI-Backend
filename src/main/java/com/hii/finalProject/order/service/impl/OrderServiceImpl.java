@@ -14,9 +14,10 @@ import com.hii.finalProject.order.entity.Order;
 import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.order.repository.OrderRepository;
 import com.hii.finalProject.order.service.OrderService;
-import com.hii.finalProject.order.specifications.OrderSpecifications;
 import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import com.hii.finalProject.orderItem.entity.OrderItem;
+import com.hii.finalProject.payment.entity.Payment;
+import com.hii.finalProject.payment.repository.PaymentRepository;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.stock.service.StockService;
@@ -57,11 +58,12 @@ public class OrderServiceImpl implements OrderService {
     private static final String INVOICE_PREFIX = "INV";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
     private final AtomicInteger sequence = new AtomicInteger(1);
+    private final PaymentRepository paymentRepository;
 
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
                             CartService cartService, ProductRepository productRepository,
                             AddressRepository addressRepository, WarehouseRepository warehouseRepository,
-                            CourierRepository courierRepository, CourierService courierService, StockService stockService, WarehouseService warehouseService) {
+                            CourierRepository courierRepository, CourierService courierService, StockService stockService, WarehouseService warehouseService, PaymentRepository paymentRepository) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
@@ -72,6 +74,7 @@ public class OrderServiceImpl implements OrderService {
         this.courierService = courierService;
         this.stockService = stockService;
         this.warehouseService = warehouseService;
+        this.paymentRepository = paymentRepository;
     }
 
     @Override
@@ -110,6 +113,7 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.pending_payment);
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
+        order.setPaymentMethod(null);
 
         BigDecimal originalAmount = BigDecimal.ZERO;
         int totalWeight = 0;
@@ -186,20 +190,20 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
-        OrderStatus oldStatus = order.getStatus();
-
-        if (newStatus == OrderStatus.cancelled) {
-            handleOrderCancellation(order, oldStatus);
-        } else if (newStatus == OrderStatus.confirmation && oldStatus != OrderStatus.confirmation) {
-            handleOrderConfirmation(order);
-        }
-
         order.setStatus(newStatus);
         order.setUpdatedAt(LocalDateTime.now());
+
+        // If the order is being confirmed, we should ensure it has a payment method
+        if (newStatus == OrderStatus.confirmation && order.getPaymentMethod() == null) {
+            Payment payment = paymentRepository.findByOrderId(orderId)
+                    .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderId));
+            order.setPaymentMethod(payment.getPaymentMethod());
+        }
 
         Order updatedOrder = orderRepository.save(order);
         return convertToDTO(updatedOrder);
     }
+
 
     private void handleOrderCancellation(Order order, OrderStatus oldStatus) {
         if (oldStatus == OrderStatus.shipped || oldStatus == OrderStatus.delivered) {
@@ -284,56 +288,8 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    @Override
-    public Page<OrderDTO> getFilteredOrders(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        Page<Order> orders;
-
-        if (status != null && !status.isEmpty()) {
-            try {
-                OrderStatus orderStatus = OrderStatus.valueOf(status.toUpperCase());
-                orders = orderRepository.findByUserIdAndStatus(userId, orderStatus, pageable);
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid order status: " + status);
-            }
-        } else if (startDate != null && endDate != null) {
-            orders = orderRepository.findByUserIdAndCreatedAtBetween(userId, startDate, endDate, pageable);
-        } else {
-            orders = orderRepository.findByUserId(userId, pageable);
-        }
-
-        return orders.map(this::convertToDTO);
-    }
-
 
     @Override
-    @Transactional
-    public OrderDTO shipOrder(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-
-        if (order.getStatus() != OrderStatus.process) {
-            throw new IllegalStateException("Order must be in 'process' status to be shipped");
-        }
-
-        order.setStatus(OrderStatus.shipped);
-
-        // Reduce stock when order is shipped
-        for (OrderItem item : order.getItems()) {
-            stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
-        }
-
-        Order updatedOrder = orderRepository.save(order);
-        return convertToDTO(updatedOrder);
-    }
-
-    @Override
-    public Page<OrderDTO> getAllOrders(Pageable pageable) {
-        Page<Order> orders = orderRepository.findAll(pageable);
-        return orders.map(this::convertToDTO);
-    }
-
-    @Override
-
     public Page<OrderDTO> getAdminOrders(Long warehouseId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         Specification<Order> spec = Specification.where(null);
 
@@ -370,6 +326,49 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    @Override
+    @Transactional
+    public OrderDTO updateOrder(OrderDTO orderDTO) {
+        Order order = orderRepository.findById(orderDTO.getId())
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderDTO.getId()));
+
+        // Update fields as necessary
+        order.setPaymentMethod(orderDTO.getPaymentMethod());
+        // ... update other fields as needed ...
+
+        Order updatedOrder = orderRepository.save(order);
+        return convertToDTO(updatedOrder);
+    }
+
+
+    //    @Override
+//    @Transactional
+//    public OrderDTO shipOrder(Long orderId) {
+//        Order order = orderRepository.findById(orderId)
+//                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+//
+//        if (order.getStatus() != OrderStatus.process) {
+//            throw new IllegalStateException("Order must be in 'process' status to be shipped");
+//        }
+//
+//        order.setStatus(OrderStatus.shipped);
+//
+//        // Reduce stock when order is shipped
+//        for (OrderItem item : order.getItems()) {
+//            stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+//        }
+//
+//        Order updatedOrder = orderRepository.save(order);
+//        return convertToDTO(updatedOrder);
+//    }
+
+    //    @Override
+//    public Page<OrderDTO> getAllOrders(Pageable pageable) {
+//        Page<Order> orders = orderRepository.findAll(pageable);
+//        return orders.map(this::convertToDTO);
+//    }
+
+
     private OrderDTO convertToDTO(Order order) {
         OrderDTO dto = new OrderDTO();
         dto.setId(order.getId());
@@ -390,7 +389,11 @@ public class OrderServiceImpl implements OrderService {
         dto.setCourierName(order.getCourier().getCourier());
         dto.setOriginCity(order.getWarehouse().getCity().getName());
         dto.setDestinationCity(order.getAddress().getCity().getName());
-        dto.setPaymentMethod(order.getPaymentMethod());
+
+        Payment payment = paymentRepository.findByOrderId(order.getId()).orElse(null);
+        if (payment != null) {
+            dto.setPaymentMethod(payment.getPaymentMethod());
+        }
         return dto;
     }
 
