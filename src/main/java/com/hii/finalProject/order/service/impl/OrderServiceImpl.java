@@ -14,6 +14,7 @@ import com.hii.finalProject.order.entity.Order;
 import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.order.repository.OrderRepository;
 import com.hii.finalProject.order.service.OrderService;
+import com.hii.finalProject.order.specifications.OrderSpecifications;
 import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import com.hii.finalProject.orderItem.entity.OrderItem;
 import com.hii.finalProject.products.entity.Product;
@@ -331,12 +332,29 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Page<OrderDTO> getFilteredOrdersForAdmin(Long warehouseId, Pageable pageable) {
-        log.debug("Filtering orders with warehouseId: {}", warehouseId);
+    public Page<OrderDTO> getFilteredOrdersForAdmin(String status, Long warehouseId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        OrderStatus orderStatus = convertToOrderStatus(status);
 
-        Page<Order> orders = orderRepository.findByWarehouse(warehouseId, pageable);
+        Page<Order> orders = orderRepository.findAll(
+                OrderSpecifications.withFilters(orderStatus, warehouseId, startDate, endDate),
+                pageable
+        );
+
         return orders.map(this::convertToDTO);
     }
+
+    private OrderStatus convertToOrderStatus(String status) {
+        if (status == null || status.isEmpty()) {
+            return null;
+        }
+        try {
+            return OrderStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid order status: {}", status);
+            return null;
+        }
+    }
+
 
 
 
