@@ -145,6 +145,7 @@ public class OrderController {
         Page<OrderDTO> orders = orderService.getFilteredOrdersForAdmin(warehouse, pageRequest);
         return Response.successfulResponse("Filtered orders successfully fetched", orders);
     }
+    //
 
     @PutMapping("/{orderId}/cancel")
     public ResponseEntity<Response<OrderDTO>> cancelOrder(@PathVariable Long orderId) {
