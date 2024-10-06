@@ -341,32 +341,32 @@ public class OrderServiceImpl implements OrderService {
     }
 
 
-    //    @Override
-//    @Transactional
-//    public OrderDTO shipOrder(Long orderId) {
-//        Order order = orderRepository.findById(orderId)
-//                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-//
-//        if (order.getStatus() != OrderStatus.process) {
-//            throw new IllegalStateException("Order must be in 'process' status to be shipped");
-//        }
-//
-//        order.setStatus(OrderStatus.shipped);
-//
-//        // Reduce stock when order is shipped
-//        for (OrderItem item : order.getItems()) {
-//            stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
-//        }
-//
-//        Order updatedOrder = orderRepository.save(order);
-//        return convertToDTO(updatedOrder);
-//    }
+    @Override
+    @Transactional
+    public OrderDTO shipOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
-    //    @Override
-//    public Page<OrderDTO> getAllOrders(Pageable pageable) {
-//        Page<Order> orders = orderRepository.findAll(pageable);
-//        return orders.map(this::convertToDTO);
-//    }
+        if (order.getStatus() != OrderStatus.process) {
+            throw new IllegalStateException("Order must be in 'process' status to be shipped");
+        }
+
+        order.setStatus(OrderStatus.shipped);
+
+        // Reduce stock when order is shipped
+        for (OrderItem item : order.getItems()) {
+            stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+        }
+
+        Order updatedOrder = orderRepository.save(order);
+        return convertToDTO(updatedOrder);
+    }
+
+        @Override
+    public Page<OrderDTO> getAllOrders(Pageable pageable) {
+        Page<Order> orders = orderRepository.findAll(pageable);
+        return orders.map(this::convertToDTO);
+    }
 
 
     private OrderDTO convertToDTO(Order order) {
