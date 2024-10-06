@@ -14,6 +14,7 @@ import com.hii.finalProject.order.entity.Order;
 import com.hii.finalProject.order.entity.OrderStatus;
 import com.hii.finalProject.order.repository.OrderRepository;
 import com.hii.finalProject.order.service.OrderService;
+import com.hii.finalProject.order.specifications.OrderSpecifications;
 import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import com.hii.finalProject.orderItem.entity.OrderItem;
 import com.hii.finalProject.products.entity.Product;
@@ -332,6 +333,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+
     public Page<OrderDTO> getAdminOrders(Long warehouseId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         Specification<Order> spec = Specification.where(null);
 
@@ -356,7 +358,17 @@ public class OrderServiceImpl implements OrderService {
         return orders.map(this::convertToDTO);
     }
 
-
+    private OrderStatus convertToOrderStatus(String status) {
+        if (status == null || status.isEmpty()) {
+            return null;
+        }
+        try {
+            return OrderStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid order status: {}", status);
+            return null;
+        }
+    }
 
     private OrderDTO convertToDTO(Order order) {
         OrderDTO dto = new OrderDTO();
