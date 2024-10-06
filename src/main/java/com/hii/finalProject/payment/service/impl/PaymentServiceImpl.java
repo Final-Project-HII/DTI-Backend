@@ -19,11 +19,13 @@ import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -39,13 +41,14 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentProofRepository paymentProofRepository;
     private final ObjectMapper jacksonObjectMapper;
+    private final TaskScheduler taskScheduler;
 
     private String serverKey = "SB-Mid-server-1YIRKrKNSAv83Cq4AdIKPKlB";
     private String apiUrl  = "https://api.sandbox.midtrans.com/v2/charge";
 
     public PaymentServiceImpl(OrderService orderService, UserService userService, CartService cartService,
                               RestTemplateBuilder restTemplateBuilder, PaymentRepository paymentRepository,
-                              PaymentProofRepository paymentProofRepository, ObjectMapper jacksonObjectMapper) {
+                              PaymentProofRepository paymentProofRepository, ObjectMapper jacksonObjectMapper, TaskScheduler taskScheduler) {
         this.orderService = orderService;
         this.userService = userService;
         this.cartService = cartService;
@@ -53,6 +56,7 @@ public class PaymentServiceImpl implements PaymentService {
         this.paymentRepository = paymentRepository;
         this.paymentProofRepository = paymentProofRepository;
         this.jacksonObjectMapper = jacksonObjectMapper;
+        this.taskScheduler = taskScheduler;
     }
 
     @Override
@@ -93,6 +97,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setStatus(PaymentStatus.PENDING);
             payment.setName("Midtrans Payment for Order " + orderId);
             payment.setCreatedAt(LocalDateTime.now());
+            schedulePaymentExpirationCheck(orderId, LocalDateTime.now().plusHours(1));
 
             try {
                 JsonNode responseJson = jacksonObjectMapper.readTree(transactionResponse);
@@ -103,6 +108,11 @@ public class PaymentServiceImpl implements PaymentService {
 
                     payment.setVirtualAccountBank(vaBank);
                     payment.setVirtualAccountNumber(vaNumber);
+                }
+
+                if (responseJson.has("expiry_time")) {
+                    String expiryTime = responseJson.get("expiry_time").asText();
+                    payment.setExpiryTime(LocalDateTime.parse(expiryTime));
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Error parsing Midtrans response: " + e.getMessage());
@@ -148,6 +158,16 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         return result;
+    }
+
+    private void schedulePaymentExpirationCheck(Long orderId, LocalDateTime expiryTime) {
+        taskScheduler.schedule(() -> {
+            Payment payment = getPaymentByOrderId(orderId);
+            if (payment.getStatus() == PaymentStatus.PENDING) {
+                updatePaymentStatus(orderId, PaymentStatus.FAILED);
+                orderService.updateOrderStatus(orderId, OrderStatus.cancelled);
+            }
+        }, expiryTime.toInstant(ZoneOffset.UTC));
     }
 
     @Override
@@ -321,6 +341,12 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRequest.setBank_transfer(bankTransfer);
         paymentRequest.setCustomer_details(customerDetails);
         paymentRequest.setItem_details(itemDetailsList);
+
+        PaymentRequest.CustomExpiryOptions customExpiry = new PaymentRequest.CustomExpiryOptions();
+        customExpiry.setOrder_time(LocalDateTime.now().toString());
+        customExpiry.setExpiry_duration("1");
+        customExpiry.setUnit("hour");
+        paymentRequest.setCustom_expiry(customExpiry);
 
         return paymentRequest;
     }

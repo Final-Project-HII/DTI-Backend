@@ -11,4 +11,12 @@ public class PaymentRequest {
     private BankTransfer bank_transfer;
     private CustomerDetails customer_details;
     private List<ItemDetail> item_details;
+    private CustomExpiryOptions custom_expiry;
+
+    @Data
+    public static class CustomExpiryOptions {
+        private String order_time;
+        private String expiry_duration;
+        private String unit;
+    }
 }
