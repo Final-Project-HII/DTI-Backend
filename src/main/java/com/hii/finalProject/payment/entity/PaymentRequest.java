@@ -18,4 +18,5 @@ public class PaymentRequest {
         private Integer expiry_duration;
         // Note: We're not including a 'unit' field here, as it seems your friend's implementation uses only an integer for duration
     }
+
 }

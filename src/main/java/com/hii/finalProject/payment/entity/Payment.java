@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 @Data
 @Entity
@@ -44,4 +46,18 @@ public class Payment {
 
     @Column(name = "virtual_account_number")
     private String virtualAccountNumber;
+
+    @Column(name = "expiration_time")
+    private LocalDateTime expirationTime;
+
+    public void setExpirationTimeWithOffset(OffsetDateTime offsetDateTime) {
+        this.expirationTime = offsetDateTime != null ? offsetDateTime.toLocalDateTime() : null;
+    }
+
+    // New method to get expiration time with offset
+    public OffsetDateTime getExpirationTimeWithOffset() {
+        return this.expirationTime != null
+                ? this.expirationTime.atOffset(ZoneOffset.UTC)
+                : null;
+    }
 }
