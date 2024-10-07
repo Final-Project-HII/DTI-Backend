@@ -367,6 +367,22 @@ public class OrderServiceImpl implements OrderService {
         return orders.map(this::convertToDTO);
     }
 
+    @Override
+    @Transactional
+    public void cancelUnpaidOrders() {
+        LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
+        List<Order> unpaidOrders = orderRepository.findByStatusAndCreatedAtBefore(OrderStatus.pending_payment, oneHourAgo);
+
+        for (Order order : unpaidOrders) {
+            try {
+                cancelOrder(order.getId());
+                log.info("Automatically cancelled unpaid order: {}", order.getId());
+            } catch (Exception e) {
+                log.error("Failed to cancel unpaid order: {}", order.getId(), e);
+            }
+        }
+}
+
 
     private OrderDTO convertToDTO(Order order) {
         OrderDTO dto = new OrderDTO();

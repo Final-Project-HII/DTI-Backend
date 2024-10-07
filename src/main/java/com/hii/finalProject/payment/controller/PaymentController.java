@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -79,7 +81,8 @@ public class PaymentController {
                     response.put("paymentProofUrl", paymentProof.getPaymentProofUrl());
                 }
             } else if (payment.getPaymentMethod() == PaymentMethod.PAYMENT_GATEWAY) {
-                response.put("transactionId", payment.getName());
+                LocalDateTime expirationTime = payment.getCreatedAt().plusHours(1);
+                response.put("expirationTime", expirationTime);
 
                 if (payment.getVirtualAccountBank() != null && payment.getVirtualAccountNumber() != null) {
                     Map<String, String> vaInfo = new HashMap<>();
