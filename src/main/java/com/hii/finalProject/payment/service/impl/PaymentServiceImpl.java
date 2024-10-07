@@ -24,6 +24,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -86,16 +87,23 @@ public class PaymentServiceImpl implements PaymentService {
             PaymentRequest paymentRequest = createPaymentRequest(order, user.get(), bank);
             String transactionResponse = createTransaction(paymentRequest);
 
-            Payment payment = new Payment();
-            payment.setOrderId(orderId);
-            payment.setAmount(order.getFinalAmount());
-            payment.setPaymentMethod(PaymentMethod.PAYMENT_GATEWAY);
-            payment.setStatus(PaymentStatus.PENDING);
-            payment.setName("Midtrans Payment for Order " + orderId);
-            payment.setCreatedAt(LocalDateTime.now());
-
             try {
-                JsonNode responseJson = jacksonObjectMapper.readTree(transactionResponse);
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode responseJson = mapper.readTree(transactionResponse);
+
+                // Parse the transaction time
+                String dateTimeString = responseJson.path("transaction_time").asText();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                LocalDateTime transactionTime = LocalDateTime.parse(dateTimeString, formatter);
+
+                Payment payment = new Payment();
+                payment.setOrderId(orderId);
+                payment.setAmount(order.getFinalAmount());
+                payment.setPaymentMethod(PaymentMethod.PAYMENT_GATEWAY);
+                payment.setStatus(PaymentStatus.PENDING);
+                payment.setName("Midtrans Payment for Order " + orderId);
+                payment.setCreatedAt(transactionTime);
+
                 if (responseJson.has("va_numbers") && responseJson.get("va_numbers").isArray()) {
                     JsonNode vaNumbers = responseJson.get("va_numbers").get(0);
                     String vaBank = vaNumbers.get("bank").asText();
@@ -104,14 +112,14 @@ public class PaymentServiceImpl implements PaymentService {
                     payment.setVirtualAccountBank(vaBank);
                     payment.setVirtualAccountNumber(vaNumber);
                 }
+
+                paymentRepository.save(payment);
+
+                result = transactionResponse;
             } catch (Exception e) {
-                throw new RuntimeException("Error parsing Midtrans response: " + e.getMessage());
+                log.severe("Error processing Midtrans response: " + e.getMessage());
+                throw new RuntimeException("Failed to process payment: " + e.getMessage(), e);
             }
-
-
-            paymentRepository.save(payment);
-
-            result = transactionResponse;
         } else if (paymentMethod == PaymentMethod.PAYMENT_PROOF) {
             Payment payment = new Payment();
             payment.setOrderId(orderId);
