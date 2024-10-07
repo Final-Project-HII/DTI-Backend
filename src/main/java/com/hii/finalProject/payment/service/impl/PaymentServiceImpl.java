@@ -339,9 +339,10 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRequest.setCustomer_details(customerDetails);
         paymentRequest.setItem_details(itemDetailsList);
 
-        // Set expiration time to 1 hour from now
-        LocalDateTime expirationTime = LocalDateTime.now().plusHours(1);
-        paymentRequest.setExpiry_time(expirationTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        PaymentRequest.CustomExpiry customExpiry = new PaymentRequest.CustomExpiry();
+        customExpiry.setExpiry_duration(60); // Set to 60 minutes (1 hour)
+        paymentRequest.setCustom_expiry(customExpiry);
+
 
         return paymentRequest;
     }
