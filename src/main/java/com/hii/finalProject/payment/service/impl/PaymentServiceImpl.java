@@ -100,6 +100,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setStatus(PaymentStatus.PENDING);
             payment.setName("Midtrans Payment for Order " + orderId);
             payment.setCreatedAt(LocalDateTime.now());
+            payment.setExpirationTime(LocalDateTime.now().plusHours(1));
 
             try {
                 JsonNode responseJson = jacksonObjectMapper.readTree(transactionResponse);
@@ -134,6 +135,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setStatus(PaymentStatus.PENDING);
             payment.setName("Manual Payment for Order " + orderId);
             payment.setCreatedAt(LocalDateTime.now());
+            payment.setExpirationTime(LocalDateTime.now().plusHours(1));
 
             Payment savedPayment = paymentRepository.save(payment);
 
