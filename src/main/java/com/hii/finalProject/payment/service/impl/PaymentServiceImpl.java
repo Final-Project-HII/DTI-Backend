@@ -322,6 +322,10 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRequest.setCustomer_details(customerDetails);
         paymentRequest.setItem_details(itemDetailsList);
 
+        PaymentRequest.CustomExpiry customExpiry = new PaymentRequest.CustomExpiry();
+        customExpiry.setExpiry_duration(60); // Set to 60 minutes (1 hour)
+        paymentRequest.setCustom_expiry(customExpiry);
+
         return paymentRequest;
     }
 }
