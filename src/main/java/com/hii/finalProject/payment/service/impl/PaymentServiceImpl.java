@@ -19,11 +19,16 @@ import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
+import org.springframework.scheduling.concurrent.SimpleAsyncTaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -39,13 +44,14 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentProofRepository paymentProofRepository;
     private final ObjectMapper jacksonObjectMapper;
+    private final TaskScheduler taskScheduler;
 
     private String serverKey = "SB-Mid-server-1YIRKrKNSAv83Cq4AdIKPKlB";
     private String apiUrl  = "https://api.sandbox.midtrans.com/v2/charge";
 
     public PaymentServiceImpl(OrderService orderService, UserService userService, CartService cartService,
                               RestTemplateBuilder restTemplateBuilder, PaymentRepository paymentRepository,
-                              PaymentProofRepository paymentProofRepository, ObjectMapper jacksonObjectMapper) {
+                              PaymentProofRepository paymentProofRepository, ObjectMapper jacksonObjectMapper, TaskScheduler taskScheduler) {
         this.orderService = orderService;
         this.userService = userService;
         this.cartService = cartService;
@@ -53,6 +59,7 @@ public class PaymentServiceImpl implements PaymentService {
         this.paymentRepository = paymentRepository;
         this.paymentProofRepository = paymentProofRepository;
         this.jacksonObjectMapper = jacksonObjectMapper;
+        this.taskScheduler = taskScheduler;
     }
 
     @Override
@@ -93,6 +100,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setStatus(PaymentStatus.PENDING);
             payment.setName("Midtrans Payment for Order " + orderId);
             payment.setCreatedAt(LocalDateTime.now());
+            payment.setExpirationTime(LocalDateTime.now().plusHours(1));
 
             try {
                 JsonNode responseJson = jacksonObjectMapper.readTree(transactionResponse);
@@ -103,6 +111,13 @@ public class PaymentServiceImpl implements PaymentService {
 
                     payment.setVirtualAccountBank(vaBank);
                     payment.setVirtualAccountNumber(vaNumber);
+                }
+                if (responseJson.has("expiry_time")) {
+                    String expiryTime = responseJson.get("expiry_time").asText();
+                    LocalDateTime expirationTime = LocalDateTime.parse(expiryTime, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+                    payment.setExpirationTime(expirationTime);
+
+                    scheduleOrderCancellation(orderId, expirationTime);
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Error parsing Midtrans response: " + e.getMessage());
@@ -120,6 +135,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setStatus(PaymentStatus.PENDING);
             payment.setName("Manual Payment for Order " + orderId);
             payment.setCreatedAt(LocalDateTime.now());
+            payment.setExpirationTime(LocalDateTime.now().plusHours(1));
 
             Payment savedPayment = paymentRepository.save(payment);
 
@@ -149,6 +165,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         return result;
     }
+
 
     @Override
     public PaymentStatus getTransactionStatus(Long orderId) {
@@ -326,6 +343,25 @@ public class PaymentServiceImpl implements PaymentService {
         customExpiry.setExpiry_duration(60); // Set to 60 minutes (1 hour)
         paymentRequest.setCustom_expiry(customExpiry);
 
+
         return paymentRequest;
+    }
+
+    private void scheduleOrderCancellation(Long orderId, LocalDateTime expirationTime) {
+        taskScheduler.schedule(() -> {
+            try {
+                Payment payment = paymentRepository.findByOrderId(orderId)
+                        .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderId));
+
+                if (payment.getStatus() == PaymentStatus.PENDING) {
+                    payment.setStatus(PaymentStatus.FAILED);
+                    paymentRepository.save(payment);
+
+                    orderService.updateOrderStatus(orderId, OrderStatus.cancelled);
+                    log.info("Order " + orderId + " cancelled due to payment expiration");
+                }
+            } catch (Exception e) {
+            }
+        }, expirationTime.toInstant(ZoneOffset.UTC));
     }
 }
