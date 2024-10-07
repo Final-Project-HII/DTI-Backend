@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.logging.Logger;
 
@@ -96,8 +97,7 @@ public class OrderController {
     public ResponseEntity<Response<Page<OrderDTO>>> getAdminOrders(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long warehouse,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -106,7 +106,7 @@ public class OrderController {
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-        Page<OrderDTO> orders = orderService.getAdminOrders(status, warehouse, startDate, endDate, pageRequest);
+        Page<OrderDTO> orders = orderService.getAdminOrders(status, warehouse, date, pageRequest);
         return Response.successfulResponse("Orders successfully fetched", orders);
     }
 
