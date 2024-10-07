@@ -39,7 +39,6 @@ public class Courier {
     @Column(name = "created_at")
     private Instant createdAt;
 
-
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updated_at")
     private Instant updatedAt;
@@ -50,3 +49,4 @@ public class Courier {
         updatedAt = Instant.now();
     }
 }
+//

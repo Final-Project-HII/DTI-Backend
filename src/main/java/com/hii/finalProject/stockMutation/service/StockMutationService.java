@@ -1,18 +1,15 @@
 package com.hii.finalProject.stockMutation.service;
 
 
-import com.hii.finalProject.stock.dto.StockDtoResponse;
-import com.hii.finalProject.stock.entity.Stock;
-import com.hii.finalProject.stockMutation.dto.StockMutationProcessDto;
-import com.hii.finalProject.stockMutation.dto.StockMutationRequestDto;
-import com.hii.finalProject.stockMutation.dto.StockMutationResponseDto;
-import com.hii.finalProject.stockMutation.entity.StockMutation;
+//import com.hii.finalProject.stockMutation.dto.StockDetailReportDto;
+import com.hii.finalProject.stockMutation.dto.*;
 import com.hii.finalProject.stockMutation.entity.StockMutationStatus;
+import com.hii.finalProject.stockMutationJournal.entity.StockMutationJournal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 
 public interface StockMutationService {
@@ -31,7 +28,8 @@ Page<StockMutationResponseDto> getAllStockMutations(
         Long originWarehouseId,
         Long destinationWarehouseId,
         String productName,
-        String status,
+//        String status,
+        StockMutationStatus status,
         LocalDateTime createdAtStart,
         LocalDateTime createdAtEnd,
         LocalDateTime updatedAtStart,
@@ -40,5 +38,17 @@ Page<StockMutationResponseDto> getAllStockMutations(
         String sortDirection,
         Pageable pageable
 );
-
+Page<StockMutationJournalDto> getStockMutationJournals(
+            Long warehouseId,
+            String productName,
+            StockMutationJournal.MutationType mutationType,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            String email,
+            Pageable pageable
+    );
+//    Page<StockDetailReportDto> getStockDetailReport(Long warehouseId, Long productId, YearMonth month, Pageable pageable);
+//    Page<StockSummaryReportDto> getStockSummaryReport(Long warehouseId, YearMonth month, Pageable pageable);
+//    Page<StockSummaryReportDto> getStockSummaryReport(Long warehouseId, YearMonth month, Pageable pageable);
+//    Page<StockMutationJournalDto> getStockDetailReport(Long warehouseId, Long productId, YearMonth month, Pageable pageable);
 }
