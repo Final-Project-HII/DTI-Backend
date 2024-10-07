@@ -6,6 +6,7 @@ import com.hii.finalProject.paymentProof.Repository.PaymentProofRepository;
 import com.hii.finalProject.paymentProof.entity.PaymentProof;
 import com.hii.finalProject.paymentProof.service.PaymentProofService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -31,5 +32,12 @@ public class PaymentProofServiceImpl implements PaymentProofService {
         paymentProof.setUpdatedAt(LocalDateTime.now());
 
         paymentProofRepository.save(paymentProof);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaymentProof getPaymentProofByPayment(Payment payment) {
+        return paymentProofRepository.findByPayment(payment)
+                .orElse(null);
     }
 }

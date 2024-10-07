@@ -17,6 +17,7 @@ import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.stock.dto.StockDtoProductResponse;
 import com.hii.finalProject.stock.entity.Stock;
 import com.hii.finalProject.stock.repository.StockRepository;
+import com.hii.finalProject.stock.service.StockServiceImpl;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
@@ -69,7 +70,12 @@ public class ProductServiceImpl implements ProductService{
                 ));
             }
             if (categoryName != null && !categoryName.isEmpty()) {
-                predicates.add(cb.equal(cb.lower(root.get("categories").get("name")), categoryName.toLowerCase()));
+                String[] categories = categoryName.split(",");
+                List<Predicate> categoryPredicates = new ArrayList<>();
+                for (String category : categories) {
+                    categoryPredicates.add(cb.equal(cb.lower(root.get("categories").get("name")), category.trim().toLowerCase()));
+                }
+                predicates.add(cb.or(categoryPredicates.toArray(new Predicate[0])));
             }
 
             // If no predicates, return null (which means no filtering)
@@ -236,7 +242,7 @@ public class ProductServiceImpl implements ProductService{
         responseDto.setProductImages(images);
         // Convert Stock to StockDto
         List<StockDtoProductResponse> stockDtos = stocks.stream()
-                .map(StockDtoProductResponse::convertFromStock)
+                .map(StockServiceImpl::convertFromStock)
                 .collect(Collectors.toList());
         // Calculate total stock
         Integer totalStock = stockDtos.stream()

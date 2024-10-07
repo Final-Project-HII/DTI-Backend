@@ -8,6 +8,7 @@ import com.hii.finalProject.warehouse.entity.Warehouse;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Data
@@ -21,7 +22,7 @@ public class Stock {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_id")
     @JsonIgnore
     private Product product;
 
@@ -33,14 +34,19 @@ public class Stock {
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+//    @Column(name = "created_at", nullable = false, updatable = false)
+//    private LocalDateTime createdAt = LocalDateTime.now();
+//
+//    @Column(name = "updated_at")
+//    private LocalDateTime updatedAt = LocalDateTime.now();
+    @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private Instant createdAt = Instant.now();
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @Column(name = "updated_at", nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    private Instant updatedAt = Instant.now();
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = Instant.now();
     }
 }

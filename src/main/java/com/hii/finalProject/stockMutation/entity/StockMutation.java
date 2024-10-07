@@ -1,11 +1,15 @@
 package com.hii.finalProject.stockMutation.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hii.finalProject.products.entity.Product;
+import com.hii.finalProject.stockMutationJournal.entity.StockMutationJournal;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -48,6 +52,10 @@ public class StockMutation {
     @Column(name = "requested_by")
     private Integer requestedBy;
 
+    @OneToMany(mappedBy = "stockMutation")
+    @JsonBackReference
+    private List<StockMutationJournal> stockMutationJournals = new ArrayList<>();
+
     @Column(name = "handled_by")
     private Integer handledBy;
 
@@ -64,4 +72,12 @@ public class StockMutation {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+//    public enum StockMutationStatus {
+//        REQUESTED,
+//        APPROVED,
+//        IN_TRANSIT,
+//        COMPLETED,
+//        CANCELLED
+//    }
 }
