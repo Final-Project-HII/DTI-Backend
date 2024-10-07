@@ -28,4 +28,6 @@ public interface OrderService {
     Page<OrderDTO> getAllOrders(Pageable pageable);
 
     void cancelUnpaidOrders();
+
+    Page<OrderDTO> getUserOrders(Long userId, String status, LocalDate date, Pageable pageable);
 }

@@ -66,6 +66,8 @@ public class OrderController {
 
     @GetMapping
     public ResponseEntity<Response<Page<OrderDTO>>> getUserOrders(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -77,7 +79,7 @@ public class OrderController {
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-        Page<OrderDTO> orders = orderService.getOrdersByUserId(userId, pageRequest);
+        Page<OrderDTO> orders = orderService.getUserOrders(userId, status, date, pageRequest);
         return Response.successfulResponse("Orders successfully fetched", orders);
     }
 
