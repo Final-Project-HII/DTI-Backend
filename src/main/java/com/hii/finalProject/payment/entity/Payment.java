@@ -44,4 +44,7 @@ public class Payment {
 
     @Column(name = "virtual_account_number")
     private String virtualAccountNumber;
+
+    @Column(name = "expiration_time")
+    private LocalDateTime expirationTime;
 }

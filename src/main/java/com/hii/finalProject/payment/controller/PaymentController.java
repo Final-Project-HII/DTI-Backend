@@ -70,6 +70,7 @@ public class PaymentController {
                 }
             } else if (payment.getPaymentMethod() == PaymentMethod.PAYMENT_GATEWAY) {
                 response.put("transactionId", payment.getName());
+                response.put("expirationTime", payment.getExpirationTime());
 
                 if (payment.getVirtualAccountBank() != null && payment.getVirtualAccountNumber() != null) {
                     Map<String, String> vaInfo = new HashMap<>();

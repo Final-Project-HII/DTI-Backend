@@ -11,4 +11,5 @@ public class PaymentRequest {
     private BankTransfer bank_transfer;
     private CustomerDetails customer_details;
     private List<ItemDetail> item_details;
+    private String expiry_time;
 }
