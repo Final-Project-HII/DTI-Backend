@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -290,7 +291,7 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
-    public Page<OrderDTO> getAdminOrders(String status, Long warehouseId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+    public Page<OrderDTO> getAdminOrders(String status, Long warehouseId, LocalDate date, Pageable pageable) {
         Specification<Order> spec = Specification.where(null);
 
         if (status != null && !status.isEmpty()) {
@@ -298,15 +299,15 @@ public class OrderServiceImpl implements OrderService {
                 OrderStatus orderStatus = OrderStatus.fromString(status);
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), orderStatus));
             } catch (IllegalArgumentException e) {
-                // Log the error and ignore the invalid status
                 log.warn("Invalid order status: " + status);
             }
         }
         if (warehouseId != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("warehouse").get("id"), warehouseId));
         }
-        if (startDate != null && endDate != null) {
-            spec = spec.and((root, query, cb) -> cb.between(root.get("createdAt"), startDate, endDate));
+        if (date != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(cb.function("DATE", LocalDate.class, root.get("createdAt")), date));
         }
         Page<Order> orders = orderRepository.findAll(spec, pageable);
         return orders.map(this::convertToDTO);
@@ -381,7 +382,29 @@ public class OrderServiceImpl implements OrderService {
                 log.error("Failed to cancel unpaid order: {}", order.getId(), e);
             }
         }
-}
+    }
+
+    @Override
+    public Page<OrderDTO> getUserOrders(Long userId, String status, LocalDate date, Pageable pageable) {
+        Specification<Order> spec = Specification.where((root, query, cb) -> cb.equal(root.get("user").get("id"), userId));
+
+        if (status != null && !status.isEmpty()) {
+            try {
+                OrderStatus orderStatus = OrderStatus.fromString(status);
+                spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), orderStatus));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid order status: " + status);
+            }
+        }
+
+        if (date != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(cb.function("DATE", LocalDate.class, root.get("createdAt")), date));
+        }
+
+        Page<Order> orders = orderRepository.findAll(spec, pageable);
+        return orders.map(this::convertToDTO);
+    }
 
 
     private OrderDTO convertToDTO(Order order) {
