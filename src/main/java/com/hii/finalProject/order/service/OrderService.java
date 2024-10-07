@@ -29,5 +29,5 @@ public interface OrderService {
     OrderDTO shipOrder(Long orderId);
     Page<OrderDTO> getAllOrders(Pageable pageable);
 
-
+    void cancelUnpaidOrders();
 }
