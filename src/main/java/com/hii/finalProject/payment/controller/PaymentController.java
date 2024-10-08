@@ -14,6 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,13 +67,22 @@ public class PaymentController {
             response.put("status", payment.getStatus().toString());
             response.put("createdAt", payment.getCreatedAt());
 
+            if (payment.getExpirationTime() != null) {
+                OffsetDateTime expirationTime = payment.getExpirationTimeWithOffset();
+                response.put("expirationTime", expirationTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+                // Optionally, you can also add a formatted string
+                response.put("expirationTimeFormatted", expirationTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z")));
+            }
+
             if (payment.getPaymentMethod() == PaymentMethod.PAYMENT_PROOF) {
                 PaymentProof paymentProof = payment.getPaymentProof();
                 if (paymentProof != null) {
                     response.put("paymentProofUrl", paymentProof.getPaymentProofUrl());
                 }
             } else if (payment.getPaymentMethod() == PaymentMethod.PAYMENT_GATEWAY) {
-                response.put("transactionId", payment.getName());
+                LocalDateTime expirationTime = payment.getCreatedAt().plusHours(1);
+                response.put("expirationTime", expirationTime);
 
                 if (payment.getVirtualAccountBank() != null && payment.getVirtualAccountNumber() != null) {
                     Map<String, String> vaInfo = new HashMap<>();

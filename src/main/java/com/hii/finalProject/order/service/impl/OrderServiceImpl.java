@@ -7,7 +7,6 @@ import com.hii.finalProject.cart.service.CartService;
 import com.hii.finalProject.courier.entity.Courier;
 import com.hii.finalProject.courier.repository.CourierRepository;
 import com.hii.finalProject.courier.service.CourierService;
-import com.hii.finalProject.exceptions.DataNotFoundException;
 import com.hii.finalProject.exceptions.InsufficientStockException;
 import com.hii.finalProject.exceptions.OrderProcessingException;
 import com.hii.finalProject.order.dto.OrderDTO;
@@ -17,6 +16,8 @@ import com.hii.finalProject.order.repository.OrderRepository;
 import com.hii.finalProject.order.service.OrderService;
 import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import com.hii.finalProject.orderItem.entity.OrderItem;
+import com.hii.finalProject.payment.entity.Payment;
+import com.hii.finalProject.payment.repository.PaymentRepository;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.stock.service.StockService;
@@ -28,8 +29,6 @@ import com.hii.finalProject.users.repository.UserRepository;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.warehouse.repository.WarehouseRepository;
 import com.hii.finalProject.warehouse.service.WarehouseService;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -37,15 +36,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
@@ -61,13 +62,14 @@ public class OrderServiceImpl implements OrderService {
     private static final String INVOICE_PREFIX = "INV";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
     private final AtomicInteger sequence = new AtomicInteger(1);
+    private final PaymentRepository paymentRepository;
     private final AutoStockMutationService autoStockMutationService;
     private final StockMutationJournalRepository stockMutationJournalRepository;
 
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
                             CartService cartService, ProductRepository productRepository,
                             AddressRepository addressRepository, WarehouseRepository warehouseRepository,
-                            CourierRepository courierRepository, CourierService courierService, StockService stockService, WarehouseService warehouseService, AutoStockMutationService autoStockMutationService, StockMutationJournalRepository stockMutationJournalRepository) {
+                            CourierRepository courierRepository, CourierService courierService, StockService stockService, WarehouseService warehouseService, PaymentRepository paymentRepository, AutoStockMutationService autoStockMutationService, StockMutationJournalRepository stockMutationJournalRepository) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
@@ -78,6 +80,7 @@ public class OrderServiceImpl implements OrderService {
         this.courierService = courierService;
         this.stockService = stockService;
         this.warehouseService = warehouseService;
+        this.paymentRepository = paymentRepository;
         this.autoStockMutationService = autoStockMutationService;
         this.stockMutationJournalRepository = stockMutationJournalRepository;
     }
@@ -89,7 +92,7 @@ public class OrderServiceImpl implements OrderService {
         if (hasPendingOrder(userId)) {
             throw new OrderProcessingException("You have a pending order. Please complete your previous transaction first.");
         }
-        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         Address address = addressRepository.findById(addressId)
@@ -118,6 +121,7 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.pending_payment);
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
+        order.setPaymentMethod(null);
 
         BigDecimal originalAmount = BigDecimal.ZERO;
         int totalWeight = 0;
@@ -151,7 +155,7 @@ public class OrderServiceImpl implements OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        return convertToDTO(savedOrder, null);
+        return convertToDTO(savedOrder);
     }
 
     private boolean hasPendingOrder(Long userId) {
@@ -177,7 +181,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderDTO getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-        return convertToDTO(order, null);
+        return convertToDTO(order);
     }
 
 
@@ -185,7 +189,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Page<OrderDTO> getOrdersByUserId(Long userId, Pageable pageable) {
         Page<Order> orders = orderRepository.findByUserId(userId, pageable);
-        return orders.map(order -> convertToDTO(order, null));
+        return orders.map(this::convertToDTO);
     }
 
     @Override
@@ -194,25 +198,23 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
+        order.setStatus(newStatus);
+        order.setUpdatedAt(LocalDateTime.now());
         OrderStatus oldStatus = order.getStatus();
 
-        if (newStatus == OrderStatus.cancelled) {
-            handleOrderCancellation(order, oldStatus);
-        } else if (newStatus == OrderStatus.confirmation && oldStatus != OrderStatus.confirmation) {
-            handleOrderConfirmation(order);
+        // If the order is being confirmed, we should ensure it has a payment method
+        if (newStatus == OrderStatus.confirmation && order.getPaymentMethod() == null) {
+            Payment payment = paymentRepository.findByOrderId(orderId)
+                    .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderId));
+            order.setPaymentMethod(payment.getPaymentMethod());
             recordStockMutationJournal(order);
         } else if (newStatus == OrderStatus.process && oldStatus != OrderStatus.process) {
             autoStockMutationService.processOrderAndCreateMutationIfNeeded(order);
         }
-//        if (newStatus == OrderStatus.process && oldStatus != OrderStatus.process) {
-//            autoStockMutationService.processOrderAndCreateMutationIfNeeded(order);
-//        }
-
         order.setStatus(newStatus);
         order.setUpdatedAt(LocalDateTime.now());
-
         Order updatedOrder = orderRepository.save(order);
-        return convertToDTO(updatedOrder, null);
+        return convertToDTO(updatedOrder);
     }
     private void recordStockMutationJournal(Order order) {
         for (OrderItem item : order.getItems()) {
@@ -255,7 +257,7 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdatedAt(LocalDateTime.now());
 
         Order updatedOrder = orderRepository.save(order);
-        return convertToDTO(updatedOrder, null);
+        return convertToDTO(updatedOrder);
     }
 
     private void returnStockForOrder(Order order) {
@@ -282,7 +284,7 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdatedAt(LocalDateTime.now());
 
         Order updatedOrder = orderRepository.save(order);
-        return convertToDTO(updatedOrder, null);
+        return convertToDTO(updatedOrder);
     }
 
     private void handleOrderConfirmation(Order order) {
@@ -307,24 +309,55 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+
     @Override
-    public Page<OrderDTO> getFilteredOrders(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        Page<Order> orders;
+    public Page<OrderDTO> getAdminOrders(String status, Long warehouseId, LocalDate date, Pageable pageable) {
+        Specification<Order> spec = Specification.where(null);
 
         if (status != null && !status.isEmpty()) {
             try {
-                OrderStatus orderStatus = OrderStatus.valueOf(status.toUpperCase());
-                orders = orderRepository.findByUserIdAndStatus(userId, orderStatus, pageable);
+                OrderStatus orderStatus = OrderStatus.fromString(status);
+                spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), orderStatus));
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid order status: " + status);
+                log.warn("Invalid order status: " + status);
             }
-        } else if (startDate != null && endDate != null) {
-            orders = orderRepository.findByUserIdAndCreatedAtBetween(userId, startDate, endDate, pageable);
-        } else {
-            orders = orderRepository.findByUserId(userId, pageable);
         }
+        if (warehouseId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("warehouse").get("id"), warehouseId));
+        }
+        if (date != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(cb.function("DATE", LocalDate.class, root.get("createdAt")), date));
+        }
+        Page<Order> orders = orderRepository.findAll(spec, pageable);
+        return orders.map(this::convertToDTO);
+    }
 
-        return orders.map(order -> convertToDTO(order, null));
+
+    private OrderStatus convertToOrderStatus(String status) {
+        if (status == null || status.isEmpty()) {
+            return null;
+        }
+        try {
+            return OrderStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid order status: {}", status);
+            return null;
+        }
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO updateOrder(OrderDTO orderDTO) {
+        Order order = orderRepository.findById(orderDTO.getId())
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderDTO.getId()));
+
+        // Update fields as necessary
+        order.setPaymentMethod(orderDTO.getPaymentMethod());
+        // ... update other fields as needed ...
+
+        Order updatedOrder = orderRepository.save(order);
+        return convertToDTO(updatedOrder);
     }
 
 
@@ -346,23 +379,55 @@ public class OrderServiceImpl implements OrderService {
         }
 
         Order updatedOrder = orderRepository.save(order);
-        return convertToDTO(updatedOrder, null);
+        return convertToDTO(updatedOrder);
     }
 
     @Override
     public Page<OrderDTO> getAllOrders(Pageable pageable) {
         Page<Order> orders = orderRepository.findAll(pageable);
-        return orders.map(order -> convertToDTO(order, null));
+        return orders.map(this::convertToDTO);
     }
 
     @Override
-    public Page<OrderDTO> getFilteredOrdersForAdmin(String status, Long warehouseId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        OrderStatus orderStatus = status != null && !status.isEmpty() ? OrderStatus.valueOf(status) : null;
-        Page<Order> orders = orderRepository.findFilteredOrders(orderStatus, warehouseId, startDate, endDate, pageable);
-        return orders.map(order -> convertToDTO(order, null));
+    @Transactional
+    public void cancelUnpaidOrders() {
+        LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
+        List<Order> unpaidOrders = orderRepository.findByStatusAndCreatedAtBefore(OrderStatus.pending_payment, oneHourAgo);
+
+        for (Order order : unpaidOrders) {
+            try {
+                cancelOrder(order.getId());
+                log.info("Automatically cancelled unpaid order: {}", order.getId());
+            } catch (Exception e) {
+                log.error("Failed to cancel unpaid order: {}", order.getId(), e);
+            }
+        }
     }
 
-    private OrderDTO convertToDTO(Order order, String email) {
+    @Override
+    public Page<OrderDTO> getUserOrders(Long userId, String status, LocalDate date, Pageable pageable) {
+        Specification<Order> spec = Specification.where((root, query, cb) -> cb.equal(root.get("user").get("id"), userId));
+
+        if (status != null && !status.isEmpty()) {
+            try {
+                OrderStatus orderStatus = OrderStatus.fromString(status);
+                spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), orderStatus));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid order status: " + status);
+            }
+        }
+
+        if (date != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(cb.function("DATE", LocalDate.class, root.get("createdAt")), date));
+        }
+
+        Page<Order> orders = orderRepository.findAll(spec, pageable);
+        return orders.map(this::convertToDTO);
+    }
+
+
+    private OrderDTO convertToDTO(Order order) {
         OrderDTO dto = new OrderDTO();
         dto.setId(order.getId());
         dto.setInvoiceId(order.getInvoiceId());
@@ -382,14 +447,10 @@ public class OrderServiceImpl implements OrderService {
         dto.setCourierName(order.getCourier().getCourier());
         dto.setOriginCity(order.getWarehouse().getCity().getName());
         dto.setDestinationCity(order.getAddress().getCity().getName());
-        dto.setPaymentMethod(order.getPaymentMethod());
-        if (email != null) {
-            User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new DataNotFoundException("User not found"));
 
-            if (user.getWarehouse() != null && user.getWarehouse().getId() != null) {
-                dto.setLoginWarehouseId(user.getWarehouse().getId());
-            }
+        Payment payment = paymentRepository.findByOrderId(order.getId()).orElse(null);
+        if (payment != null) {
+            dto.setPaymentMethod(payment.getPaymentMethod());
         }
         return dto;
     }
@@ -399,8 +460,6 @@ public class OrderServiceImpl implements OrderService {
         dto.setId(orderItem.getId());
         dto.setProductId(orderItem.getProduct().getId());
         dto.setProductName(orderItem.getProduct().getName());
-        dto.setCategoryId(orderItem.getProduct().getCategories().getId());
-        dto.setCategoryName(orderItem.getProduct().getCategories().getName());
         dto.setQuantity(orderItem.getQuantity());
         dto.setPrice(orderItem.getPrice());
         return dto;
@@ -410,45 +469,5 @@ public class OrderServiceImpl implements OrderService {
         // Implement this method to create a JSON representation of the product
         // You might want to use a JSON library like Jackson or Gson
         return ""; // Placeholder
-    }
-    @Override
-    public Page<OrderDTO> getAllOrders(Long warehouseId, String customerName, OrderStatus status,
-                                       YearMonth month, Long productId, Long categoryId,
-                                       Pageable pageable, String email) {
-        Specification<Order> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-
-            if (warehouseId != null) {
-                predicates.add(cb.equal(root.get("warehouse").get("id"), warehouseId));
-            }
-            if (customerName != null && !customerName.isEmpty()) {
-                predicates.add(cb.like(cb.lower(root.get("user").get("name")), "%" + customerName.toLowerCase() + "%"));
-            }
-            if (status != null) {
-                predicates.add(cb.equal(root.get("status"), status));
-            }
-            if (month != null) {
-                LocalDateTime startDate = month.atDay(1).atStartOfDay();
-                LocalDateTime endDate = month.atEndOfMonth().atTime(23, 59, 59);
-                predicates.add(cb.between(root.get("createdAt"), startDate, endDate));
-            }
-            if (productId != null) {
-                Join<Order, OrderItem> orderItemJoin = root.join("items");
-                predicates.add(cb.equal(orderItemJoin.get("product").get("id"), productId));
-            }
-            if (categoryId != null) {
-                Join<Order, OrderItem> orderItemJoin = root.join("items");
-                predicates.add(cb.equal(orderItemJoin.get("product").get("categories").get("id"), categoryId));
-            }
-
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
-
-        Page<Order> orders = orderRepository.findAll(spec, pageable);
-        return orders.map(order -> {
-            OrderDTO dto = convertToDTO(order, email);
-            dto.setMonth(YearMonth.from(order.getCreatedAt()));
-            return dto;
-        });
     }
 }

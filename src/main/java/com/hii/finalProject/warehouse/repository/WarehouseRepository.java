@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface WarehouseRepository extends JpaRepository<Warehouse, Long>, JpaSpecificationExecutor<Warehouse> {
-        @Query(value = "SELECT w.* FROM developmentfp.warehouse w ORDER BY developmentfp.ST_Distance(developmentfp.ST_MakePoint(:longitude,:latitude), developmentfp.ST_MakePoint(w.lon, w.lat)) LIMIT 1", nativeQuery = true)
+        @Query(value = "SELECT w.* FROM developmentfp.warehouse w WHERE w.deleted_at IS NULL ORDER BY developmentfp.ST_Distance(developmentfp.ST_MakePoint(:longitude,:latitude), developmentfp.ST_MakePoint(w.lon, w.lat)) LIMIT 1", nativeQuery = true)
         Warehouse findNearestWarehouse(@Param("longitude") float longitude, @Param("latitude") float latitude);
         @Query(value = "SELECT w.* FROM developmentfp.warehouse w ORDER BY developmentfp.ST_Distance(developmentfp.ST_MakePoint(:longitude,:latitude), developmentfp.ST_MakePoint(w.lon, w.lat))", nativeQuery = true)
         List<Warehouse> findAllOrderByDistance(@Param("longitude") float longitude, @Param("latitude") float latitude);

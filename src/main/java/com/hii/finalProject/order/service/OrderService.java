@@ -7,8 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
 
 public interface OrderService {
     OrderDTO createOrder(Long userId, Long warehouseId, Long addressId, Long courierId);
@@ -18,17 +18,16 @@ public interface OrderService {
     OrderDTO updateOrderStatus(Long orderId, OrderStatus status);
     OrderDTO cancelOrder(Long orderId) throws IllegalStateException;
 
-    @Transactional
     OrderDTO markOrderAsDelivered(Long orderId) throws IllegalStateException;
+    Page<OrderDTO> getAdminOrders(String status, Long warehouseId, LocalDate date, Pageable pageable);
+    OrderDTO updateOrder(OrderDTO orderDTO);
 
-    Page<OrderDTO> getFilteredOrders(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
-
+    //    Page<OrderDTO> getFilteredOrders(Long userId, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+//
     OrderDTO shipOrder(Long orderId);
-
     Page<OrderDTO> getAllOrders(Pageable pageable);
 
-    Page<OrderDTO> getFilteredOrdersForAdmin(String status, Long warehouseId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
-    Page<OrderDTO> getAllOrders(Long warehouseId, String customerName, OrderStatus status,
-                                YearMonth month, Long productId, Long categoryId,
-                                Pageable pageable, String email);
+    void cancelUnpaidOrders();
+
+    Page<OrderDTO> getUserOrders(Long userId, String status, LocalDate date, Pageable pageable);
 }
