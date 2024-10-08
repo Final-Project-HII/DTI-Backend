@@ -11,6 +11,7 @@ import com.hii.finalProject.paymentProof.service.impl.PaymentProofServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,6 +35,7 @@ public class PaymentController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<String> createPayment(
             @RequestParam Long orderId,
             @RequestParam String paymentMethod,
@@ -56,6 +58,7 @@ public class PaymentController {
     }
 
     @GetMapping("/{orderId}/status")
+    @PreAuthorize("hasAuthority('SCOPE_USER') or hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<?> getPaymentStatus(@PathVariable Long orderId) {
         try {
             Payment payment = paymentService.getPaymentByOrderId(orderId);
@@ -104,6 +107,7 @@ public class PaymentController {
 
 
     @PostMapping("/{orderId}/approve-proof")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<String> approvePaymentProof(@PathVariable Long orderId) {
         try {
             paymentService.updatePaymentStatus(orderId, PaymentStatus.COMPLETED);
@@ -114,6 +118,7 @@ public class PaymentController {
     }
 
     @PostMapping("/{orderId}/reject-proof")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<String> rejectPaymentProof(@PathVariable Long orderId) {
         try {
             paymentService.updatePaymentStatus(orderId, PaymentStatus.FAILED);
@@ -124,6 +129,7 @@ public class PaymentController {
     }
 
     @PostMapping("/approve-payment/{paymentId}")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<String> approvePayment(@PathVariable Long paymentId) {
         try {
             // Update the payment status to COMPLETED
@@ -135,6 +141,7 @@ public class PaymentController {
     }
 
     @PostMapping("/midtrans-callback")
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<String> handleMidtransCallback(@RequestBody String callbackPayload) {
         try {
             paymentService.processMidtransCallback(callbackPayload);

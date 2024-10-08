@@ -46,6 +46,7 @@ public class OrderController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<OrderDTO>> createOrder(
             @RequestParam Long addressId,
             @RequestParam Long courierId) {
@@ -65,6 +66,7 @@ public class OrderController {
 
 
     @GetMapping("/{orderId}")
+    @PreAuthorize("hasAuthority('SCOPE_USER') or hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<OrderDTO> getOrder(@PathVariable Long orderId) {
         OrderDTO orderDTO = orderService.getOrderById(orderId);
         return ResponseEntity.ok(orderDTO);
@@ -72,6 +74,7 @@ public class OrderController {
 
 
     @GetMapping
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<Page<OrderDTO>>> getUserOrders(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
@@ -92,6 +95,7 @@ public class OrderController {
 
 
     @PutMapping("/{orderId}/status")
+    @PreAuthorize("hasAuthority('SCOPE_USER') or hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<OrderDTO> updateOrderStatus(
             @PathVariable Long orderId,
             @RequestParam OrderStatus status) {
@@ -102,7 +106,7 @@ public class OrderController {
 
 
     @GetMapping("/admin")
-//    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER')")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Response<Page<OrderDTO>>> getAdminOrders(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long warehouse,
@@ -162,6 +166,7 @@ public class OrderController {
 
     //////
     @PutMapping("/{orderId}/cancel")
+    @PreAuthorize("hasAuthority('SCOPE_USER') or hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Response<OrderDTO>> cancelOrder(@PathVariable Long orderId) {
         try {
             OrderDTO canceledOrder = orderService.cancelOrder(orderId);
@@ -175,6 +180,7 @@ public class OrderController {
     }
 
     @PutMapping("/{orderId}/deliver")
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<OrderDTO>> markOrderAsDelivered(@PathVariable Long orderId) {
         try {
             OrderDTO deliveredOrder = orderService.markOrderAsDelivered(orderId);

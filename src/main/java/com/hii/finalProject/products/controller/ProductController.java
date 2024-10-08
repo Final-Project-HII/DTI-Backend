@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,6 +26,7 @@ public class ProductController {
         this.productService = productService;
     }
     @PostMapping("/create")
+    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<ProductListDtoResponse> createProduct(
             @ModelAttribute NewProductRequestDto productRequestDTO,
             @RequestParam("productImages") List<MultipartFile> productImages) {
@@ -51,6 +53,7 @@ public class ProductController {
     }
 
     @PutMapping(value = "/update/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<ProductListDtoResponse> updateProduct(
             @PathVariable Long id,
             @RequestPart(value = "product") String updateProductRequestDtoJson,
@@ -60,6 +63,7 @@ public class ProductController {
         return ResponseEntity.ok(updatedProduct);
     }
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
