@@ -1,6 +1,8 @@
 package com.hii.finalProject.stockMutation.service;
 
 import com.hii.finalProject.exceptions.DataNotFoundException;
+import com.hii.finalProject.order.entity.Order;
+import com.hii.finalProject.orderItem.entity.OrderItem;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.stock.entity.Stock;
@@ -16,6 +18,8 @@ import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.warehouse.repository.WarehouseRepository;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.*;
@@ -30,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -126,40 +131,40 @@ public class StockMutationServiceImpl implements StockMutationService {
                 .map(user -> user.getId().intValue())
                 .orElseThrow(() -> new DataNotFoundException("User not found with email: " + username));
     }
-@Override
-public StockMutationResponseDto processMutation(StockMutationProcessDto processDto, String handledBy) {
-    StockMutation mutation = stockMutationRepository.findById(processDto.getId())
-            .orElseThrow(() -> new DataNotFoundException("Stock mutation not found"));
+    @Override
+    public StockMutationResponseDto processMutation(StockMutationProcessDto processDto, String handledBy) {
+        StockMutation mutation = stockMutationRepository.findById(processDto.getId())
+                .orElseThrow(() -> new DataNotFoundException("Stock mutation not found"));
 
-    if (mutation.getStatus() == processDto.getStatus()) {
-        throw new IllegalStateException("New status must be different from the current status");
+        if (mutation.getStatus() == processDto.getStatus()) {
+            throw new IllegalStateException("New status must be different from the current status");
+        }
+        validateStatusTransition(mutation.getStatus(), processDto.getStatus());
+
+        StockMutationStatus oldStatus = mutation.getStatus();
+        mutation.setStatus(processDto.getStatus());
+        mutation.setRemarks(processDto.getRemarks());
+        mutation.setHandledBy(getUserIdByUsername(handledBy));
+        mutation.setUpdatedAt(LocalDateTime.now());
+
+        switch (processDto.getStatus()) {
+            case APPROVED, IN_TRANSIT:
+                break;
+            case COMPLETED:
+                updateStock(mutation);
+                createStockMutationJournal(mutation, mutation.getOrigin(), StockMutationJournal.MutationType.OUT);
+                createStockMutationJournal(mutation, mutation.getDestination(), StockMutationJournal.MutationType.IN);
+                mutation.setCompletedAt(LocalDateTime.now());
+                break;
+            case CANCELLED:
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported status: " + processDto.getStatus());
+        }
+
+        StockMutation updatedMutation = stockMutationRepository.save(mutation);
+        return convertToResponseDto(updatedMutation, handledBy);
     }
-    validateStatusTransition(mutation.getStatus(), processDto.getStatus());
-
-    StockMutationStatus oldStatus = mutation.getStatus();
-    mutation.setStatus(processDto.getStatus());
-    mutation.setRemarks(processDto.getRemarks());
-    mutation.setHandledBy(getUserIdByUsername(handledBy));
-    mutation.setUpdatedAt(LocalDateTime.now());
-
-    switch (processDto.getStatus()) {
-        case APPROVED, IN_TRANSIT:
-            break;
-        case COMPLETED:
-            updateStock(mutation);
-            createStockMutationJournal(mutation, mutation.getOrigin(), StockMutationJournal.MutationType.OUT);
-            createStockMutationJournal(mutation, mutation.getDestination(), StockMutationJournal.MutationType.IN);
-            mutation.setCompletedAt(LocalDateTime.now());
-            break;
-        case CANCELLED:
-            break;
-        default:
-            throw new IllegalArgumentException("Unsupported status: " + processDto.getStatus());
-    }
-
-    StockMutation updatedMutation = stockMutationRepository.save(mutation);
-    return convertToResponseDto(updatedMutation, handledBy);
-}
     private void createStockMutationJournal(StockMutation mutation, Warehouse warehouse, StockMutationJournal.MutationType mutationType) {
         StockMutationJournal journal = new StockMutationJournal();
         journal.setStockMutation(mutation);
@@ -371,4 +376,118 @@ public StockMutationResponseDto processMutation(StockMutationProcessDto processD
             long newId = StockMutationJurnalIdGenerator.generateId();
         }
     }
+
+    //report
+    @Override
+    public StockReportDto getStockReport(Long warehouseId, YearMonth month, Pageable pageable) {
+        StockReportDto reportDto = new StockReportDto();
+        reportDto.setSummary(getStockSummary(warehouseId, month, pageable));
+        reportDto.setDetails(getStockDetails(warehouseId, month));
+        return reportDto;
+    }
+    private StockSummaryReportDto getStockSummary(Long warehouseId, YearMonth month, Pageable pageable) {
+        LocalDateTime startDate = month.atDay(1).atStartOfDay();
+        LocalDateTime endDate = month.atEndOfMonth().atTime(23, 59, 59);
+
+        StockSummaryReportDto summaryDto = new StockSummaryReportDto();
+        summaryDto.setMonth(month);
+
+        if (warehouseId != null) {
+            Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                    .orElseThrow(() -> new DataNotFoundException("Warehouse not found"));
+            summaryDto.setWarehouseId(warehouseId);
+            summaryDto.setWarehouseName(warehouse.getName());
+        }
+        // Use specification to get all products with their stock information
+        Specification<Product> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            Join<Product, Stock> stockJoin = root.join("stocks", JoinType.LEFT);
+
+            if (warehouseId != null) {
+                predicates.add(criteriaBuilder.equal(stockJoin.get("warehouse").get("id"), warehouseId));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+        Page<Product> productsPage = productRepository.findAll(spec, pageable);
+        List<ProductSummaryDto> productSummaries = productsPage.getContent().stream()
+                .map(product -> {
+                    ProductSummaryDto summary = new ProductSummaryDto();
+                    summary.setProductId(product.getId());
+                    summary.setProductName(product.getName());
+                    // Get all stock movements for this product
+                    Specification<StockMutationJournal> journalSpec = (root, query, cb) -> {
+                        List<Predicate> predicates = new ArrayList<>();
+                        predicates.add(cb.equal(root.get("stockMutation").get("product").get("id"), product.getId()));
+                        predicates.add(cb.between(root.get("createdAt"), startDate, endDate));
+                        if (warehouseId != null) {
+                            predicates.add(cb.equal(root.get("warehouse").get("id"), warehouseId));
+                        }
+                        return cb.and(predicates.toArray(new Predicate[0]));
+                    };
+
+                    List<StockMutationJournal> journals = stockMutationJournalRepository.findAll(journalSpec);
+
+                    long addition = journals.stream()
+                            .filter(j -> j.getMutationType() == StockMutationJournal.MutationType.IN)
+                            .mapToLong(j -> j.getStockMutation().getQuantity())
+                            .sum();
+
+                    long reduction = journals.stream()
+                            .filter(j -> j.getMutationType() == StockMutationJournal.MutationType.OUT)
+                            .mapToLong(j -> j.getStockMutation().getQuantity())
+                            .sum();
+
+                    // Calculate total stock across all warehouses or for specific warehouse
+                    long totalStock = product.getStocks().stream()
+                            .filter(stock -> warehouseId == null || stock.getWarehouse().getId().equals(warehouseId))
+                            .mapToLong(Stock::getQuantity)
+                            .sum();
+
+                    summary.setTotalAddition(addition);
+                    summary.setTotalReduction(reduction);
+                    summary.setEndingStock(totalStock);
+
+                    return summary;
+                })
+                .collect(Collectors.toList());
+
+        Page<ProductSummaryDto> productSummariesPage = new PageImpl<>(
+                productSummaries,
+                pageable,
+                productsPage.getTotalElements()
+        );
+
+        summaryDto.setProductSummaries(productSummariesPage);
+
+        // Calculate totals
+        long totalAddition = productSummaries.stream().mapToLong(ProductSummaryDto::getTotalAddition).sum();
+        long totalReduction = productSummaries.stream().mapToLong(ProductSummaryDto::getTotalReduction).sum();
+        long endingStock = productSummaries.stream().mapToLong(ProductSummaryDto::getEndingStock).sum();
+
+        summaryDto.setTotalAddition(totalAddition);
+        summaryDto.setTotalReduction(totalReduction);
+        summaryDto.setEndingStock(endingStock);
+
+        return summaryDto;
+    }
+
+    private List<StockMutationJournalDto> getStockDetails(Long warehouseId, YearMonth month) {
+        LocalDateTime startDate = month.atDay(1).atStartOfDay();
+        LocalDateTime endDate = month.atEndOfMonth().atTime(23, 59, 59);
+        Specification<StockMutationJournal> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.between(root.get("createdAt"), startDate, endDate));
+            if (warehouseId != null) {
+                predicates.add(cb.equal(root.get("warehouse").get("id"), warehouseId));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        List<StockMutationJournal> journals = stockMutationJournalRepository.findAll(spec);
+        return journals.stream()
+                .map(journal -> fromEntity(journal, null))
+                .collect(Collectors.toList());
+    }
+
 }

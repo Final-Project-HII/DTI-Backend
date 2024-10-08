@@ -7,6 +7,7 @@ import com.hii.finalProject.stockMutation.entity.StockMutationStatus;
 import com.hii.finalProject.stockMutation.service.StockMutationService;
 import com.hii.finalProject.stockMutationJournal.entity.StockMutationJournal;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 
 @RestController
@@ -108,5 +110,17 @@ public class StockMutationController {
                 warehouseId, productName, mutationType, startDate, endDate, email, pageable
         );
         return Response.successfulResponse("Stock reports fetched successfully", reports);
+    }
+    @GetMapping("/report")
+    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
+    public ResponseEntity<Response<StockReportDto>> getStockReport(
+            @RequestParam(required = false) Long warehouseId,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth month,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        StockReportDto report = stockMutationService.getStockReport(warehouseId, month, pageable);
+        return Response.successfulResponse("Stock report retrieved successfully", report);
     }
 }

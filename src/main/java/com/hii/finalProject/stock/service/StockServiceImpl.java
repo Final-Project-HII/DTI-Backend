@@ -284,5 +284,5 @@ public class StockServiceImpl implements StockService{
         stock.setQuantity(stock.getQuantity() + quantity);
         stockRepository.save(stock);
     }
-
+    //stockreport
 }

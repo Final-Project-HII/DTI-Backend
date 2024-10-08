@@ -95,6 +95,7 @@ public class ProductServiceImpl implements ProductService{
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
 
         // Update product fields
+
         product.setName(updateProductRequestDto.getName());
         product.setDescription(updateProductRequestDto.getDescription());
         product.setPrice(Integer.parseInt(updateProductRequestDto.getPrice()));

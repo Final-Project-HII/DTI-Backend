@@ -21,6 +21,9 @@ import com.hii.finalProject.payment.repository.PaymentRepository;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.stock.service.StockService;
+import com.hii.finalProject.stockMutation.service.AutoStockMutationService;
+import com.hii.finalProject.stockMutationJournal.entity.StockMutationJournal;
+import com.hii.finalProject.stockMutationJournal.repository.StockMutationJournalRepository;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
 import com.hii.finalProject.warehouse.entity.Warehouse;
@@ -33,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -59,11 +63,13 @@ public class OrderServiceImpl implements OrderService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
     private final AtomicInteger sequence = new AtomicInteger(1);
     private final PaymentRepository paymentRepository;
+    private final AutoStockMutationService autoStockMutationService;
+    private final StockMutationJournalRepository stockMutationJournalRepository;
 
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
                             CartService cartService, ProductRepository productRepository,
                             AddressRepository addressRepository, WarehouseRepository warehouseRepository,
-                            CourierRepository courierRepository, CourierService courierService, StockService stockService, WarehouseService warehouseService, PaymentRepository paymentRepository) {
+                            CourierRepository courierRepository, CourierService courierService, StockService stockService, WarehouseService warehouseService, PaymentRepository paymentRepository, AutoStockMutationService autoStockMutationService, StockMutationJournalRepository stockMutationJournalRepository) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
@@ -75,6 +81,8 @@ public class OrderServiceImpl implements OrderService {
         this.stockService = stockService;
         this.warehouseService = warehouseService;
         this.paymentRepository = paymentRepository;
+        this.autoStockMutationService = autoStockMutationService;
+        this.stockMutationJournalRepository = stockMutationJournalRepository;
     }
 
     @Override
@@ -84,7 +92,7 @@ public class OrderServiceImpl implements OrderService {
         if (hasPendingOrder(userId)) {
             throw new OrderProcessingException("You have a pending order. Please complete your previous transaction first.");
         }
-        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         Address address = addressRepository.findById(addressId)
@@ -192,18 +200,31 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(newStatus);
         order.setUpdatedAt(LocalDateTime.now());
+        OrderStatus oldStatus = order.getStatus();
 
         // If the order is being confirmed, we should ensure it has a payment method
         if (newStatus == OrderStatus.confirmation && order.getPaymentMethod() == null) {
             Payment payment = paymentRepository.findByOrderId(orderId)
                     .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderId));
             order.setPaymentMethod(payment.getPaymentMethod());
+            recordStockMutationJournal(order);
+        } else if (newStatus == OrderStatus.process && oldStatus != OrderStatus.process) {
+            autoStockMutationService.processOrderAndCreateMutationIfNeeded(order);
         }
-
+        order.setStatus(newStatus);
+        order.setUpdatedAt(LocalDateTime.now());
         Order updatedOrder = orderRepository.save(order);
         return convertToDTO(updatedOrder);
     }
-
+    private void recordStockMutationJournal(Order order) {
+        for (OrderItem item : order.getItems()) {
+            StockMutationJournal journal = new StockMutationJournal();
+            journal.setWarehouse(order.getWarehouse());
+            journal.setMutationType(StockMutationJournal.MutationType.OUT);
+            journal.setCreatedAt(LocalDateTime.now());
+            stockMutationJournalRepository.save(journal);
+        }
+    }
 
     private void handleOrderCancellation(Order order, OrderStatus oldStatus) {
         if (oldStatus == OrderStatus.shipped || oldStatus == OrderStatus.delivered) {
@@ -290,7 +311,7 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
-    public Page<OrderDTO> getAdminOrders(String status, Long warehouseId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+    public Page<OrderDTO> getAdminOrders(String status, Long warehouseId, LocalDate date, Pageable pageable) {
         Specification<Order> spec = Specification.where(null);
 
         if (status != null && !status.isEmpty()) {
@@ -298,15 +319,15 @@ public class OrderServiceImpl implements OrderService {
                 OrderStatus orderStatus = OrderStatus.fromString(status);
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), orderStatus));
             } catch (IllegalArgumentException e) {
-                // Log the error and ignore the invalid status
                 log.warn("Invalid order status: " + status);
             }
         }
         if (warehouseId != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("warehouse").get("id"), warehouseId));
         }
-        if (startDate != null && endDate != null) {
-            spec = spec.and((root, query, cb) -> cb.between(root.get("createdAt"), startDate, endDate));
+        if (date != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(cb.function("DATE", LocalDate.class, root.get("createdAt")), date));
         }
         Page<Order> orders = orderRepository.findAll(spec, pageable);
         return orders.map(this::convertToDTO);
@@ -361,9 +382,47 @@ public class OrderServiceImpl implements OrderService {
         return convertToDTO(updatedOrder);
     }
 
-        @Override
+    @Override
     public Page<OrderDTO> getAllOrders(Pageable pageable) {
         Page<Order> orders = orderRepository.findAll(pageable);
+        return orders.map(this::convertToDTO);
+    }
+
+    @Override
+    @Transactional
+    public void cancelUnpaidOrders() {
+        LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
+        List<Order> unpaidOrders = orderRepository.findByStatusAndCreatedAtBefore(OrderStatus.pending_payment, oneHourAgo);
+
+        for (Order order : unpaidOrders) {
+            try {
+                cancelOrder(order.getId());
+                log.info("Automatically cancelled unpaid order: {}", order.getId());
+            } catch (Exception e) {
+                log.error("Failed to cancel unpaid order: {}", order.getId(), e);
+            }
+        }
+    }
+
+    @Override
+    public Page<OrderDTO> getUserOrders(Long userId, String status, LocalDate date, Pageable pageable) {
+        Specification<Order> spec = Specification.where((root, query, cb) -> cb.equal(root.get("user").get("id"), userId));
+
+        if (status != null && !status.isEmpty()) {
+            try {
+                OrderStatus orderStatus = OrderStatus.fromString(status);
+                spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), orderStatus));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid order status: " + status);
+            }
+        }
+
+        if (date != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(cb.function("DATE", LocalDate.class, root.get("createdAt")), date));
+        }
+
+        Page<Order> orders = orderRepository.findAll(spec, pageable);
         return orders.map(this::convertToDTO);
     }
 
