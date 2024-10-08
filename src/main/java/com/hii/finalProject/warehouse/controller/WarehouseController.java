@@ -26,41 +26,39 @@ public class WarehouseController {
 
 
     @GetMapping("")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Response<Page<Warehouse>>> getWarehouseList(@RequestParam(value = "name",required = false) String name, @RequestParam(value = "cityName",required = false) String cityName, @RequestParam(defaultValue = "0") int page, @RequestParam(required = false) Integer size){
         return Response.successfulResponse("Warehouse list is successfully fetched", warehouseService.getAllWarehouses(name,cityName, page,size));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_USER') or hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Response<Warehouse>> getWarehouseById(@PathVariable("id") Long id){
         return Response.successfulResponse("Warehouse with id " + id +" is successfully fetched", warehouseService.getWarehouseById(id));
     }
 
     @PostMapping("")
+    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Response<Warehouse>> addNewWarehouse(@RequestBody WarehouseDTO data){
         return Response.successfulResponse(HttpStatus.CREATED.value(),"Warehouse has been successfully created",warehouseService.createWarehouse(data));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Response<Warehouse>> updateWarehouse(@PathVariable("id") Long id, @RequestBody WarehouseDTO data){
         System.out.println(data);
         return Response.successfulResponse("Warehouse has been successfully updated",warehouseService.updateWarehouse(id,data));
     }
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Response<Object>> deleteWarehouse(@PathVariable("id") Long id){
         warehouseService.deleteWarehouse(id);
         return Response.successfulResponse("Warehouse has been successfully deleted");
     }
 
-//    @GetMapping("/{id}")
-//    public ResponseEntity<Response<WarehouseDetailResponseDto>> getWarehouseById(@PathVariable Long id) {
-//        WarehouseDetailResponseDto warehouseDetail = warehouseService.getWarehouseDetailById(id);
-//        return Response.successfulResponse(
-//                "Warehouse detail fetched successfully",
-//                warehouseDetail
-//        );
-
 
     @GetMapping("/nearest-warehouse")
+    @PreAuthorize("hasAuthority('SCOPE_USER') or hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Response<Warehouse>> getNearestWarehouse(){
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");

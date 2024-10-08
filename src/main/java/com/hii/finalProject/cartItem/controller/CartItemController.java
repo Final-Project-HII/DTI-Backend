@@ -29,6 +29,7 @@ public class CartItemController {
     }
 
     @PostMapping("/add")
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<CartItemDTO> addToCart(@RequestBody AddToCartRequest request) {
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
         Long userId = userService.getUserByEmail(userEmail);
@@ -37,6 +38,7 @@ public class CartItemController {
     }
 
     @DeleteMapping("/item/{productId}")
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Void> removeFromCart(@PathVariable Long productId) {
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
         Long userId = userService.getUserByEmail(userEmail);
@@ -45,7 +47,7 @@ public class CartItemController {
     }
 
     @PutMapping("/item/{productId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Void> updateCartItemQuantity(
             @PathVariable Long productId,
             @RequestBody UpdateQuantityRequest request) {

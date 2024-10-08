@@ -12,6 +12,7 @@ import jakarta.servlet.http.Cookie;
 import lombok.extern.java.Log;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -60,12 +61,10 @@ public class SecurityConfig {
     }
 
 
-
-
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        configuration.setAllowedOrigins(Arrays.asList("hii-mart-development.vercel.app"));
         configuration.setAllowedMethods(Arrays.asList("GET","POST","DELETE","PUT","OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Content-Type", "*"));
         configuration.setAllowCredentials(true);
@@ -80,19 +79,18 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> {
-//                    auth.requestMatchers("/api/auth/**").permitAll();
-//                    auth.requestMatchers("/api/users/register").permitAll();
-//                    auth.requestMatchers("/api/users/register-google").permitAll();
-//                    auth.requestMatchers("/api/users/set-password").permitAll();
-//                    auth.requestMatchers("/api/users/check-verification").permitAll();
-//                    auth.requestMatchers("/api/users/new-verification-link").permitAll();
-//                    auth.requestMatchers("/api/users/reset-password").permitAll();
-//                    auth.requestMatchers("/api/users/check-reset-password").permitAll();
-//                    auth.requestMatchers("/api/users/new-reset-password-link").permitAll();
-//                    auth.requestMatchers("/api/product/**").permitAll();
-//                    auth.requestMatchers("/api/orders/**").permitAll();
-//                    auth.requestMatchers("/api/carts/**").authenticated();
-//                    auth.requestMatchers("/api/cart-items/**").authenticated();
+                    auth.requestMatchers("/api/auth/**").permitAll();
+                    auth.requestMatchers("/api/users/register").permitAll();
+                    auth.requestMatchers("/api/users/register-google").permitAll();
+                    auth.requestMatchers("/api/users/set-password").permitAll();
+                    auth.requestMatchers("/api/users/check-verification").permitAll();
+                    auth.requestMatchers("/api/users/new-verification-link").permitAll();
+                    auth.requestMatchers("/api/users/reset-password").permitAll();
+                    auth.requestMatchers("/api/users/check-reset-password").permitAll();
+                    auth.requestMatchers("/api/users/new-reset-password-link").permitAll();
+                    auth.requestMatchers("/api/cities/**").permitAll();
+                    auth.requestMatchers(HttpMethod.GET, "/api/category/**").permitAll();
+                    auth.requestMatchers(HttpMethod.GET, "/api/product/**").permitAll();
                     auth.anyRequest().permitAll();
                 })
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
