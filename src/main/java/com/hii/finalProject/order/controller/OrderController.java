@@ -160,7 +160,6 @@ public class OrderController {
         return Response.successfulResponse("Orders successfully fetched", orders);
     }
 
-
     //////
     @PutMapping("/{orderId}/cancel")
     public ResponseEntity<Response<OrderDTO>> cancelOrder(@PathVariable Long orderId) {

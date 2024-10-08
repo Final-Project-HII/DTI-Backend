@@ -1,4 +1,4 @@
-package com.hii.finalProject.order.dto;
+package com.hii.finalProject.salesReport.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hii.finalProject.orderItem.dto.OrderItemDTO;
