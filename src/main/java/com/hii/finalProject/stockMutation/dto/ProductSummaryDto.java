@@ -9,4 +9,5 @@ public class ProductSummaryDto {
     private long totalAddition;
     private long totalReduction;
     private long endingStock;
+    private String warehouseName;
 }

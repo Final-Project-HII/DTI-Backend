@@ -114,7 +114,7 @@ public class StockMutationController {
     @GetMapping("/report")
     @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<Response<StockReportDto>> getStockReport(
-            @RequestParam Long warehouseId,
+            @RequestParam(required = false) Long warehouseId,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth month,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {

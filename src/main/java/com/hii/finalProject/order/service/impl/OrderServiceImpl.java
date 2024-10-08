@@ -6,6 +6,10 @@ import com.hii.finalProject.cart.entity.Cart;
 import com.hii.finalProject.cart.service.CartService;
 import com.hii.finalProject.courier.entity.Courier;
 import com.hii.finalProject.courier.repository.CourierRepository;
+import com.hii.finalProject.courier.service.CourierService;
+import com.hii.finalProject.exceptions.DataNotFoundException;
+import com.hii.finalProject.exceptions.InsufficientStockException;
+import com.hii.finalProject.exceptions.OrderProcessingException;
 import com.hii.finalProject.order.dto.OrderDTO;
 import com.hii.finalProject.order.entity.Order;
 import com.hii.finalProject.order.entity.OrderStatus;
@@ -15,17 +19,30 @@ import com.hii.finalProject.orderItem.dto.OrderItemDTO;
 import com.hii.finalProject.orderItem.entity.OrderItem;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
+import com.hii.finalProject.stock.service.StockService;
+import com.hii.finalProject.stockMutation.service.AutoStockMutationService;
+import com.hii.finalProject.stockMutationJournal.entity.StockMutationJournal;
+import com.hii.finalProject.stockMutationJournal.repository.StockMutationJournalRepository;
 import com.hii.finalProject.users.entity.User;
 import com.hii.finalProject.users.repository.UserRepository;
 import com.hii.finalProject.warehouse.entity.Warehouse;
 import com.hii.finalProject.warehouse.repository.WarehouseRepository;
+import com.hii.finalProject.warehouse.service.WarehouseService;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,15 +51,23 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final CartService cartService;
+    private final CourierService courierService;
+    private final StockService stockService;
+    private final WarehouseService warehouseService;
     private final ProductRepository productRepository;
     private final AddressRepository addressRepository;
     private final WarehouseRepository warehouseRepository;
     private final CourierRepository courierRepository;
+    private static final String INVOICE_PREFIX = "INV";
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private final AtomicInteger sequence = new AtomicInteger(1);
+    private final AutoStockMutationService autoStockMutationService;
+    private final StockMutationJournalRepository stockMutationJournalRepository;
 
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
                             CartService cartService, ProductRepository productRepository,
                             AddressRepository addressRepository, WarehouseRepository warehouseRepository,
-                            CourierRepository courierRepository) {
+                            CourierRepository courierRepository, CourierService courierService, StockService stockService, WarehouseService warehouseService, AutoStockMutationService autoStockMutationService, StockMutationJournalRepository stockMutationJournalRepository) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
@@ -50,11 +75,21 @@ public class OrderServiceImpl implements OrderService {
         this.addressRepository = addressRepository;
         this.warehouseRepository = warehouseRepository;
         this.courierRepository = courierRepository;
+        this.courierService = courierService;
+        this.stockService = stockService;
+        this.warehouseService = warehouseService;
+        this.autoStockMutationService = autoStockMutationService;
+        this.stockMutationJournalRepository = stockMutationJournalRepository;
     }
 
     @Override
     @Transactional
     public OrderDTO createOrder(Long userId, Long warehouseId, Long addressId, Long courierId) {
+
+        if (hasPendingOrder(userId)) {
+            throw new OrderProcessingException("You have a pending order. Please complete your previous transaction first.");
+        }
+        
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         Address address = addressRepository.findById(addressId)
@@ -62,16 +97,10 @@ public class OrderServiceImpl implements OrderService {
         Courier courier = courierRepository.findById(courierId)
                 .orElseThrow(() -> new RuntimeException("Courier not found with id: " + courierId));
 
-//        Warehouse nearestWarehouse = warehouseRepository.findAll().get(0);
-//        if (nearestWarehouse == null) {
-//            throw new RuntimeException("No warehouse found");
-//        }
-
         Warehouse nearestWarehouse = warehouseRepository.findNearestWarehouse(address.getLon(), address.getLat());
         if (nearestWarehouse == null) {
             throw new RuntimeException("No warehouse found");
         }
-        System.out.println(nearestWarehouse);
 
         Cart cart = cartService.getCartEntity(userId);
 
@@ -81,6 +110,8 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = new Order();
         order.setUser(user);
+        String invoiceId = generateInvoiceId();
+        order.setInvoiceId(invoiceId);
         order.setWarehouse(nearestWarehouse);
         order.setAddress(address);
         order.setCourier(courier);
@@ -102,45 +133,178 @@ public class OrderServiceImpl implements OrderService {
 
             order.getItems().add(orderItem);
             originalAmount = originalAmount.add(orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())));
-            totalWeight += cartItem.getProduct().getWeight() * cartItem.getQuantity();
             totalQuantity += cartItem.getQuantity();
+            totalWeight += cartItem.getProduct().getWeight() * cartItem.getQuantity();
         }
 
         order.setOriginalAmount(originalAmount);
-        order.setFinalAmount(originalAmount);
-        order.setTotalWeight(totalWeight);
         order.setTotalQuantity(totalQuantity);
+        order.setTotalWeight(totalWeight);
+
+        //Get shipping cost directly from courier service
+        Integer shippingCost = courierService.getCourierPrice(courierId);
+        order.setShippingCost(BigDecimal.valueOf(shippingCost));
+
+        // Calculate final amount
+        BigDecimal finalAmount = originalAmount.add(BigDecimal.valueOf(shippingCost));
+        order.setFinalAmount(finalAmount);
 
         Order savedOrder = orderRepository.save(order);
 
-        cartService.clearCart(userId);
-
-        return convertToDTO(savedOrder);
+        return convertToDTO(savedOrder, null);
     }
 
+    private boolean hasPendingOrder(Long userId) {
+        return orderRepository.existsByUserIdAndStatus(userId, OrderStatus.pending_payment);
+    }
+    //
+
+
+    private String generateInvoiceId() {
+        LocalDateTime now = LocalDateTime.now();
+        String datePart = now.format(DATE_FORMATTER);
+        String sequencePart = String.format("%04d", sequence.getAndIncrement());
+
+        if (sequence.get() > 9999) {
+            sequence.set(1);
+        }
+
+        return INVOICE_PREFIX + "-" + datePart + "-" + sequencePart;
+    }
 
 
     @Override
     public OrderDTO getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-        return convertToDTO(order);
+        return convertToDTO(order, null);
     }
+
+
 
     @Override
     public Page<OrderDTO> getOrdersByUserId(Long userId, Pageable pageable) {
         Page<Order> orders = orderRepository.findByUserId(userId, pageable);
-        return orders.map(this::convertToDTO);
+        return orders.map(order -> convertToDTO(order, null));
     }
 
     @Override
     @Transactional
-    public OrderDTO updateOrderStatus(Long orderId, OrderStatus status) {
+    public OrderDTO updateOrderStatus(Long orderId, OrderStatus newStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-        order.setStatus(status);
+
+        OrderStatus oldStatus = order.getStatus();
+
+        if (newStatus == OrderStatus.cancelled) {
+            handleOrderCancellation(order, oldStatus);
+        } else if (newStatus == OrderStatus.confirmation && oldStatus != OrderStatus.confirmation) {
+            handleOrderConfirmation(order);
+            recordStockMutationJournal(order);
+        } else if (newStatus == OrderStatus.process && oldStatus != OrderStatus.process) {
+            autoStockMutationService.processOrderAndCreateMutationIfNeeded(order);
+        }
+//        if (newStatus == OrderStatus.process && oldStatus != OrderStatus.process) {
+//            autoStockMutationService.processOrderAndCreateMutationIfNeeded(order);
+//        }
+
+        order.setStatus(newStatus);
+        order.setUpdatedAt(LocalDateTime.now());
+
         Order updatedOrder = orderRepository.save(order);
-        return convertToDTO(updatedOrder);
+        return convertToDTO(updatedOrder, null);
+    }
+    private void recordStockMutationJournal(Order order) {
+        for (OrderItem item : order.getItems()) {
+            StockMutationJournal journal = new StockMutationJournal();
+            journal.setWarehouse(order.getWarehouse());
+            journal.setMutationType(StockMutationJournal.MutationType.OUT);
+            journal.setCreatedAt(LocalDateTime.now());
+            stockMutationJournalRepository.save(journal);
+        }
+    }
+
+    private void handleOrderCancellation(Order order, OrderStatus oldStatus) {
+        if (oldStatus == OrderStatus.shipped || oldStatus == OrderStatus.delivered) {
+            throw new IllegalStateException("Cannot cancel an order that has been shipped or delivered");
+        }
+
+        if (oldStatus == OrderStatus.confirmation || oldStatus == OrderStatus.process) {
+            for (OrderItem item : order.getItems()) {
+                stockService.returnStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+            }
+        }
+    }
+
+
+    @Override
+    @Transactional
+    public OrderDTO cancelOrder(Long orderId) throws IllegalStateException {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+        if (order.getStatus() == OrderStatus.shipped || order.getStatus() == OrderStatus.delivered) {
+            throw new IllegalStateException("Cannot cancel an order that has been shipped or delivered");
+        }
+
+        if (order.getStatus() == OrderStatus.confirmation || order.getStatus() == OrderStatus.process) {
+            returnStockForOrder(order);
+        }
+
+        order.setStatus(OrderStatus.cancelled);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        Order updatedOrder = orderRepository.save(order);
+        return convertToDTO(updatedOrder, null);
+    }
+
+    private void returnStockForOrder(Order order) {
+        for (OrderItem item : order.getItems()) {
+            stockService.returnStock(
+                    item.getProduct().getId(),
+                    order.getWarehouse().getId(),
+                    item.getQuantity()
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO markOrderAsDelivered(Long orderId) throws IllegalStateException {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+        if (order.getStatus() != OrderStatus.shipped) {
+            throw new IllegalStateException("Only shipped orders can be marked as delivered");
+        }
+
+        order.setStatus(OrderStatus.delivered);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        Order updatedOrder = orderRepository.save(order);
+        return convertToDTO(updatedOrder, null);
+    }
+
+    private void handleOrderConfirmation(Order order) {
+        if (order.getWarehouse() == null) {
+            Warehouse nearestWarehouse = warehouseService.findNearestWarehouse(order.getUser().getEmail());
+            order.setWarehouse(nearestWarehouse);
+        }
+
+        List<String> insufficientStockItems = new ArrayList<>();
+
+        for (OrderItem item : order.getItems()) {
+            try {
+                stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+            } catch (InsufficientStockException e) {
+                insufficientStockItems.add(item.getProduct().getName() + " (Ordered: " + item.getQuantity() + ")");
+            }
+        }
+
+        if (!insufficientStockItems.isEmpty()) {
+            // Rollback the entire operation
+            throw new OrderProcessingException("Insufficient stock for items: " + String.join(", ", insufficientStockItems));
+        }
     }
 
     @Override
@@ -160,10 +324,45 @@ public class OrderServiceImpl implements OrderService {
             orders = orderRepository.findByUserId(userId, pageable);
         }
 
-        return orders.map(this::convertToDTO);
+        return orders.map(order -> convertToDTO(order, null));
     }
 
-    private OrderDTO convertToDTO(Order order) {
+
+    @Override
+    @Transactional
+    public OrderDTO shipOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+        if (order.getStatus() != OrderStatus.process) {
+            throw new IllegalStateException("Order must be in 'process' status to be shipped");
+        }
+
+        order.setStatus(OrderStatus.shipped);
+
+        // Reduce stock when order is shipped
+        for (OrderItem item : order.getItems()) {
+            stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+        }
+
+        Order updatedOrder = orderRepository.save(order);
+        return convertToDTO(updatedOrder, null);
+    }
+
+    @Override
+    public Page<OrderDTO> getAllOrders(Pageable pageable) {
+        Page<Order> orders = orderRepository.findAll(pageable);
+        return orders.map(order -> convertToDTO(order, null));
+    }
+
+    @Override
+    public Page<OrderDTO> getFilteredOrdersForAdmin(String status, Long warehouseId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        OrderStatus orderStatus = status != null && !status.isEmpty() ? OrderStatus.valueOf(status) : null;
+        Page<Order> orders = orderRepository.findFilteredOrders(orderStatus, warehouseId, startDate, endDate, pageable);
+        return orders.map(order -> convertToDTO(order, null));
+    }
+
+    private OrderDTO convertToDTO(Order order, String email) {
         OrderDTO dto = new OrderDTO();
         dto.setId(order.getId());
         dto.setInvoiceId(order.getInvoiceId());
@@ -172,9 +371,10 @@ public class OrderServiceImpl implements OrderService {
         dto.setWarehouseName(order.getWarehouse().getName());
         dto.setAddressId(order.getAddress().getId());
         dto.setItems(order.getItems().stream().map(this::convertToOrderItemDTO).collect(Collectors.toList()));
-        dto.setOrderDate(order.getCreatedAt());
+        dto.setOrderDate(order.getCreatedAt().toLocalDate());
         dto.setStatus(order.getStatus().name());
         dto.setOriginalAmount(order.getOriginalAmount());
+        dto.setShippingCost(order.getShippingCost());
         dto.setFinalAmount(order.getFinalAmount());
         dto.setTotalWeight(order.getTotalWeight());
         dto.setTotalQuantity(order.getTotalQuantity());
@@ -182,6 +382,15 @@ public class OrderServiceImpl implements OrderService {
         dto.setCourierName(order.getCourier().getCourier());
         dto.setOriginCity(order.getWarehouse().getCity().getName());
         dto.setDestinationCity(order.getAddress().getCity().getName());
+        dto.setPaymentMethod(order.getPaymentMethod());
+        if (email != null) {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new DataNotFoundException("User not found"));
+
+            if (user.getWarehouse() != null && user.getWarehouse().getId() != null) {
+                dto.setLoginWarehouseId(user.getWarehouse().getId());
+            }
+        }
         return dto;
     }
 
@@ -190,6 +399,8 @@ public class OrderServiceImpl implements OrderService {
         dto.setId(orderItem.getId());
         dto.setProductId(orderItem.getProduct().getId());
         dto.setProductName(orderItem.getProduct().getName());
+        dto.setCategoryId(orderItem.getProduct().getCategories().getId());
+        dto.setCategoryName(orderItem.getProduct().getCategories().getName());
         dto.setQuantity(orderItem.getQuantity());
         dto.setPrice(orderItem.getPrice());
         return dto;
@@ -199,5 +410,45 @@ public class OrderServiceImpl implements OrderService {
         // Implement this method to create a JSON representation of the product
         // You might want to use a JSON library like Jackson or Gson
         return ""; // Placeholder
+    }
+    @Override
+    public Page<OrderDTO> getAllOrders(Long warehouseId, String customerName, OrderStatus status,
+                                       YearMonth month, Long productId, Long categoryId,
+                                       Pageable pageable, String email) {
+        Specification<Order> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (warehouseId != null) {
+                predicates.add(cb.equal(root.get("warehouse").get("id"), warehouseId));
+            }
+            if (customerName != null && !customerName.isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("user").get("name")), "%" + customerName.toLowerCase() + "%"));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (month != null) {
+                LocalDateTime startDate = month.atDay(1).atStartOfDay();
+                LocalDateTime endDate = month.atEndOfMonth().atTime(23, 59, 59);
+                predicates.add(cb.between(root.get("createdAt"), startDate, endDate));
+            }
+            if (productId != null) {
+                Join<Order, OrderItem> orderItemJoin = root.join("items");
+                predicates.add(cb.equal(orderItemJoin.get("product").get("id"), productId));
+            }
+            if (categoryId != null) {
+                Join<Order, OrderItem> orderItemJoin = root.join("items");
+                predicates.add(cb.equal(orderItemJoin.get("product").get("categories").get("id"), categoryId));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<Order> orders = orderRepository.findAll(spec, pageable);
+        return orders.map(order -> {
+            OrderDTO dto = convertToDTO(order, email);
+            dto.setMonth(YearMonth.from(order.getCreatedAt()));
+            return dto;
+        });
     }
 }
