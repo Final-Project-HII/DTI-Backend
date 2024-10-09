@@ -202,6 +202,12 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdatedAt(LocalDateTime.now());
         OrderStatus oldStatus = order.getStatus();
 
+        if (newStatus == OrderStatus.shipped && oldStatus != OrderStatus.shipped) {
+            // Reduce stock when order is being shipped
+            for (OrderItem item : order.getItems()) {
+                stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+            }
+        }
         // If the order is being confirmed, we should ensure it has a payment method
         if (newStatus == OrderStatus.confirmation && order.getPaymentMethod() == null) {
             Payment payment = paymentRepository.findByOrderId(orderId)
