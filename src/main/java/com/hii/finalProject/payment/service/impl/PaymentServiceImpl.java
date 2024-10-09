@@ -310,7 +310,7 @@ public class PaymentServiceImpl implements PaymentService {
         String paymentType = "bank_transfer";
         PaymentTransactionDetails paymentTransactionDetails = new PaymentTransactionDetails();
         paymentTransactionDetails.setOrder_id(order.getId().toString());
-        paymentTransactionDetails.setGross_amount(order.getOriginalAmount().intValue());
+        paymentTransactionDetails.setGross_amount(order.getFinalAmount().intValue());
 
         BankTransfer bankTransfer = new BankTransfer();
         bankTransfer.setBank(bank);
