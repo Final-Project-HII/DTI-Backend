@@ -25,7 +25,7 @@ public class CategoriesController {
     }
 
     @PostMapping("/create")
-    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Response<CategoriesResponseDto>> createCategory(@RequestParam("categoriesData") String categoriesData,
                                                                          @RequestParam("image") @ValidImage(maxSizeInMB = 2) MultipartFile image) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -39,7 +39,7 @@ public class CategoriesController {
         return ResponseEntity.ok(categoriesService.getAllCategories());
     }
     @PutMapping("/update/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<CategoriesResponseDto> updateCategory(
             @PathVariable Long id,
             @RequestParam(value = "image", required = false) MultipartFile image,
@@ -60,7 +60,7 @@ public class CategoriesController {
 
 
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
         try {
             categoriesService.deleteCategory(id);

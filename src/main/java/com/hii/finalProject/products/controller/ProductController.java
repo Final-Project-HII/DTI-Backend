@@ -26,7 +26,7 @@ public class ProductController {
         this.productService = productService;
     }
     @PostMapping("/create")
-    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<ProductListDtoResponse> createProduct(
             @ModelAttribute NewProductRequestDto productRequestDTO,
             @RequestParam("productImages") List<MultipartFile> productImages) {
@@ -53,7 +53,7 @@ public class ProductController {
     }
 
     @PutMapping(value = "/update/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<ProductListDtoResponse> updateProduct(
             @PathVariable Long id,
             @RequestPart(value = "product") String updateProductRequestDtoJson,
@@ -63,7 +63,7 @@ public class ProductController {
         return ResponseEntity.ok(updatedProduct);
     }
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();

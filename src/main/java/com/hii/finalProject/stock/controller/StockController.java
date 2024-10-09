@@ -21,7 +21,7 @@ public class StockController {
         this.stockService = stockService;
     }
 
-    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
     @PostMapping
     public ResponseEntity<Response<StockDtoResponse>> createStock(@RequestBody StockDtoRequest stockDtoRequest) {
         var claims = Claims.getClaimsFromJwt();

@@ -24,7 +24,7 @@ public class AddressController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('SCOPE_USER')")
+//    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<Address>> createAddress(@RequestBody AddressDTO addressDTO) {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");
@@ -32,13 +32,13 @@ public class AddressController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_USER')")
+//    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<Address>> updateAddress(@PathVariable Long id, @RequestBody AddressDTO addressDTO) {
         return Response.successfulResponse("Address has been successfully updated", addressService.updateAddress(id,addressDTO));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_USER')")
+//    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<Object>> deleteAddress(@PathVariable Long id) {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");
@@ -47,7 +47,7 @@ public class AddressController {
     }
 
     @GetMapping("/active-address")
-    @PreAuthorize("hasAuthority('SCOPE_USER')")
+//    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<Address>> getUserActiveAddress() {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");
@@ -55,7 +55,7 @@ public class AddressController {
     }
 
     @GetMapping("")
-    @PreAuthorize("hasAuthority('SCOPE_USER')")
+//    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<Page<Address>>> getAddressByUserId(@RequestParam(value = "addressLine",required = false) String addressLine, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");
@@ -64,7 +64,7 @@ public class AddressController {
 
 
     @PutMapping("/change-primary-address/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_USER')")
+//    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<Address>> tooglePrimaryAddress(@PathVariable Long id) {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");

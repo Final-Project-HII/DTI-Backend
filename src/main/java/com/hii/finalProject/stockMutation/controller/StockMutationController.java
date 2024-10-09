@@ -29,7 +29,7 @@ public class StockMutationController {
     }
 
     @PostMapping("/manual")
-    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<Response<StockMutationResponseDto>> createManualMutation(
             @RequestBody StockMutationRequestDto request) {
         var claims = Claims.getClaimsFromJwt();
@@ -40,7 +40,7 @@ public class StockMutationController {
         return Response.successfulResponse("Stock Mutation registered successfully", response);
     }
     @PutMapping("/process")
-    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<Response<StockMutationResponseDto>> processMutation(
             @RequestBody StockMutationProcessDto processDto) {
         var claims = Claims.getClaimsFromJwt();
@@ -51,7 +51,7 @@ public class StockMutationController {
         return Response.successfulResponse("Stock Mutation processed successfully", response);
     }
     @GetMapping("/{mutationId}")
-    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<Response<StockMutationResponseDto>> getMutation(
             @PathVariable Long mutationId) {
         var claims = Claims.getClaimsFromJwt();
@@ -61,7 +61,7 @@ public class StockMutationController {
         return Response.successfulResponse("Stock Mutation retrieved successfully", response);
     }
     @GetMapping("/user")
-    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<Response<List<StockMutationResponseDto>>> getUserMutations() {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");
@@ -71,7 +71,7 @@ public class StockMutationController {
         return Response.successfulResponse("User Stock Mutations retrieved successfully", response);
     }
     @GetMapping
-    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<Response<Page<StockMutationResponseDto>>> getAllStockMutations(
             @RequestParam(required = false) Long originWarehouseId,
             @RequestParam(required = false) Long destinationWarehouseId,
@@ -95,7 +95,7 @@ public class StockMutationController {
         return Response.successfulResponse("Stock Mutations retrieved successfully", response);
     }
     @GetMapping("/journal")
-    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<Response<Page<StockMutationJournalDto>>> getStockReports(
             @RequestParam(required = false) Long warehouseId,
             @RequestParam(required = false) String productName,
@@ -112,7 +112,7 @@ public class StockMutationController {
         return Response.successfulResponse("Stock reports fetched successfully", reports);
     }
     @GetMapping("/report")
-    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<Response<StockReportDto>> getStockReport(
             @RequestParam(required = false) Long warehouseId,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth month,

@@ -22,7 +22,7 @@ public class CartController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('SCOPE_USER')")
+//    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<CartDTO> getCart() {
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
         Long userId = userService.getUserByEmail(userEmail);
@@ -31,7 +31,7 @@ public class CartController {
     }
 
     @GetMapping("/total-weight")
-    @PreAuthorize("hasAuthority('SCOPE_USER')")
+//    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Integer> getCartTotalWeight() {
         String userEmail = Claims.getClaimsFromJwt().get("sub").toString();
         Integer totalWeight = cartService.getCartTotalWeight(userEmail);

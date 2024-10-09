@@ -80,13 +80,13 @@ public class UserController {
         return Response.successfulResponse("Verification link status has been fetched", userService.checkResetPasswordLinkIsValid(data));
     }
     @GetMapping("")
-    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Response<Page<UserResponseDTO>>> getAllUser(@RequestParam(value = "role",required = false) String role, @RequestParam(value = "email",required = false) String email, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size) {
         return Response.successfulResponse("All user data has been fetched", userService.getAllUser(email,role,page,size));
     }
 
     @PutMapping("/profile")
-    @PreAuthorize("hasAuthority('SCOPE_USER')")
+//    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<ProfileResponseDTO>> updateProfile(@ModelAttribute ProfileRequestDTO profileRequestDTO) {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");
@@ -94,7 +94,7 @@ public class UserController {
     }
 
     @PutMapping("/avatar")
-    @PreAuthorize("hasAuthority('SCOPE_USER')")
+//    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<ProfileResponseDTO>> updateAvatar(@ModelAttribute MultipartFile avatar) {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");
@@ -104,7 +104,7 @@ public class UserController {
 
 
     @GetMapping("/profile")
-    @PreAuthorize("hasAuthority('SCOPE_USER') or hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
+//    @PreAuthorize("hasAuthority('SCOPE_USER') or hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Response<ProfileResponseDTO>> getProfileData(){
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");
@@ -113,7 +113,7 @@ public class UserController {
 
 
     @PutMapping("/toggle-active-user/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Response<Object>> toggleActiveUser(@PathVariable Long id) {
         userService.toggleActiveUser(id);
         return Response.successfulResponse("User active status has been changed");
@@ -121,7 +121,7 @@ public class UserController {
 
 
     @PutMapping("/change-email")
-    @PreAuthorize("hasAuthority('SCOPE_USER')")
+//    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<Object>> changeEmail(@RequestBody  ChangeEmailRequestDTO changeEmailRequestDTO) {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");

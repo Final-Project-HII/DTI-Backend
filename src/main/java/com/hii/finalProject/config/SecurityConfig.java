@@ -64,7 +64,7 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("https://hii-mart-development.vercel.app"));
+        configuration.setAllowedOrigins(Arrays.asList("https://localhost:3000"));
         configuration.setAllowedMethods(Arrays.asList("GET","POST","DELETE","PUT","OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Content-Type", "*"));
         configuration.setAllowCredentials(true);
@@ -79,18 +79,18 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/api/auth/**").permitAll();
-                    auth.requestMatchers("/api/users/register").permitAll();
-                    auth.requestMatchers("/api/users/register-google").permitAll();
-                    auth.requestMatchers("/api/users/set-password").permitAll();
-                    auth.requestMatchers("/api/users/check-verification").permitAll();
-                    auth.requestMatchers("/api/users/new-verification-link").permitAll();
-                    auth.requestMatchers("/api/users/reset-password").permitAll();
-                    auth.requestMatchers("/api/users/check-reset-password").permitAll();
-                    auth.requestMatchers("/api/users/new-reset-password-link").permitAll();
-                    auth.requestMatchers("/api/cities/**").permitAll();
-                    auth.requestMatchers(HttpMethod.GET, "/api/category/**").permitAll();
-                    auth.requestMatchers(HttpMethod.GET, "/api/product/**").permitAll();
+//                    auth.requestMatchers("/api/auth/**").permitAll();
+//                    auth.requestMatchers("/api/users/register").permitAll();
+//                    auth.requestMatchers("/api/users/register-google").permitAll();
+//                    auth.requestMatchers("/api/users/set-password").permitAll();
+//                    auth.requestMatchers("/api/users/check-verification").permitAll();
+//                    auth.requestMatchers("/api/users/new-verification-link").permitAll();
+//                    auth.requestMatchers("/api/users/reset-password").permitAll();
+//                    auth.requestMatchers("/api/users/check-reset-password").permitAll();
+//                    auth.requestMatchers("/api/users/new-reset-password-link").permitAll();
+//                    auth.requestMatchers("/api/cities/**").permitAll();
+//                    auth.requestMatchers(HttpMethod.GET, "/api/category/**").permitAll();
+//                    auth.requestMatchers(HttpMethod.GET, "/api/product/**").permitAll();
                     auth.anyRequest().permitAll();
                 })
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

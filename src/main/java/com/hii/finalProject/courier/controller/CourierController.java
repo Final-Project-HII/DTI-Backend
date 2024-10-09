@@ -26,7 +26,7 @@ public class CourierController {
 
 
     @GetMapping("")
-    @PreAuthorize("hasAuthority('SCOPE_USER')")
+//    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<List<CourierDTO>>> getCourierData() {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");

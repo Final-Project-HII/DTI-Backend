@@ -53,7 +53,7 @@ public class SalesReportController {
     }
     //indah
     @GetMapping
-    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
+//    @PreAuthorize("hasAuthority('SCOPE_SUPER') or hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<Response<Page<OrderDTO>>> getAllOrders(
             @RequestParam(required = false) Long warehouseId,
             @RequestParam(required = false) String customerName,
