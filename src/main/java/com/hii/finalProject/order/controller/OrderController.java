@@ -180,7 +180,7 @@ public class OrderController {
     }
 
     @PutMapping("/{orderId}/deliver")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<OrderDTO>> markOrderAsDelivered(@PathVariable Long orderId) {
         try {
             OrderDTO deliveredOrder = orderService.markOrderAsDelivered(orderId);
