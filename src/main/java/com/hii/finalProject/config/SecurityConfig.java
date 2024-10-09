@@ -94,7 +94,7 @@ public class SecurityConfig {
                     auth.requestMatchers(HttpMethod.GET, "/api/product/**").permitAll();
                     auth.requestMatchers(HttpMethod.GET, "/api/warehouses/**").permitAll();
                     auth.requestMatchers("/api/payments/midtrans-callback").permitAll();
-                    auth.requestMatchers(new AntPathRequestMatcher("/api/orders/{orderId}/deliver")).hasAuthority("SCOPE_USER")
+                    auth.requestMatchers(new AntPathRequestMatcher("/api/orders/{orderId}/deliver")).hasAuthority("SCOPE_USER");
                     auth.anyRequest().authenticated();
                 })
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
