@@ -91,7 +91,8 @@ public class SecurityConfig {
                     auth.requestMatchers("/api/cities/**").permitAll();
                     auth.requestMatchers(HttpMethod.GET, "/api/category/**").permitAll();
                     auth.requestMatchers(HttpMethod.GET, "/api/product/**").permitAll();
-                    auth.anyRequest().permitAll();
+                    auth.requestMatchers(HttpMethod.GET, "/api/warehouses/**").permitAll();
+                    auth.anyRequest().authenticated();
                 })
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer((oauth2) -> {
