@@ -146,7 +146,7 @@ public class UserServiceImpl implements UserService {
                 "<h1 style='color: #E85C0D;'>Thanks for Signing Up!</h1>" +
                 "<h2 style='color: #E85C0D;'>Verify Your E-mail Address</h2>" +
                 "<p style='color: #333;'>Hi,<br>You're almost ready to get started. Please click on the button below to verify your email address</p>" +
-                "<a href='http://localhost:3000/manage-password?token=" + tokenValue +"&email=" + user.getEmail() + "' style='text-decoration: none;'>" +
+                "<a href='http://hii-mart-development.vercel.app/manage-password?token=" + tokenValue +"&email=" + user.getEmail() + "' style='text-decoration: none;'>" +
                 "<button style='background-color: #C7253E; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;'>VERIFY YOUR EMAIL</button>" +
                 "</a>" +
                 "</div>" +
@@ -191,7 +191,7 @@ public class UserServiceImpl implements UserService {
                 "<h1 style='color: #E85C0D;'>Thanks for Signing Up!</h1>" +
                 "<h2 style='color: #E85C0D;'>Verify Your E-mail Address</h2>" +
                 "<p style='color: #333;'>Hi,<br>You're almost ready to get started. Please click on the button below to verify your email address</p>" +
-                "<a href='http://localhost:3000/manage-password?token=" + tokenValue +"&email=" + user.getEmail() + "' style='text-decoration: none;'>" +
+                "<a href='http://hii-mart-development.vercel.app/manage-password?token=" + tokenValue +"&email=" + user.getEmail() + "' style='text-decoration: none;'>" +
                 "<button style='background-color: #C7253E; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;'>VERIFY YOUR EMAIL</button>" +
                 "</a>" +
                 "</div>" +
@@ -275,7 +275,7 @@ public class UserServiceImpl implements UserService {
                 "<h1 style='color: #E85C0D;'>Thanks for Signing Up!</h1>" +
                 "<h2 style='color: #E85C0D;'>Verify Your E-mail Address</h2>" +
                 "<p style='color: #333;'>Hi,<br>You're almost ready to get started. Please click on the button below to verify your email address</p>" +
-                "<a href='http://localhost:3000/manage-password?token=" + tokenValue +"&email=" + email + "' style='text-decoration: none;'>" +
+                "<a href='http://hii-mart-development.vercel.app/manage-password?token=" + tokenValue +"&email=" + email + "' style='text-decoration: none;'>" +
                 "<button style='background-color: #C7253E; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;'>VERIFY YOUR EMAIL</button>" +
                 "</a>" +
                 "</div>" +
@@ -308,7 +308,7 @@ public class UserServiceImpl implements UserService {
                 "<div style='text-align: center; padding: 40px 20px;'>" +
                 "<h1 style='color: #E85C0D;'>Reset Password!</h1>" +
                 "<p style='color: #333;'>Hi,<br>We received a request to reset your password. Click the button below to reset it:</p>" +
-                "<a href='http://localhost:3000/reset-password-confirmation?token=" + tokenValue +"&email=" + email + "' style='text-decoration: none;'>" +
+                "<a href='http://hii-mart-development.vercel.app/reset-password-confirmation?token=" + tokenValue +"&email=" + email + "' style='text-decoration: none;'>" +
                 "<button style='background-color: #C7253E; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;'>RESET PASSWORD</button>" +
                 "</a>" +
                 "</div>" +
@@ -348,7 +348,7 @@ public class UserServiceImpl implements UserService {
                 "<div style='text-align: center; padding: 40px 20px;'>" +
                 "<h1 style='color: #E85C0D;'>Reset Password!</h1>" +
                 "<p style='color: #333;'>Hi,<br>We received a request to reset your password. Click the button below to reset it:</p>" +
-                "<a href='http://localhost:3000/reset-password-confirmation?token=" + tokenValue +"&email=" + email + "' style='text-decoration: none;'>" +
+                "<a href='http://hii-mart-development.vercel.app/reset-password-confirmation?token=" + tokenValue +"&email=" + email + "' style='text-decoration: none;'>" +
                 "<button style='background-color: #C7253E; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;'>RESET PASSWORD</button>" +
                 "</a>" +
                 "</div>" +
@@ -389,7 +389,7 @@ public class UserServiceImpl implements UserService {
                     "<h1 style='color: #E85C0D;'>Thanks for Signing Up!</h1>" +
                     "<h2 style='color: #E85C0D;'>Verify Your E-mail Address</h2>" +
                     "<p style='color: #333;'>Hi,<br>You're almost ready to get started. Please click on the button below to verify your email address</p>" +
-                    "<a href='http://localhost:3000/manage-password?token=" + tokenValue +"&email=" + changeEmailRequestDTO.getNewEmail()+ "' style='text-decoration: none;'>" +
+                    "<a href='http://hii-mart-development.vercel.app/manage-password?token=" + tokenValue +"&email=" + changeEmailRequestDTO.getNewEmail()+ "' style='text-decoration: none;'>" +
                     "<button style='background-color: #C7253E; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;'>VERIFY YOUR EMAIL</button>" +
                     "</a>" +
                     "</div>" +
