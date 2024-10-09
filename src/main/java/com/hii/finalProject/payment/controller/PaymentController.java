@@ -141,7 +141,7 @@ public class PaymentController {
     }
 
     @PostMapping("/midtrans-callback")
-    @PreAuthorize("hasAuthority('SCOPE_USER')")
+//    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<String> handleMidtransCallback(@RequestBody String callbackPayload) {
         try {
             paymentService.processMidtransCallback(callbackPayload);
