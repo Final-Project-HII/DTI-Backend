@@ -94,6 +94,7 @@ public class SecurityConfig {
                     auth.requestMatchers(HttpMethod.GET, "/api/product/**").permitAll();
                     auth.requestMatchers(HttpMethod.GET, "/api/warehouses/**").permitAll();
                     auth.requestMatchers("/api/payments/midtrans-callback").permitAll();
+                    auth.requestMatchers(HttpMethod.PUT, "/api/orders/{orderId}/deliver").permitAll();
                     auth.anyRequest().authenticated();
                 })
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
