@@ -200,8 +200,24 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(newStatus);
         order.setUpdatedAt(LocalDateTime.now());
-        OrderStatus oldStatus = order.getStatus();
 
+        OrderStatus oldStatus = order.getStatus();
+        log.info("Updating order status for order {}: {} -> {}", orderId, oldStatus, newStatus);
+
+        if (newStatus == OrderStatus.shipped) {
+            log.info("Order {} is shipped. Reducing stock.", orderId);
+            for (OrderItem item : order.getItems()) {
+                try {
+                    stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+                    log.info("Reduced stock for product {} in warehouse {} by {}",
+                            item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+                } catch (Exception e) {
+                    log.error("Failed to reduce stock for product {} in warehouse {}: {}",
+                            item.getProduct().getId(), order.getWarehouse().getId(), e.getMessage());
+                    throw e; // Re-throw to trigger transaction rollback
+                }
+            }
+        }
         // If the order is being confirmed, we should ensure it has a payment method
         if (newStatus == OrderStatus.confirmation && order.getPaymentMethod() == null) {
             Payment payment = paymentRepository.findByOrderId(orderId)
@@ -214,6 +230,7 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(newStatus);
         order.setUpdatedAt(LocalDateTime.now());
         Order updatedOrder = orderRepository.save(order);
+        log.info("Order {} status updated successfully", orderId);
         return convertToDTO(updatedOrder);
     }
     private void recordStockMutationJournal(Order order) {
