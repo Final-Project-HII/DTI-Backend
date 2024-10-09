@@ -26,13 +26,13 @@ public class WarehouseController {
 
 
     @GetMapping("")
-//    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Response<Page<Warehouse>>> getWarehouseList(@RequestParam(value = "name",required = false) String name, @RequestParam(value = "cityName",required = false) String cityName, @RequestParam(defaultValue = "0") int page, @RequestParam(required = false) Integer size){
         return Response.successfulResponse("Warehouse list is successfully fetched", warehouseService.getAllWarehouses(name,cityName, page,size));
     }
 
     @GetMapping("/{id}")
-//    @PreAuthorize("hasAuthority('SCOPE_USER') or hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
+    @PreAuthorize("hasAuthority('SCOPE_USER') or hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
     public ResponseEntity<Response<Warehouse>> getWarehouseById(@PathVariable("id") Long id){
         return Response.successfulResponse("Warehouse with id " + id +" is successfully fetched", warehouseService.getWarehouseById(id));
     }
