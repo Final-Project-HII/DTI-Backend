@@ -64,7 +64,7 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://hii-mart-development.vercel.app"));
+        configuration.setAllowedOrigins(Arrays.asList("https://hii-mart-development.vercel.app"));
         configuration.setAllowedMethods(Arrays.asList("GET","POST","DELETE","PUT","OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Content-Type", "*"));
         configuration.setAllowCredentials(true);
