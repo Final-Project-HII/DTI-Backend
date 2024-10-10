@@ -29,5 +29,8 @@ public interface OrderService {
 
     void cancelUnpaidOrders();
 
+    @Transactional
+    void autoUpdateShippedOrders();
+
     Page<OrderDTO> getUserOrders(Long userId, String status, LocalDate date, Pageable pageable);
 }

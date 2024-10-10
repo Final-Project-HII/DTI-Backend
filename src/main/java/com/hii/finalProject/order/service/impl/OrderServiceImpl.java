@@ -422,6 +422,24 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
+    public void autoUpdateShippedOrders() {
+        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+        List<Order> shippedOrders = orderRepository.findByStatusAndUpdatedAtBefore(OrderStatus.shipped, sevenDaysAgo);
+
+        for (Order order : shippedOrders) {
+            try {
+                order.setStatus(OrderStatus.delivered);
+                order.setUpdatedAt(LocalDateTime.now());
+                orderRepository.save(order);
+                log.info("Automatically updated order {} from shipped to delivered", order.getId());
+            } catch (Exception e) {
+                log.error("Failed to auto-update order: {}", order.getId(), e);
+            }
+        }
+    }
+
+    @Override
     public Page<OrderDTO> getUserOrders(Long userId, String status, LocalDate date, Pageable pageable) {
         Specification<Order> spec = Specification.where((root, query, cb) -> cb.equal(root.get("user").get("id"), userId));
 

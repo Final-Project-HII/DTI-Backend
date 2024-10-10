@@ -17,4 +17,9 @@ public class OrderCancellationScheduler {
     public void cancelUnpaidOrders() {
         orderService.cancelUnpaidOrders();
     }
+
+    @Scheduled(cron = "0 0 1 * * ?") // Run every day at 1:00 AM
+    public void updateShippedOrders() {
+        orderService.autoUpdateShippedOrders();
+    }
 }
