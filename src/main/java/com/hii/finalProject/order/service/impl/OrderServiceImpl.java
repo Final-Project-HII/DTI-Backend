@@ -218,7 +218,6 @@ public class OrderServiceImpl implements OrderService {
                 }
             }
         }
-        // If the order is being confirmed, we should ensure it has a payment method
         if (newStatus == OrderStatus.confirmation && order.getPaymentMethod() == null) {
             Payment payment = paymentRepository.findByOrderId(orderId)
                     .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderId));
@@ -417,6 +416,24 @@ public class OrderServiceImpl implements OrderService {
                 log.info("Automatically cancelled unpaid order: {}", order.getId());
             } catch (Exception e) {
                 log.error("Failed to cancel unpaid order: {}", order.getId(), e);
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public void autoUpdateShippedOrders() {
+        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+        List<Order> shippedOrders = orderRepository.findByStatusAndUpdatedAtBefore(OrderStatus.shipped, sevenDaysAgo);
+
+        for (Order order : shippedOrders) {
+            try {
+                order.setStatus(OrderStatus.delivered);
+                order.setUpdatedAt(LocalDateTime.now());
+                orderRepository.save(order);
+                log.info("Automatically updated order {} from shipped to delivered", order.getId());
+            } catch (Exception e) {
+                log.error("Failed to auto-update order: {}", order.getId(), e);
             }
         }
     }

@@ -45,7 +45,7 @@ public class Order {
     private OrderStatus status;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method")
+    @Column(name = "payment_method", nullable = true)
     private PaymentMethod paymentMethod;
 
     @Column(name = "original_amount", nullable = false)

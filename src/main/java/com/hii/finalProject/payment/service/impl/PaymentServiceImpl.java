@@ -307,21 +307,29 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private PaymentRequest createPaymentRequest(OrderDTO order, UserDTO user, String bank) {
-        String paymentType = "bank_transfer";
-        PaymentTransactionDetails paymentTransactionDetails = new PaymentTransactionDetails();
-        paymentTransactionDetails.setOrder_id(order.getId().toString());
-        paymentTransactionDetails.setGross_amount(order.getOriginalAmount().intValue());
+        PaymentRequest paymentRequest = new PaymentRequest();
+        paymentRequest.setPayment_type("bank_transfer");
+
+        PaymentTransactionDetails transactionDetails = new PaymentTransactionDetails();
+        transactionDetails.setOrder_id(order.getId().toString());
+        BigDecimal totalAmount = order.getFinalAmount();
+        transactionDetails.setGross_amount(totalAmount.intValue());
+        paymentRequest.setTransaction_details(transactionDetails);
 
         BankTransfer bankTransfer = new BankTransfer();
         bankTransfer.setBank(bank);
+        paymentRequest.setBank_transfer(bankTransfer);
 
         CustomerDetails customerDetails = new CustomerDetails();
         customerDetails.setFirst_name(user.getName());
         customerDetails.setLast_name("");
         customerDetails.setEmail(user.getEmail());
         customerDetails.setPhone(user.getPhoneNumber());
+        paymentRequest.setCustomer_details(customerDetails);
 
         List<ItemDetail> itemDetailsList = new ArrayList<>();
+        BigDecimal itemsTotal = BigDecimal.ZERO;
+
         for (OrderItemDTO item : order.getItems()) {
             ItemDetail itemDetail = new ItemDetail();
             itemDetail.setId(item.getProductId().toString());
@@ -329,19 +337,31 @@ public class PaymentServiceImpl implements PaymentService {
             itemDetail.setPrice(item.getPrice().intValue());
             itemDetail.setQuantity(item.getQuantity());
             itemDetailsList.add(itemDetail);
+
+            BigDecimal itemTotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+            itemsTotal = itemsTotal.add(itemTotal);
         }
 
-        PaymentRequest paymentRequest = new PaymentRequest();
-        paymentRequest.setPayment_type(paymentType);
-        paymentRequest.setTransaction_details(paymentTransactionDetails);
-        paymentRequest.setBank_transfer(bankTransfer);
-        paymentRequest.setCustomer_details(customerDetails);
+        if (order.getShippingCost().compareTo(BigDecimal.ZERO) > 0) {
+            ItemDetail shippingItem = new ItemDetail();
+            shippingItem.setId("SHIPPING");
+            shippingItem.setName("Shipping Cost");
+            shippingItem.setPrice(order.getShippingCost().intValue());
+            shippingItem.setQuantity(1);
+            itemDetailsList.add(shippingItem);
+
+            itemsTotal = itemsTotal.add(order.getShippingCost());
+        }
+
         paymentRequest.setItem_details(itemDetailsList);
+
+        if (itemsTotal.intValue() != totalAmount.intValue()) {
+            throw new RuntimeException("Item total (" + itemsTotal + ") does not match the gross amount (" + totalAmount + ")");
+        }
 
         PaymentRequest.CustomExpiry customExpiry = new PaymentRequest.CustomExpiry();
         customExpiry.setExpiry_duration(60); // Set to 60 minutes (1 hour)
         paymentRequest.setCustom_expiry(customExpiry);
-
 
         return paymentRequest;
     }

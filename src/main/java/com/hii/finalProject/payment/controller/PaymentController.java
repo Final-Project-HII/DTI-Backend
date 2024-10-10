@@ -74,7 +74,6 @@ public class PaymentController {
                 OffsetDateTime expirationTime = payment.getExpirationTimeWithOffset();
                 response.put("expirationTime", expirationTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 
-                // Optionally, you can also add a formatted string
                 response.put("expirationTimeFormatted", expirationTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z")));
             }
 

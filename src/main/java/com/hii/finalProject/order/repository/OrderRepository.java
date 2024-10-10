@@ -25,7 +25,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
     Page<Order> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     List<Order> findByStatusAndCreatedAtBefore(OrderStatus status, LocalDateTime dateTime);
-
+    List<Order> findByStatusAndUpdatedAtBefore(OrderStatus status, LocalDateTime dateTime);
 
     @Modifying
     @Query(value = "INSERT INTO developmentfp.orders (address_id, courier_id, created_at, final_amount, invoice_id, original_amount, status, total_quantity, total_weight, updated_at, user_id, warehouse_id) " +
