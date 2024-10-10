@@ -25,6 +25,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
     Page<Order> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     List<Order> findByStatusAndCreatedAtBefore(OrderStatus status, LocalDateTime dateTime);
+    List<Order> findByStatusAndUpdatedAtBefore(OrderStatus status, LocalDateTime dateTime);
 
 
     @Modifying
