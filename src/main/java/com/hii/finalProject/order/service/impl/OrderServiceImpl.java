@@ -21,6 +21,7 @@ import com.hii.finalProject.payment.repository.PaymentRepository;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.products.repository.ProductRepository;
 import com.hii.finalProject.stock.service.StockService;
+import com.hii.finalProject.stockMutation.entity.StockMutation;
 import com.hii.finalProject.stockMutation.service.AutoStockMutationService;
 import com.hii.finalProject.stockMutationJournal.entity.StockMutationJournal;
 import com.hii.finalProject.stockMutationJournal.repository.StockMutationJournalRepository;
@@ -64,7 +65,6 @@ public class OrderServiceImpl implements OrderService {
     private final AtomicInteger sequence = new AtomicInteger(1);
     private final PaymentRepository paymentRepository;
     private final AutoStockMutationService autoStockMutationService;
-    private final StockMutationJournalRepository stockMutationJournalRepository;
 
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
                             CartService cartService, ProductRepository productRepository,
@@ -82,7 +82,6 @@ public class OrderServiceImpl implements OrderService {
         this.warehouseService = warehouseService;
         this.paymentRepository = paymentRepository;
         this.autoStockMutationService = autoStockMutationService;
-        this.stockMutationJournalRepository = stockMutationJournalRepository;
     }
 
     @Override
@@ -192,14 +191,11 @@ public class OrderServiceImpl implements OrderService {
         return orders.map(this::convertToDTO);
     }
 
-    @Override
+    @@Override
     @Transactional
     public OrderDTO updateOrderStatus(Long orderId, OrderStatus newStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
-
-        order.setStatus(newStatus);
-        order.setUpdatedAt(LocalDateTime.now());
 
         OrderStatus oldStatus = order.getStatus();
         log.info("Updating order status for order {}: {} -> {}", orderId, oldStatus, newStatus);
@@ -211,6 +207,10 @@ public class OrderServiceImpl implements OrderService {
                     stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
                     log.info("Reduced stock for product {} in warehouse {} by {}",
                             item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+                } catch (InsufficientStockException e) {
+                    log.error("Insufficient stock for product {} in warehouse {}: {}",
+                            item.getProduct().getId(), order.getWarehouse().getId(), e.getMessage());
+                    throw new RuntimeException("Insufficient stock: " + e.getMessage());
                 } catch (Exception e) {
                     log.error("Failed to reduce stock for product {} in warehouse {}: {}",
                             item.getProduct().getId(), order.getWarehouse().getId(), e.getMessage());
@@ -239,7 +239,6 @@ public class OrderServiceImpl implements OrderService {
             journal.setWarehouse(order.getWarehouse());
             journal.setMutationType(StockMutationJournal.MutationType.OUT);
             journal.setCreatedAt(LocalDateTime.now());
-            stockMutationJournalRepository.save(journal);
         }
     }
 

@@ -1,7 +1,9 @@
 package com.hii.finalProject.stockMutationJournal.entity;
 
+import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.stockMutation.entity.StockMutation;
 import com.hii.finalProject.warehouse.entity.Warehouse;
+import com.hii.finalProject.order.entity.Order;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -16,7 +18,6 @@ public class StockMutationJournal {
     @Column(name = "id", nullable = false)
     private Long id;
 
-
     @ManyToOne
     @JoinColumn(name = "stock_mutation_id", nullable = false)
     private StockMutation stockMutation;
@@ -24,6 +25,17 @@ public class StockMutationJournal {
     @ManyToOne
     @JoinColumn(name = "warehouse_id", nullable = false)
     private Warehouse warehouse;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    private Order order;
+
+    @Column(name = "quantity", nullable = false)
+    private Integer quantity;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "mutation_type", nullable = false)
@@ -42,6 +54,6 @@ public class StockMutationJournal {
 
     public enum MutationType {
         IN,
-        OUT;
+        OUT
     }
 }

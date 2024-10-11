@@ -2,6 +2,7 @@ package com.hii.finalProject.stockMutation.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.hii.finalProject.order.entity.Order;
 import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.stockMutationJournal.entity.StockMutationJournal;
 import com.hii.finalProject.warehouse.entity.Warehouse;
