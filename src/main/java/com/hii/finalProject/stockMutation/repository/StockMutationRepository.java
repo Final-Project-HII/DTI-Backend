@@ -10,5 +10,4 @@ import java.util.List;
 
 @Repository
 public interface StockMutationRepository extends JpaRepository <StockMutation, Long>, JpaSpecificationExecutor<StockMutation> {
-
 }
