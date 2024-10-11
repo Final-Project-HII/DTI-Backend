@@ -8,6 +8,8 @@ import com.hii.finalProject.courier.entity.Courier;
 import com.hii.finalProject.courier.repository.CourierRepository;
 import com.hii.finalProject.courier.service.CourierService;
 import com.hii.finalProject.exceptions.InsufficientStockException;
+import com.hii.finalProject.exceptions.InsufficientStockItem;
+import com.hii.finalProject.exceptions.OrderInsufficientStockException;
 import com.hii.finalProject.exceptions.OrderProcessingException;
 import com.hii.finalProject.order.dto.OrderDTO;
 import com.hii.finalProject.order.entity.Order;
@@ -206,16 +208,23 @@ public class OrderServiceImpl implements OrderService {
 
         if (newStatus == OrderStatus.shipped) {
             log.info("Order {} is shipped. Reducing stock.", orderId);
+            List<InsufficientStockItem> insufficientItems = new ArrayList<>();
             for (OrderItem item : order.getItems()) {
                 try {
                     stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
                     log.info("Reduced stock for product {} in warehouse {} by {}",
                             item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
-                } catch (Exception e) {
-                    log.error("Failed to reduce stock for product {} in warehouse {}: {}",
-                            item.getProduct().getId(), order.getWarehouse().getId(), e.getMessage());
-                    throw e; // Re-throw to trigger transaction rollback
+                } catch (InsufficientStockException e) {
+                    insufficientItems.add(new InsufficientStockItem(
+                            item.getProduct().getName(),
+                            item.getQuantity(),
+                            e.getAvailableQuantity(),
+                            order.getWarehouse().getName()
+                    ));
                 }
+            }
+            if (!insufficientItems.isEmpty()) {
+                throw new OrderInsufficientStockException("Insufficient stock for some items", insufficientItems);
             }
         }
         // If the order is being confirmed, we should ensure it has a payment method

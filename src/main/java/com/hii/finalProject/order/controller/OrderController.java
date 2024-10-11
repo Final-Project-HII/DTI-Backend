@@ -1,6 +1,7 @@
 package com.hii.finalProject.order.controller;
 
 import com.hii.finalProject.auth.helpers.Claims;
+import com.hii.finalProject.exceptions.OrderInsufficientStockException;
 import com.hii.finalProject.exceptions.OrderProcessingException;
 import com.hii.finalProject.order.dto.OrderDTO;
 import com.hii.finalProject.order.entity.OrderStatus;
@@ -29,6 +30,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -96,12 +99,22 @@ public class OrderController {
 
     @PutMapping("/{orderId}/status")
     @PreAuthorize("hasAuthority('SCOPE_USER') or hasAuthority('SCOPE_ADMIN') or hasAuthority('SCOPE_SUPER')")
-    public ResponseEntity<OrderDTO> updateOrderStatus(
+    public ResponseEntity<?> updateOrderStatus(
             @PathVariable Long orderId,
             @RequestParam OrderStatus status) {
-        OrderDTO updatedOrder = orderService.updateOrderStatus(orderId, status);
-        return ResponseEntity.ok(updatedOrder);
+        try {
+            OrderDTO updatedOrder = orderService.updateOrderStatus(orderId, status);
+            return ResponseEntity.ok(updatedOrder);
+        } catch (OrderInsufficientStockException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", e.getMessage());
+            response.put("insufficientItems", e.getInsufficientItems());
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("An error occurred while updating the order status");
+        }
     }
+
 
 
 
