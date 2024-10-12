@@ -8,6 +8,7 @@ import com.hii.finalProject.response.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class AddressController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<Address>> createAddress(@RequestBody AddressDTO addressDTO) {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");
@@ -30,11 +32,13 @@ public class AddressController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<Address>> updateAddress(@PathVariable Long id, @RequestBody AddressDTO addressDTO) {
         return Response.successfulResponse("Address has been successfully updated", addressService.updateAddress(id,addressDTO));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<Object>> deleteAddress(@PathVariable Long id) {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");
@@ -43,6 +47,7 @@ public class AddressController {
     }
 
     @GetMapping("/active-address")
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<Address>> getUserActiveAddress() {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");
@@ -50,21 +55,16 @@ public class AddressController {
     }
 
     @GetMapping("")
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<Page<Address>>> getAddressByUserId(@RequestParam(value = "addressLine",required = false) String addressLine, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");
         return Response.successfulResponse("All address has been successfully fetched", addressService.getAddressByUserId(email,addressLine,page,size));
     }
 
-    @GetMapping("/check-status")
-    public ResponseEntity<Response<Boolean>> checkUserAddress() {
-        var claims = Claims.getClaimsFromJwt();
-        var email = (String) claims.get("sub");
-        return Response.successfulResponse("User address status has been fetched", addressService.checkUserAddress(email));
-    }
-
 
     @PutMapping("/change-primary-address/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<Address>> tooglePrimaryAddress(@PathVariable Long id) {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");

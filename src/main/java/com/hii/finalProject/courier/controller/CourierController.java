@@ -8,6 +8,7 @@ import com.hii.finalProject.rajaongkir.ShippingCostDTO;
 import com.hii.finalProject.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class CourierController {
 
 
     @GetMapping("")
+    @PreAuthorize("hasAuthority('SCOPE_USER')")
     public ResponseEntity<Response<List<CourierDTO>>> getCourierData() {
         var claims = Claims.getClaimsFromJwt();
         var email = (String) claims.get("sub");

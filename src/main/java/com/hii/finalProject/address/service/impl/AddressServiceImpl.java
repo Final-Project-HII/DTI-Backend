@@ -103,12 +103,6 @@ public class AddressServiceImpl implements AddressService {
         return existingAddress;
     }
 
-    @Override
-    public Boolean checkUserAddress(String email) {
-        Long userId = userService.getUserByEmail(email);
-        List<Address> addressList = addressRepository.findByUserId(userId);
-        return !addressList.isEmpty();
-    }
 
     @Override
     public Address tooglePrimaryAddress(String email, Long addressId) {

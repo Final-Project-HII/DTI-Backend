@@ -19,11 +19,16 @@ import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
+import org.springframework.scheduling.concurrent.SimpleAsyncTaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -39,13 +44,14 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentProofRepository paymentProofRepository;
     private final ObjectMapper jacksonObjectMapper;
+    private final TaskScheduler taskScheduler;
 
     private String serverKey = "SB-Mid-server-1YIRKrKNSAv83Cq4AdIKPKlB";
     private String apiUrl  = "https://api.sandbox.midtrans.com/v2/charge";
 
     public PaymentServiceImpl(OrderService orderService, UserService userService, CartService cartService,
                               RestTemplateBuilder restTemplateBuilder, PaymentRepository paymentRepository,
-                              PaymentProofRepository paymentProofRepository, ObjectMapper jacksonObjectMapper) {
+                              PaymentProofRepository paymentProofRepository, ObjectMapper jacksonObjectMapper, TaskScheduler taskScheduler) {
         this.orderService = orderService;
         this.userService = userService;
         this.cartService = cartService;
@@ -53,6 +59,7 @@ public class PaymentServiceImpl implements PaymentService {
         this.paymentRepository = paymentRepository;
         this.paymentProofRepository = paymentProofRepository;
         this.jacksonObjectMapper = jacksonObjectMapper;
+        this.taskScheduler = taskScheduler;
     }
 
     @Override
@@ -77,22 +84,32 @@ public class PaymentServiceImpl implements PaymentService {
             throw new RuntimeException("User not found for order: " + orderId);
         }
 
+        order.setPaymentMethod(paymentMethod);
+        orderService.updateOrder(order);
+
         String result;
 
         if (paymentMethod == PaymentMethod.PAYMENT_GATEWAY) {
             PaymentRequest paymentRequest = createPaymentRequest(order, user.get(), bank);
             String transactionResponse = createTransaction(paymentRequest);
 
-            Payment payment = new Payment();
-            payment.setOrderId(orderId);
-            payment.setAmount(order.getFinalAmount());
-            payment.setPaymentMethod(PaymentMethod.PAYMENT_GATEWAY);
-            payment.setStatus(PaymentStatus.PENDING);
-            payment.setName("Midtrans Payment for Order " + orderId);
-            payment.setCreatedAt(LocalDateTime.now());
-
             try {
-                JsonNode responseJson = jacksonObjectMapper.readTree(transactionResponse);
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode responseJson = mapper.readTree(transactionResponse);
+
+                // Parse the transaction time
+                String dateTimeString = responseJson.path("transaction_time").asText();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                LocalDateTime transactionTime = LocalDateTime.parse(dateTimeString, formatter);
+
+                Payment payment = new Payment();
+                payment.setOrderId(orderId);
+                payment.setAmount(order.getFinalAmount());
+                payment.setPaymentMethod(PaymentMethod.PAYMENT_GATEWAY);
+                payment.setStatus(PaymentStatus.PENDING);
+                payment.setName("Midtrans Payment for Order " + orderId);
+                payment.setCreatedAt(transactionTime);
+
                 if (responseJson.has("va_numbers") && responseJson.get("va_numbers").isArray()) {
                     JsonNode vaNumbers = responseJson.get("va_numbers").get(0);
                     String vaBank = vaNumbers.get("bank").asText();
@@ -101,14 +118,14 @@ public class PaymentServiceImpl implements PaymentService {
                     payment.setVirtualAccountBank(vaBank);
                     payment.setVirtualAccountNumber(vaNumber);
                 }
+
+                paymentRepository.save(payment);
+
+                result = transactionResponse;
             } catch (Exception e) {
-                throw new RuntimeException("Error parsing Midtrans response: " + e.getMessage());
+                log.severe("Error processing Midtrans response: " + e.getMessage());
+                throw new RuntimeException("Failed to process payment: " + e.getMessage(), e);
             }
-
-
-            paymentRepository.save(payment);
-
-            result = transactionResponse;
         } else if (paymentMethod == PaymentMethod.PAYMENT_PROOF) {
             Payment payment = new Payment();
             payment.setOrderId(orderId);
@@ -117,6 +134,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setStatus(PaymentStatus.PENDING);
             payment.setName("Manual Payment for Order " + orderId);
             payment.setCreatedAt(LocalDateTime.now());
+            payment.setExpirationTime(LocalDateTime.now().plusHours(1));
 
             Payment savedPayment = paymentRepository.save(payment);
 
@@ -146,6 +164,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         return result;
     }
+
 
     @Override
     public PaymentStatus getTransactionStatus(Long orderId) {
@@ -288,21 +307,29 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private PaymentRequest createPaymentRequest(OrderDTO order, UserDTO user, String bank) {
-        String paymentType = "bank_transfer";
-        PaymentTransactionDetails paymentTransactionDetails = new PaymentTransactionDetails();
-        paymentTransactionDetails.setOrder_id(order.getId().toString());
-        paymentTransactionDetails.setGross_amount(order.getOriginalAmount().intValue());
+        PaymentRequest paymentRequest = new PaymentRequest();
+        paymentRequest.setPayment_type("bank_transfer");
+
+        PaymentTransactionDetails transactionDetails = new PaymentTransactionDetails();
+        transactionDetails.setOrder_id(order.getId().toString());
+        BigDecimal totalAmount = order.getFinalAmount();
+        transactionDetails.setGross_amount(totalAmount.intValue());
+        paymentRequest.setTransaction_details(transactionDetails);
 
         BankTransfer bankTransfer = new BankTransfer();
         bankTransfer.setBank(bank);
+        paymentRequest.setBank_transfer(bankTransfer);
 
         CustomerDetails customerDetails = new CustomerDetails();
         customerDetails.setFirst_name(user.getName());
         customerDetails.setLast_name("");
         customerDetails.setEmail(user.getEmail());
         customerDetails.setPhone(user.getPhoneNumber());
+        paymentRequest.setCustomer_details(customerDetails);
 
         List<ItemDetail> itemDetailsList = new ArrayList<>();
+        BigDecimal itemsTotal = BigDecimal.ZERO;
+
         for (OrderItemDTO item : order.getItems()) {
             ItemDetail itemDetail = new ItemDetail();
             itemDetail.setId(item.getProductId().toString());
@@ -310,15 +337,50 @@ public class PaymentServiceImpl implements PaymentService {
             itemDetail.setPrice(item.getPrice().intValue());
             itemDetail.setQuantity(item.getQuantity());
             itemDetailsList.add(itemDetail);
+
+            BigDecimal itemTotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+            itemsTotal = itemsTotal.add(itemTotal);
         }
 
-        PaymentRequest paymentRequest = new PaymentRequest();
-        paymentRequest.setPayment_type(paymentType);
-        paymentRequest.setTransaction_details(paymentTransactionDetails);
-        paymentRequest.setBank_transfer(bankTransfer);
-        paymentRequest.setCustomer_details(customerDetails);
+        if (order.getShippingCost().compareTo(BigDecimal.ZERO) > 0) {
+            ItemDetail shippingItem = new ItemDetail();
+            shippingItem.setId("SHIPPING");
+            shippingItem.setName("Shipping Cost");
+            shippingItem.setPrice(order.getShippingCost().intValue());
+            shippingItem.setQuantity(1);
+            itemDetailsList.add(shippingItem);
+
+            itemsTotal = itemsTotal.add(order.getShippingCost());
+        }
+
         paymentRequest.setItem_details(itemDetailsList);
 
+        if (itemsTotal.intValue() != totalAmount.intValue()) {
+            throw new RuntimeException("Item total (" + itemsTotal + ") does not match the gross amount (" + totalAmount + ")");
+        }
+
+        PaymentRequest.CustomExpiry customExpiry = new PaymentRequest.CustomExpiry();
+        customExpiry.setExpiry_duration(60); // Set to 60 minutes (1 hour)
+        paymentRequest.setCustom_expiry(customExpiry);
+
         return paymentRequest;
+    }
+
+    private void scheduleOrderCancellation(Long orderId, LocalDateTime expirationTime) {
+        taskScheduler.schedule(() -> {
+            try {
+                Payment payment = paymentRepository.findByOrderId(orderId)
+                        .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderId));
+
+                if (payment.getStatus() == PaymentStatus.PENDING) {
+                    payment.setStatus(PaymentStatus.FAILED);
+                    paymentRepository.save(payment);
+
+                    orderService.updateOrderStatus(orderId, OrderStatus.cancelled);
+                    log.info("Order " + orderId + " cancelled due to payment expiration");
+                }
+            } catch (Exception e) {
+            }
+        }, expirationTime.toInstant(ZoneOffset.UTC));
     }
 }

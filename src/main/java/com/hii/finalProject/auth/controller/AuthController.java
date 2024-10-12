@@ -46,7 +46,7 @@ public class AuthController {
         log.info("User login request received for user: " + userLogin.getEmail());
         try {
             Optional<User> userOptional = userRepository.findByEmail(userLogin.getEmail());
-            if (userOptional.isEmpty() || (userOptional.get().getIsVerified() && userOptional.get().getPassword() == null)) {
+            if (userOptional.isEmpty() || (userOptional.get().getIsVerified() && userOptional.get().getPassword() == null ) || userOptional.get().getDeletedAt() != null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Email Not Found", "message", "No account found with this email address"));
             }
 
@@ -83,7 +83,7 @@ public class AuthController {
         log.info("User login request received for user: " + userLogin.getEmail());
         try {
             Optional<User> userOptional = userRepository.findByEmail(userLogin.getEmail());
-            if (userOptional.isEmpty() || userOptional.get().getPassword() != null) {
+            if (userOptional.isEmpty() || userOptional.get().getPassword() != null || userOptional.get().getDeletedAt() != null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Email Not Found", "message", "No account found with this email address"));
             }
 

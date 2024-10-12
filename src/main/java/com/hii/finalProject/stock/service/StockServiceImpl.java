@@ -251,7 +251,7 @@ public class StockServiceImpl implements StockService{
     //stockreport
     @Override
     @Transactional
-    public void reduceStock(Long productId, Long warehouseId, int quantity) {
+    public void reduceStock(Long productId, Long warehouseId, int quantity) throws InsufficientStockException {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         Warehouse warehouse = warehouseRepository.findById(warehouseId)
@@ -263,7 +263,7 @@ public class StockServiceImpl implements StockService{
         if (stock.getQuantity() < quantity) {
             throw new InsufficientStockException("Not enough stock for product: " + product.getName()
                     + " in warehouse: " + warehouse.getName()
-                    + ". Required: " + quantity + ", Available: " + stock.getQuantity());
+                    + ". Required: " + quantity + ", Available: " + stock.getQuantity(), stock.getQuantity());
         }
 
         stock.setQuantity(stock.getQuantity() - quantity);
@@ -284,5 +284,5 @@ public class StockServiceImpl implements StockService{
         stock.setQuantity(stock.getQuantity() + quantity);
         stockRepository.save(stock);
     }
-
+    //stockreport
 }

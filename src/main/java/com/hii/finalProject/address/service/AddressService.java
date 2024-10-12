@@ -18,8 +18,6 @@ public interface AddressService {
 
     Address getActiveUserAddress(String email);
 
-    Boolean checkUserAddress(String email);
-
 
     Address tooglePrimaryAddress(String email, Long addressId);
 }

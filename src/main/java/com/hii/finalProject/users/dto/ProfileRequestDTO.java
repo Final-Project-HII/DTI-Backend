@@ -12,7 +12,4 @@ public class ProfileRequestDTO {
 
     @NotBlank(message = "Phone number is required")
     private String phoneNumber;
-
-
-    private MultipartFile avatar;
 }
