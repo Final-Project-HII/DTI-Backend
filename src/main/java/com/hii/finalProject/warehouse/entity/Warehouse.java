@@ -16,7 +16,7 @@ import java.util.List;
 
 
 @Entity
-@Table(name = "warehouse",schema = "developmentfp")
+@Table(name = "warehouse")
 @Data
 public class Warehouse {
     @Id

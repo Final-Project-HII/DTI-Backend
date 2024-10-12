@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "cart_items", schema = "developmentfp")
+@Table(name = "cart_items")
 public class CartItem implements Serializable {
 
     @Id

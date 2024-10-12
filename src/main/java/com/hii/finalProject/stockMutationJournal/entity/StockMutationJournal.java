@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "stock_mutation_journals", schema = "developmentfp")
+@Table(name = "stock_mutation_journals")
 public class StockMutationJournal {
 
     @Id
@@ -17,11 +17,11 @@ public class StockMutationJournal {
     private Long id;
 
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "stock_mutation_id", nullable = false)
     private StockMutation stockMutation;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "warehouse_id", nullable = false)
     private Warehouse warehouse;
 

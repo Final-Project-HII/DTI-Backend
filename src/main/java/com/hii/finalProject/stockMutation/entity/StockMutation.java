@@ -13,7 +13,7 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "stock_mutations", schema = "developmentfp")
+@Table(name = "stock_mutations")
 
 public class StockMutation {
 

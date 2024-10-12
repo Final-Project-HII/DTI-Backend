@@ -10,7 +10,7 @@ import java.util.Set;
 
 @Data
 @Entity
-@Table(name = "city",schema = "developmentfp")
+@Table(name = "city")
 public class City {
 
     @Id

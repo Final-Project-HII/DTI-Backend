@@ -8,6 +8,7 @@ import com.hii.finalProject.stockMutation.entity.StockMutation;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -17,16 +18,21 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@Table(name = "products", schema = "developmentfp")
+@Table(name = "products")
 public class Product implements Serializable {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
+    @Column(name = "name")
     private String name;
+    @Column(name = "description")
     private String description;
+    @Column(name = "price")
     private Integer price;
+    @Column(name = "weight")
     private Integer weight;
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
@@ -41,19 +47,27 @@ public class Product implements Serializable {
     @JsonIgnore
     private List<Stock> stocks = new ArrayList<>();
 
-    @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private Instant createdAt = Instant.now();
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt ;
 
-    @Column(name = "updated_at", nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-    private Instant updatedAt = Instant.now();
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt ;
 
     @OneToMany(mappedBy = "product")
     @JsonIgnore
     private List<StockMutation> stockMutations = new ArrayList<>();
+    @PrePersist
+    protected void onCreate(){
+        createdAt = Instant.now();
+        updatedAt = Instant.now();
+    }
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = Instant.now();
+    }
 }
 
-
-//    @Column(name = "deleted_at")
-//    private Instant deletedAt;
 
 

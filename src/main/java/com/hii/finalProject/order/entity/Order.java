@@ -15,12 +15,12 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "orders", schema = "developmentfp")
+@Table(name = "orders")
 public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "order_id_gen")
-    @SequenceGenerator(name = "order_id_gen", sequenceName = "developmentfp.order_id_seq", allocationSize = 1, schema = "developmentfp")
+    @SequenceGenerator(name = "order_id_gen", sequenceName = "order_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 

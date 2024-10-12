@@ -9,12 +9,12 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "order_items", schema = "developmentfp")
+@Table(name = "order_items")
 public class OrderItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "order_item_id_gen")
-    @SequenceGenerator(name = "order_item_id_gen", sequenceName = "developmentfp.order_item_id_seq", allocationSize = 1)
+    @SequenceGenerator(name = "order_item_id_gen", sequenceName = "order_item_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 

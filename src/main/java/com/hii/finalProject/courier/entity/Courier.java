@@ -11,7 +11,7 @@ import java.time.Instant;
 
 @Data
 @Entity
-@Table(name = "couriers",schema = "developmentfp")
+@Table(name = "couriers")
 public class Courier {
 
     @Id

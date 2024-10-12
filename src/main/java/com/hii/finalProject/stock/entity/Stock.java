@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "stock",schema = "developmentfp")
+@Table(name = "stock")
 public class Stock {
 
     @Id
@@ -34,19 +34,15 @@ public class Stock {
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
-//    @Column(name = "created_at", nullable = false, updatable = false)
-//    private LocalDateTime createdAt = LocalDateTime.now();
-//
-//    @Column(name = "updated_at")
-//    private LocalDateTime updatedAt = LocalDateTime.now();
-    @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
-    @Column(name = "updated_at", nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = Instant.now();
     }
+
 }
