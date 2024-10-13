@@ -19,7 +19,7 @@ public class ImageValidator implements ConstraintValidator<ValidImage, Multipart
     public void initialize(ValidImage constraintAnnotation) {
         this.maxSizeInBytes = constraintAnnotation.maxSizeInMB() * 1024 * 1024; // Convert MB to bytes
         this.allowedContentTypes = new HashSet<>(Arrays.asList(
-                "image/jpeg", "image/png", "image/svg+xml", "image/webp"
+                "image/jpeg", "image/png", "image/svg+xml", "image/webp",  "image/gif"
         ));
     }
 
