@@ -46,7 +46,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final ObjectMapper jacksonObjectMapper;
     private final TaskScheduler taskScheduler;
 
-    private String serverKey = "SB-Mid-server-1YIRKrKNSAv83Cq4AdIKPKlB";
+    private String serverKey = "SB-Mid-server-sshCj8FJozep3byMda1OBTUJ";
     private String apiUrl  = "https://api.sandbox.midtrans.com/v2/charge";
 
     public PaymentServiceImpl(OrderService orderService, UserService userService, CartService cartService,
