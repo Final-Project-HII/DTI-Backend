@@ -2,6 +2,7 @@ package com.hii.finalProject.stockMutation.service;
 
 import com.hii.finalProject.order.entity.Order;
 import com.hii.finalProject.orderItem.entity.OrderItem;
+import com.hii.finalProject.products.entity.Product;
 import com.hii.finalProject.stock.entity.Stock;
 import com.hii.finalProject.stock.repository.StockRepository;
 import com.hii.finalProject.stockMutation.entity.MutationType;
@@ -56,7 +57,6 @@ public class AutoStockMutationService {
                 Stock sourceWarehouseStock = stockRepository.findByProductAndWarehouse(item.getProduct(), sourceWarehouse)
                         .orElseThrow(() -> new RuntimeException("Stock not found in source warehouse"));
 
-
                 StockMutation mutation = new StockMutation();
                 mutation.setProduct(item.getProduct());
                 mutation.setOrigin(sourceWarehouse);
@@ -67,12 +67,10 @@ public class AutoStockMutationService {
                 mutation.setCreatedAt(LocalDateTime.now());
                 stockMutationRepository.save(mutation);
 
-
                 sourceWarehouseStock.setQuantity(sourceWarehouseStock.getQuantity() - requiredQuantity);
                 stock.setQuantity(stock.getQuantity() + requiredQuantity);
                 stockRepository.save(sourceWarehouseStock);
                 stockRepository.save(stock);
-
 
                 createStockMutationJournal(mutation, sourceWarehouse, StockMutationJournal.MutationType.OUT);
                 createStockMutationJournal(mutation, orderWarehouse, StockMutationJournal.MutationType.IN);
