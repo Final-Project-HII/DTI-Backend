@@ -14,5 +14,5 @@ public @interface ValidImage {
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
     long maxSizeInMB() default 2;
-    String[] allowedExtensions() default {"jpg", "jpeg", "png", "svg", "webp"};
+    String[] allowedExtensions() default {"jpg", "jpeg", "png", "svg", "webp","gif"};
 }
