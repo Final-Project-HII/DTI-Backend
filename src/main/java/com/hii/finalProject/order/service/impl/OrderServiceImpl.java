@@ -397,12 +397,18 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("Order must be in 'process' status to be shipped");
         }
 
-        order.setStatus(OrderStatus.shipped);
+        autoStockMutationService.processOrderAndCreateMutationIfNeeded(order);
 
-        // Reduce stock when order is shipped
-        for (OrderItem item : order.getItems()) {
-            stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+        try {
+            for (OrderItem item : order.getItems()) {
+                stockService.reduceStock(item.getProduct().getId(), order.getWarehouse().getId(), item.getQuantity());
+            }
+        } catch (InsufficientStockException e) {
+            throw new OrderProcessingException("Failed to ship order due to insufficient stock after auto mutation");
         }
+
+        order.setStatus(OrderStatus.shipped);
+        order.setUpdatedAt(LocalDateTime.now());
 
         Order updatedOrder = orderRepository.save(order);
         return convertToDTO(updatedOrder);
