@@ -56,7 +56,7 @@ public class AutoStockMutationService {
                 Stock sourceWarehouseStock = stockRepository.findByProductAndWarehouse(item.getProduct(), sourceWarehouse)
                         .orElseThrow(() -> new RuntimeException("Stock not found in source warehouse"));
 
-                // Create and save automatic stock mutation
+
                 StockMutation mutation = new StockMutation();
                 mutation.setProduct(item.getProduct());
                 mutation.setOrigin(sourceWarehouse);
@@ -67,13 +67,13 @@ public class AutoStockMutationService {
                 mutation.setCreatedAt(LocalDateTime.now());
                 stockMutationRepository.save(mutation);
 
-                // Update stock in both warehouses
+
                 sourceWarehouseStock.setQuantity(sourceWarehouseStock.getQuantity() - requiredQuantity);
                 stock.setQuantity(stock.getQuantity() + requiredQuantity);
                 stockRepository.save(sourceWarehouseStock);
                 stockRepository.save(stock);
 
-                // Create stock mutation journal entries
+
                 createStockMutationJournal(mutation, sourceWarehouse, StockMutationJournal.MutationType.OUT);
                 createStockMutationJournal(mutation, orderWarehouse, StockMutationJournal.MutationType.IN);
             }
@@ -85,7 +85,7 @@ public class AutoStockMutationService {
 
         for (Warehouse warehouse : warehouses) {
             if (warehouse.getId().equals(orderWarehouse.getId())) {
-                continue; // Skip the order's warehouse
+                continue;
             }
 
             Stock stock = stockRepository.findByProductAndWarehouse(product, warehouse)
@@ -96,7 +96,7 @@ public class AutoStockMutationService {
             }
         }
 
-        return null; // If no warehouse with sufficient stock is found
+        return null;
     }
 
     private void createStockMutationJournal(StockMutation mutation, Warehouse warehouse, StockMutationJournal.MutationType type) {
