@@ -25,7 +25,7 @@ public class Categories {
     @Column(name = "name")
     private String name;
 
-    @OneToMany(mappedBy = "categories", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "categories", fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Product> products = new ArrayList<>();
     @Column(name = "category_image")
