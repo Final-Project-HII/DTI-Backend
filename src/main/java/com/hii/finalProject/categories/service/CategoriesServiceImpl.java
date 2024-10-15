@@ -88,11 +88,13 @@ public class CategoriesServiceImpl implements CategoriesService {
         }
     }
     public void deleteCategory(Long id) {
-        if (categoriesRepository.existsById(id)) {
-            categoriesRepository.deleteById(id);
-        } else {
-            throw new IllegalArgumentException("Category not found with id: " + id);
+       Categories category = categoriesRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + id));
+
+        if (!category.getProducts().isEmpty()) {
+            throw new IllegalStateException("Cannot delete category. It has associated products.");
         }
+        categoriesRepository.deleteById(id);
     }
 
     private CategoriesResponseDto mapToResponseDto(Categories categories){
