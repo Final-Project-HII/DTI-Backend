@@ -61,14 +61,16 @@ public class CategoriesController {
 
     @DeleteMapping("/delete/{id}")
     @PreAuthorize("hasAuthority('SCOPE_SUPER')")
-    public ResponseEntity<?> deleteCategory(@PathVariable Long id) {
+    public ResponseEntity<Response<Void>> deleteCategory(@PathVariable Long id) {
         try {
             categoriesService.deleteCategory(id);
-            return ResponseEntity.noContent().build();
+            return Response.successfulResponse("Category deleted successfully",null);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return Response.failedResponse(HttpStatus.NOT_FOUND.value(), "Category not found", null);
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return Response.failedResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null);
+        } catch (Exception e) {
+            return Response.failedResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred", null);
         }
     }
 }
