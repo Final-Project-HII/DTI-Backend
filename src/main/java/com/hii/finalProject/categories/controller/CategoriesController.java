@@ -61,12 +61,14 @@ public class CategoriesController {
 
     @DeleteMapping("/delete/{id}")
     @PreAuthorize("hasAuthority('SCOPE_SUPER')")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+    public ResponseEntity<?> deleteCategory(@PathVariable Long id) {
         try {
             categoriesService.deleteCategory(id);
             return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }
