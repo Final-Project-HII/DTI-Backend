@@ -61,7 +61,7 @@ public class ProductServiceImpl implements ProductService{
     public Page<ProductListDtoResponse> getAllProducts(String search, String categoryName, String sortBy, String sortDirection, Pageable pageable) {
         Specification<Product> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-
+            predicates.add(cb.isNull(root.get("deletedAt")));
             if (search != null && !search.isEmpty()) {
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("name")), "%" + search.toLowerCase() + "%"),
@@ -148,41 +148,44 @@ public class ProductServiceImpl implements ProductService{
     @Override
     @Transactional
     public void deleteProduct(Long id) {
-        Product product = productRepository.findById(id)
+        // Product product = productRepository.findById(id)
+        //         .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+
+        // // Create a new list to avoid ConcurrentModificationException
+        // List<ProductImage> imagesToDelete = new ArrayList<>(product.getProductImages());
+
+        // // Delete associated images from Cloudinary and database
+        // for (ProductImage image : imagesToDelete) {
+        //     try {
+        //         cloudinaryService.deleteImage(image.getImageUrl());
+        //     } catch (IOException e) {
+        //         System.err.println("Error deleting image from Cloudinary: " + e.getMessage());
+        //     }
+        //     productImageRepository.delete(image);
+        // }
+
+        // // Clear the product's image collection
+        // product.getProductImages().clear();
+
+        // // Flush changes to ensure image deletions are persisted
+        // entityManager.flush();
+
+        // // Delete the product
+        // productRepository.delete(product);
+
+        // // Flush again to ensure product deletion is persisted
+        // entityManager.flush();
+
+        // // Double-check if the product is actually deleted
+        // if (productRepository.existsById(id)) {
+        //     // If the product still exists, use the deleteByIdAndFlush method
+        //     productRepository.deleteByIdAndFlush(id);
+        // }
+        // System.out.println("Product and associated images deleted for id: " + id);
+         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
-
-        // Create a new list to avoid ConcurrentModificationException
-        List<ProductImage> imagesToDelete = new ArrayList<>(product.getProductImages());
-
-        // Delete associated images from Cloudinary and database
-        for (ProductImage image : imagesToDelete) {
-            try {
-                cloudinaryService.deleteImage(image.getImageUrl());
-            } catch (IOException e) {
-                System.err.println("Error deleting image from Cloudinary: " + e.getMessage());
-            }
-            productImageRepository.delete(image);
-        }
-
-        // Clear the product's image collection
-        product.getProductImages().clear();
-
-        // Flush changes to ensure image deletions are persisted
-        entityManager.flush();
-
-        // Delete the product
-        productRepository.delete(product);
-
-        // Flush again to ensure product deletion is persisted
-        entityManager.flush();
-
-        // Double-check if the product is actually deleted
-        if (productRepository.existsById(id)) {
-            // If the product still exists, use the deleteByIdAndFlush method
-            productRepository.deleteByIdAndFlush(id);
-        }
-
-        System.out.println("Product and associated images deleted for id: " + id);
+        product.setDeletedAt(Instant.now());
+        productRepository.save(product);
     }
 
     @Override
