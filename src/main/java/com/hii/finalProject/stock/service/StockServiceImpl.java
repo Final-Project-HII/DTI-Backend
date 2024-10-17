@@ -137,7 +137,7 @@ public class StockServiceImpl implements StockService{
             if (maxPrice != null) {
                 predicates.add(cb.le(root.get("product").get("price"), maxPrice));
             }
-
+            predicates.add(cb.greaterThan(root.get("quantity"), 0));
             return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
         };
         Sort sort = Sort.by(sortDirection.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
@@ -152,7 +152,11 @@ public class StockServiceImpl implements StockService{
 
     @Override
     public void deleteStock(Long id) {
-        stockRepository.deleteById(id);
+        // stockRepository.deleteById(id);
+        Stock stock = stockRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Stock not found"));
+        stock.setQuantity(0);
+        stockRepository.save(stock);
     }
 
     @Override
