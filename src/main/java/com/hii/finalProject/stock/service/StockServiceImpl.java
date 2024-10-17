@@ -137,7 +137,7 @@ public class StockServiceImpl implements StockService{
             if (maxPrice != null) {
                 predicates.add(cb.le(root.get("product").get("price"), maxPrice));
             }
-            predicates.add(cb.greaterThan(root.get("quantity"), 0));
+            // predicates.add(cb.greaterThan(root.get("quantity"), 0));
             return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
         };
         Sort sort = Sort.by(sortDirection.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
