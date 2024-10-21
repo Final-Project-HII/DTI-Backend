@@ -8,4 +8,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CategoriesRepository extends JpaRepository<Categories, Long>, JpaSpecificationExecutor<Categories> {
     boolean existsByNameIgnoreCase(String name);
+    Optional<Categories> findByIdAndDeletedAtIsNull(Long id);
+    List<Categories> findAllByDeletedAtIsNull();
+    Optional<Categories> findByNameIgnoreCase(String name);
 }
