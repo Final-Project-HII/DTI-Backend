@@ -38,6 +38,10 @@ public class Categories {
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt ;
+    
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+    
     @PrePersist
     protected void onCreate(){
         createdAt = Instant.now();
