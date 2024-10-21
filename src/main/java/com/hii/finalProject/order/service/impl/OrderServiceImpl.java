@@ -43,6 +43,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +68,7 @@ public class OrderServiceImpl implements OrderService {
     private final PaymentRepository paymentRepository;
     private final AutoStockMutationService autoStockMutationService;
     private final StockMutationJournalRepository stockMutationJournalRepository;
+    private final Random random = new Random();
 
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
                             CartService cartService, ProductRepository productRepository,
@@ -169,13 +171,8 @@ public class OrderServiceImpl implements OrderService {
     private String generateInvoiceId() {
         LocalDateTime now = LocalDateTime.now();
         String datePart = now.format(DATE_FORMATTER);
-        String sequencePart = String.format("%04d", sequence.getAndIncrement());
-
-        if (sequence.get() > 9999) {
-            sequence.set(1);
-        }
-
-        return INVOICE_PREFIX + "-" + datePart + "-" + sequencePart;
+        String randomPart = String.format("%04d", random.nextInt(10000));
+        return INVOICE_PREFIX + "-" + datePart + "-" + randomPart;
     }
 
 
