@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.channels.MulticastChannel;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -36,8 +37,25 @@ public class CategoriesServiceImpl implements CategoriesService {
         String categoryName = categoryRequestDto.getName().trim();
 
         // Cek apakah nama kategori sudah ada
-        if (categoriesRepository.existsByNameIgnoreCase(categoryName)) {
-            throw new UniqueNameViolationException("Category", categoryName);
+        // if (categoriesRepository.existsByNameIgnoreCase(categoryName)) {
+        //     throw new UniqueNameViolationException("Category", categoryName);
+        // }
+        Optional<Categories> existingCategory = categoriesRepository.findByNameIgnoreCase(categoryName);
+
+        if (existingCategory.isPresent()) {
+            Categories category = existingCategory.get();
+            if (category.getDeletedAt() != null) {
+                // Reactivate the soft-deleted category
+                category.setDeletedAt(null);
+                if (image != null && !image.isEmpty()) {
+                    String imageUrl = cloudinaryService.uploadFile(image, "category_images");
+                    category.setCategoryImage(imageUrl);
+                }
+                Categories savedCategory = categoriesRepository.save(category);
+                return mapToResponseDto(savedCategory);
+            } else if (category.getDeletedAt() == null) {
+                throw new UniqueNameViolationException("Category", categoryName);
+            }
         }
 
         Categories categories = new Categories();
@@ -58,7 +76,8 @@ public class CategoriesServiceImpl implements CategoriesService {
 
     @Override
     public List<CategoriesResponseDto> getAllCategories() {
-        List<Categories> categories = categoriesRepository.findAll();
+        // List<Categories> categories = categoriesRepository.findAll();
+        List<Categories> categories = categoriesRepository.findAllByDeletedAtIsNull();
         return categories.stream().map(this::mapToResponseDto).collect(Collectors.toList());
     }
 
@@ -91,10 +110,12 @@ public class CategoriesServiceImpl implements CategoriesService {
        Categories category = categoriesRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + id));
 
-        if (!category.getProducts().isEmpty()) {
-            throw new IllegalStateException("Cannot delete category. It has associated products.");
-        }
-        categoriesRepository.deleteById(id);
+        // if (!category.getProducts().isEmpty()) {
+        //     throw new IllegalStateException("Cannot delete category. It has associated products.");
+        // }
+        // categoriesRepository.deleteById(id);
+        category.setDeletedAt(Instant.now());
+        categoriesRepository.save(category);
     }
 
     private CategoriesResponseDto mapToResponseDto(Categories categories){
