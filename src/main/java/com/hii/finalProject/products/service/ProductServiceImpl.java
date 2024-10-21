@@ -135,7 +135,7 @@ public class ProductServiceImpl implements ProductService{
                 imageDto.setImageUrl(imageUrl);
                 ProductImageResponseDto savedImage = productImageService.createProductImage(newImage, imageDto);
                 ProductImage productImage = new ProductImage();
-                // productImage.setId(savedImage.getId());
+                productImage.setId(savedImage.getId());
                 productImage.setProduct(product);
                 productImage.setImageUrl(savedImage.getImageUrl());
                 product.getProductImages().add(productImage);
